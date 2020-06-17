@@ -22,7 +22,7 @@ func (c *Client) GetAllVMs() ([]MyVm, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("[WSAPICLI] Fu: GetAllVMs Fi: wsapivm.go Ob: %#v\n", respBody)
+	log.Printf("[WSAPICLI] Fi: wsapivm.go Fu: GetAllVMs Ob: %#v\n", respBody)
 	var vms []MyVm
 	err = json.NewDecoder(respBody).Decode(&vms)
 	if err != nil {
@@ -46,30 +46,30 @@ func (c *Client) GetAllVMs() ([]MyVm, error) {
 			return nil, err
 		}
 	}
-	log.Printf("[WSAPICLI] Fu: GetAllVMs Fi: wsapivm.go Ob: %#v\n", vms)
+	log.Printf("[WSAPICLI] Fi: wsapivm.go Fu: GetAllVMs Ob: %#v\n", vms)
 	return vms, nil
 }
 
-func (c *Client) GetVM(idVM string) MyVm {
+func (c *Client) GetVM(idVM string) (*MyVm, error) {
 	var vm MyVm
 	body, err := c.httpRequest("vms/"+idVM, "GET", bytes.Buffer{})
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	log.Printf("[WSAPICLI] Fu: GetVM Fi: wsapivm.go Ob: %#v\n", body)
+	log.Printf("[WSAPICLI] Fi: wsapivm.go Fu: GetVM Ob: %#v\n", body)
 	err = json.NewDecoder(body).Decode(&vm)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	body, err = c.httpRequest("vms/"+idVM+"/power", "GET", bytes.Buffer{})
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	log.Printf("[WSAPICLI] Fu: GetVM Fi: wsapivm.go Ob: %#v\n", body)
+	log.Printf("[WSAPICLI] Fi: wsapivm.go Fu: GetVM Ob: %#v\n", body)
 	err = json.NewDecoder(body).Decode(&vm)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	log.Printf("[WSAPICLI] Fu: GetVM Fi: wsapivm.go Ob: %#v\n", vm)
-	return vm
+	log.Printf("[WSAPICLI] Fi: wsapivm.go Fu: GetVM Ob: %#v\n", vm)
+	return &vm, nil
 }

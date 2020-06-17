@@ -17,7 +17,7 @@ const (
 	defaultUser     = "admin"
 	defaultPassword = "Adm1n#00"
 	defaultBaseURL  = "https://localhost:8697/api"
-	defaultDebug    = false
+	defaultDebug    = true
 )
 
 type Client struct {
@@ -42,7 +42,7 @@ func NewClient(a string, u string, p string, d bool) (*Client, error) {
 		log.SetOutput(os.Stdout)
 	}
 	c.BaseURL, _ = url.Parse(a)
-	log.Printf("[WSAPICLI] Fu: NewClient Fi: wsapiclient.go Ob: %#v\n", c.BaseURL)
+	log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: NewClient Ob: %#v\n", c.BaseURL)
 	c.User = u
 	c.Password = p
 	// Como estamos desarrollando una API que se encaga de comunicarnos con
@@ -63,15 +63,15 @@ func NewClient(a string, u string, p string, d bool) (*Client, error) {
 			},
 		},
 	}
-	log.Printf("[WSAPICLI] Fu: NewClient Fi: wsapiclient.go Ob: %#v\n", c.Client)
-	log.Printf("[WSAPICLI] Fu: NewClient Fi: wsapiclient.go Ob: %#v\n", c)
+	log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: NewClient Ob: %#v\n", c.Client)
+	log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: NewClient Ob: %#v\n", c)
 	return c, nil
 }
 
 func New() (*Client, error) {
 	c, err := NewClient(defaultBaseURL, defaultUser, defaultPassword, defaultDebug)
 	log.SetOutput(os.Stdout)
-	log.Printf("[WSAPICLI] Fu: New Fi: wsapiclient.go Ob: %#v\n", c)
+	log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: New Ob: %#v\n", c)
 	log.SetOutput(ioutil.Discard)
 	return c, err
 }
@@ -100,11 +100,11 @@ func (c *Client) ConfigCli(a string, u string, p string, d bool) {
 	if err != nil {
 		panic(err)
 	}
-	log.Printf("[WSAPICLI] Fu: ConfigCli Fi: wsapiclient.go Ob: %#v\n", c.BaseURL)
+	log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: ConfigCli Ob: %#v\n", c.BaseURL)
 	c.User = u
-	log.Printf("[WSAPICLI] Fu: ConfigCli Fi: wsapiclient.go Ob: %#v\n", c.User)
+	log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: ConfigCli Ob: %#v\n", c.User)
 	c.Password = p
-	log.Printf("[WSAPICLI] Fu: ConfigCli Fi: wsapiclient.go Ob: %#v\n", c.Password)
+	log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: ConfigCli Ob: %#v\n", c.Password)
 
 }
 
@@ -133,12 +133,12 @@ func (c *Client) httpRequest(p string, m string, pl bytes.Buffer) (cl io.ReadClo
 		}
 		return nil, fmt.Errorf("got a non 200 status code: %v - %s", resp.StatusCode, respBody.String())
 	}
-	log.Printf("[WSAPICLI] Fu: httpRequest Fi: wsapiclient.go Ob: %#v\n", resp)
+	log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Ob: %#v\n", resp)
 	return resp.Body, nil
 }
 
 func (c *Client) requestPath(p string) string {
 	r := fmt.Sprintf("%s/%s", c.BaseURL, p)
-	log.Printf("[WSAPICLI] Fu: requestPath Fi: wsapiclient.go Ob: %#v\n", r)
+	log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: requestPath Ob: %#v\n", r)
 	return r
 }

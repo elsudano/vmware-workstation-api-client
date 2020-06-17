@@ -1,0 +1,6 @@
+# for binaries
+vmware-workstation-api-client*
+
+# for certificates
+*.pem
+config.ini
