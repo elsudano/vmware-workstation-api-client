@@ -26,11 +26,11 @@ Debug: false
 
 ```bash
 $ make
-build                          Build the binary of the module
-clean                          Clean the project, just remove default config of API REST VmWare Workstation, the cert, private key and binary
-start_api_rest                 Prepare environment for you can use a API REST of VmWare Workstation Pro and generate files for SSL
-stop_api_rest                  Stop a API REST server of VmWare Workstation
-test_api_client                Test API client and list all virtual machine of VmWare Workstation
+build            Build the binary of the module
+clean            Clean the project, just remove default config of API REST VmWare Workstation, the cert, private key and binary
+start_api_rest   Prepare environment for you can use a API REST of VmWare Workstation Pro and generate files for SSL
+stop_api_rest    Stop a API REST server of VmWare Workstation
+test_api_client  Test API client and list all virtual machine of VmWare Workstation
 ```
 
 * The follow step it's run the next command to create a SSL certificates and start the API with the values that you setting in config.ini
