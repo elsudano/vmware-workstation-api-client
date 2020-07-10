@@ -38,6 +38,14 @@ else
 	@kill -9 $(shell ps aux | grep -v grep | grep -e vmrest -e $(PRIVATEKEYFILE) -e $(CERTFILE) | awk '{print $$2}' | tr -d ' \n\r')
 endif
 
+PHONY += status_api_rest
+status_api_rest: ## Check if the API is work ir not
+ifeq ($(shell ps aux | grep -v grep | grep -e vmrest -e $(PRIVATEKEYFILE) -e $(CERTFILE) | awk '{print $$2}' | tr -d ' \n\r'),)
+	$(error "The API server don't running")
+else
+	@echo -e "The API server it's running"
+endif
+
 test_api_client: ## Test API client and list all virtual machine of VmWare Workstation
 	@go run .
 
