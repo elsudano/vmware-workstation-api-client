@@ -72,7 +72,7 @@ func main() {
 			value.Memory)
 	}
 
-	VM, err := client.ReadVM("LAVO7F5I1KVAQQ0IM4CNEEV0A01S267E") // the id it's a test
+	VM, err := client.CreateVM("PQLRP873B1P5FL1KFL5P3NN64CS5M9A3", "clone-test-copy") // the id it's a test
 	fmt.Printf("ID: %v\nPath: %v\nDenomination: %v\nDescription: %s\nPower Status: %s\nProcessor: %d\nMemory: %d \n\n",
 		VM.IdVM,
 		VM.Path,
@@ -85,7 +85,7 @@ func main() {
 		log.Fatalf("%s", err)
 	}
 
-	VM, err = client.CreateVM("PQLRP873B1P5FL1KFL5P3NN64CS5M9A3", "clone-test-copy") // the id it's a test
+	VM, err = client.ReadVM(VM.IdVM) // the id it's a test
 	fmt.Printf("ID: %v\nPath: %v\nDenomination: %v\nDescription: %s\nPower Status: %s\nProcessor: %d\nMemory: %d \n\n",
 		VM.IdVM,
 		VM.Path,
@@ -94,6 +94,11 @@ func main() {
 		VM.PowerStatus,
 		VM.CPU.Processors,
 		VM.Memory)
+	if err != nil {
+		log.Fatalf("%s", err)
+	}
+
+	err = client.DeleteVM(VM.IdVM) // the id it's a test
 	if err != nil {
 		log.Fatalf("%s", err)
 	}
