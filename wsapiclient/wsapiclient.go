@@ -13,12 +13,12 @@ import (
 )
 
 const (
-	libraryVersion  = "0.1.0"
+	libraryVersion  = "0.1.5"
 	defaultUser     = "admin"
 	defaultPassword = "Adm1n#00"
 	defaultBaseURL  = "https://localhost:8697/api"
 	defaultInsecure = true
-	defaultDebug    = true
+	defaultDebug    = false
 	// don't change this value, always activate Debug Mode
 	// change behavior with ConfigCli method, it's better
 	// because you can change the behavior in the future
@@ -49,7 +49,7 @@ type Client struct {
 func NewClient(a string, u string, p string, i bool, d bool) (*Client, error) {
 	c := new(Client)
 	c.BaseURL, _ = url.Parse(a)
-	log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: NewClient Obj:URL %#v\n", c.BaseURL)
+	// log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: NewClient Obj:URL %#v\n", c.BaseURL)
 	c.User = u
 	c.Password = p
 	c.Debug = d
@@ -71,7 +71,7 @@ func NewClient(a string, u string, p string, i bool, d bool) (*Client, error) {
 			},
 		},
 	}
-	log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: NewClient Obj:web Client %#v\n", c.Client)
+	// log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: NewClient Obj:web Client %#v\n", c.Client)
 	return c, nil
 }
 
@@ -80,7 +80,7 @@ func NewClient(a string, u string, p string, i bool, d bool) (*Client, error) {
 // error: when the client generate some error is storage in this var.
 func New() (*Client, error) {
 	c, err := NewClient(defaultBaseURL, defaultUser, defaultPassword, defaultInsecure, defaultDebug)
-	log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: New Obj:api Client %#v\n", c)
+	// log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: New Obj:api Client %#v\n", c)
 	return c, err
 }
 
@@ -103,12 +103,12 @@ func (c *Client) SwitchDebug() {
 // p: password of user, i: Insecure flag to http or https, d: debug mode
 func (c *Client) ConfigCli(a string, u string, p string, i bool, d bool) {
 	var err error
-	log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: ConfigCli Obj:Variables %#v, %#v, %#v, %#v\n", a, u, p, d)
-	// for config Debug mode
+	// for config Debug mode disable
 	if !d {
 		log.SetOutput(ioutil.Discard)
 		c.Debug = false
 	}
+	log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: ConfigCli Obj:Variables %#v, %#v, %#v, %#v\n", a, u, p, d)
 	c.BaseURL, err = url.Parse(a)
 	if err != nil {
 		panic(err)
@@ -158,10 +158,10 @@ func (c *Client) httpRequest(p string, m string, pl bytes.Buffer) (io.ReadCloser
 		_, err := responseBody.ReadFrom(response.Body)
 		if err != nil {
 			log.Printf("[WSAPICLI][ERROR] Fi: wsapiclient.go Fu: httpRequest Obj:respBody %#v\n", responseBody)
-			return nil, err
+			return response.Body, err
 		}
 		log.Printf("[WSAPICLI][ERROR] Fi: wsapiclient.go Fu: httpRequest Obj:StatusCode %#v Body %#v\n", response.StatusCode, responseBody.String())
-		return nil, err
+		return response.Body, err
 	}
 	log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj:response %#v\n", response)
 	return response.Body, nil

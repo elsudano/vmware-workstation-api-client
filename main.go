@@ -55,22 +55,22 @@ func main() {
 	// }}}
 
 	// To changing the config of debug you use this method
-	// client.SwitchDebug()
+	client.SwitchDebug()
 
-	AllVMs, err := client.GetAllVMs()
-	if err != nil {
-		log.Fatalf("%s", err)
-	}
-	for _, value := range AllVMs {
-		fmt.Printf("ID: %v\nPath: %v\nDenomination: %v\nDescription: %s\nPower Status: %s\nProcessor: %d\nMemory: %d \n\n",
-			value.IdVM,
-			value.Path,
-			value.Denomination,
-			value.Description,
-			value.PowerStatus,
-			value.CPU.Processors,
-			value.Memory)
-	}
+	// AllVMs, err := client.GetAllVMs()
+	// if err != nil {
+	// 	log.Fatalf("%s", err)
+	// }
+	// for _, value := range AllVMs {
+	// 	fmt.Printf("ID: %v\nPath: %v\nDenomination: %v\nDescription: %s\nPower Status: %s\nProcessor: %d\nMemory: %d \n\n",
+	// 		value.IdVM,
+	// 		value.Path,
+	// 		value.Denomination,
+	// 		value.Description,
+	// 		value.PowerStatus,
+	// 		value.CPU.Processors,
+	// 		value.Memory)
+	// }
 
 	VM, err := client.CreateVM("PQLRP873B1P5FL1KFL5P3NN64CS5M9A3", "clone-test-copy") // the id it's a test
 	fmt.Printf("ID: %v\nPath: %v\nDenomination: %v\nDescription: %s\nPower Status: %s\nProcessor: %d\nMemory: %d \n\n",
@@ -85,7 +85,20 @@ func main() {
 		log.Fatalf("%s", err)
 	}
 
-	VM, err = client.ReadVM(VM.IdVM) // the id it's a test
+	VM, err = client.ReadVM("0D6IIC428UP5DG1631T5N4E5VTEJRUVD") // the id it's a test
+	fmt.Printf("ID: %v\nPath: %v\nDenomination: %v\nDescription: %s\nPower Status: %s\nProcessor: %d\nMemory: %d \n\n",
+		VM.IdVM,
+		VM.Path,
+		VM.Denomination,
+		VM.Description,
+		VM.PowerStatus,
+		VM.CPU.Processors,
+		VM.Memory)
+	if err != nil {
+		log.Fatalf("%s", err)
+	}
+
+	VM, err = client.UpdateVM(VM.IdVM, "clone-test-copy-change", "esta es una prueba de llenadao de datos", 2, 512) // the id it's a test
 	fmt.Printf("ID: %v\nPath: %v\nDenomination: %v\nDescription: %s\nPower Status: %s\nProcessor: %d\nMemory: %d \n\n",
 		VM.IdVM,
 		VM.Path,

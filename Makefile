@@ -50,6 +50,7 @@ test_api_client: ## Test API client and list all virtual machine of VmWare Works
 	@go run .
 
 build: ## Build the binary of the module
+	@go get
 	@go build -o $(BINARY)
 
 clean: ## Clean the project, this only remove default config of API REST VmWare Workstation Pro, the cert, private key and binary

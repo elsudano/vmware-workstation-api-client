@@ -1,12 +1,9 @@
 package wsapiclient
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/json"
 	"log"
-	"os"
-	"strings"
 )
 
 type MyVm struct {
@@ -14,12 +11,12 @@ type MyVm struct {
 	Path         string `json:"path"`
 	Denomination string `json:"denomination"`
 	Description  string `json:"description"`
-	Image        string `json:"image"`
-	CPU          struct {
-		Processors int32 `json:"processors"`
+	// Image        string `json:"image"`
+	CPU struct {
+		Processors int `json:"processors"`
 	}
 	PowerStatus string `json:"power_state"`
-	Memory      int32  `json:"memory"`
+	Memory      int    `json:"memory"`
 }
 
 // Method GetAllVMs return array of MyVm and a error variable if occurr some problem
@@ -33,51 +30,31 @@ func (c *Client) GetAllVMs() ([]MyVm, error) {
 	log.Printf("[WSAPICLI] Fi: wsapivm.go Fu: GetAllVMs Obj:%#v\n", responseBody)
 	err = json.NewDecoder(responseBody).Decode(&vms)
 	if err != nil {
+		log.Fatalf("[WSAPICLI] Fi: wsapivm.go Fu: GetAllVMs Message: I can't read the json structure %s", err)
 		return nil, err
 	}
 
-	for id, value := range vms {
-		file, err := os.Open(vms[id].Path)
+	for vm, value := range vms {
+		data, err := GetNameDescription(vms[vm].Path)
 		if err != nil {
-			log.Fatalf("Failed opening file %s, please make sure the config file exists", err)
+			return nil, err
 		}
-
-		log.Printf("[WSAPICLI] Fi: wsapivm.go Fu: GetAllVMs Obj:File object %#v\n", file)
-
-		scanner := bufio.NewScanner(file)
-		scanner.Split(bufio.ScanLines)
-		var vardenomination, vardescription string
-		for scanner.Scan() {
-			temp := strings.SplitN(scanner.Text(), " = ", 2)
-			vtemp := strings.ToLower(temp[0])
-			if vtemp == "displayname" {
-				vardenomination = strings.TrimSpace(temp[1])
-				vardenomination = strings.TrimSuffix(vardenomination, "\"")
-				vardenomination = strings.TrimPrefix(vardenomination, "\"")
-			}
-			if vtemp == "annotation" {
-				vardescription = strings.TrimSpace(temp[1])
-				vardescription = strings.TrimSuffix(vardescription, "\"")
-				vardescription = strings.TrimPrefix(vardescription, "\"")
-			}
-		}
-		vms[id].Denomination = vardenomination
-		vms[id].Description = vardescription
-		file.Close()
+		vms[vm].Denomination = data[0]
+		vms[vm].Description = data[1]
 
 		responseBody, err := c.httpRequest("vms/"+value.IdVM, "GET", bytes.Buffer{})
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
-		err = json.NewDecoder(responseBody).Decode(&vms[id])
+		err = json.NewDecoder(responseBody).Decode(&vms[vm])
 		if err != nil {
 			return nil, err
 		}
 		responseBody, err = c.httpRequest("vms/"+value.IdVM+"/power", "GET", bytes.Buffer{})
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
-		err = json.NewDecoder(responseBody).Decode(&vms[id])
+		err = json.NewDecoder(responseBody).Decode(&vms[vm])
 		if err != nil {
 			return nil, err
 		}
@@ -105,8 +82,9 @@ func (c *Client) CreateVM(s string, d string) (*MyVm, error) {
 	if err != nil {
 		return nil, err
 	}
+	// Piensa si tiene que ser en este punto en la parte de httpRequest
 	// tienes que poner en este punto un control de errores de lo que responde VMW
-	// si es diferente de create o ok que de un error y ponga a nil la vm y salga
+	// si es diferente de create, ok, o delete que de un error y ponga a nil la vm y salga
 	log.Printf("[WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:response raw %#v\n", response)
 	responseBody := new(bytes.Buffer)
 	_, err = responseBody.ReadFrom(response)
@@ -119,10 +97,8 @@ func (c *Client) CreateVM(s string, d string) (*MyVm, error) {
 	if err != nil {
 		return nil, err
 	}
-	// Falta devolver cual es el ID de la nueva ademas de eso tendras que hacer un PUT para modificar los
-	// parametros de la instancia nueva. entre ellos el procesador la memoria y la network
-	//
-	// Después de esto tendrás que crear una network y asignarla a la instancia nueva.
+
+	// Falta hacer un PUT para modificar los parametros de la instancia nueva. entre ellos el procesador la memoria y la network
 	return &vm, err
 }
 
@@ -130,86 +106,50 @@ func (c *Client) CreateVM(s string, d string) (*MyVm, error) {
 // Input: i: string with the ID of the VM, Return: pointer at the MyVm object
 // and error variable with the error if occurr
 func (c *Client) ReadVM(i string) (*MyVm, error) {
-	var vms []MyVm
-	var vm MyVm
-	// La única manera de poder conseguir el path de la instancia
-	// es pidiendo a la API de VMW todas las instancias
-	responseBody, err := c.httpRequest("vms", "GET", bytes.Buffer{})
-	if err != nil {
-		return nil, err
-	}
-	err = json.NewDecoder(responseBody).Decode(&vms)
-	if err != nil {
-		return nil, err
-	}
-
-	for id, value := range vms {
-		if value.IdVM == i {
-			vm = vms[id]
-		}
-	}
-
-	file, err := os.Open(vm.Path)
-	if err != nil {
-		log.Fatalf("Failed opening file %s, please make sure the config file exists", err)
-	}
-
-	log.Printf("[WSAPICLI] Fi: wsapivm.go Fu: ReadVM Obj:File object %#v\n", file)
-
-	scanner := bufio.NewScanner(file)
-	scanner.Split(bufio.ScanLines)
-	var vardenomination, vardescription string
-	for scanner.Scan() {
-		temp := strings.SplitN(scanner.Text(), " = ", 2)
-		vtemp := strings.ToLower(temp[0])
-		if vtemp == "displayname" {
-			vardenomination = strings.TrimSpace(temp[1])
-			vardenomination = strings.TrimSuffix(vardenomination, "\"")
-			vardenomination = strings.TrimPrefix(vardenomination, "\"")
-		}
-		if vtemp == "annotation" {
-			vardescription = strings.TrimSpace(temp[1])
-			vardescription = strings.TrimSuffix(vardescription, "\"")
-			vardescription = strings.TrimPrefix(vardescription, "\"")
-		}
-	}
-	vm.Denomination = vardenomination
-	vm.Description = vardescription
-	file.Close()
-
-	responseBody, err = c.httpRequest("vms/"+i, "GET", bytes.Buffer{})
-	if err != nil {
-		return nil, err
-	}
-	log.Printf("[WSAPICLI] Fi: wsapivm.go Fu: ReadVM Obj:Body of VM %#v\n", responseBody)
-	err = json.NewDecoder(responseBody).Decode(&vm)
-	if err != nil {
-		return nil, err
-	}
-	responseBody, err = c.httpRequest("vms/"+i+"/power", "GET", bytes.Buffer{})
-	if err != nil {
-		return nil, err
-	}
-	log.Printf("[WSAPICLI] Fi: wsapivm.go Fu: ReadVM Obj:Body of power %#v\n", responseBody)
-	err = json.NewDecoder(responseBody).Decode(&vm)
+	vm, err := GetVM(c, i)
 	if err != nil {
 		return nil, err
 	}
 	log.Printf("[WSAPICLI] Fi: wsapivm.go Fu: ReadVM Obj:VM %#v\n", vm)
-	return &vm, nil
+	return vm, nil
 }
 
 // Function to update a VM in VmWare Worstation Input:
-// i: string with the ID of the VM to update, d: string with the denomination of the VM
-func (c *Client) UpdateVM(i string) (*MyVm, error) {
-	var vm MyVm
-	responseBody, err := c.httpRequest("vms/"+i, "PUT", bytes.Buffer{})
+// i: string with the ID of the VM to update, n: string with the denomination of VM
+// d: string with the description of the VM, p: int with the number of processors
+// m: int with the size of memory Output: pointer at the MyVm object
+// and error variable with the error if occurr
+func (c *Client) UpdateVM(i string, n string, d string, p int, m int) (*MyVm, error) {
+	var buffer bytes.Buffer
+	// there prepare the body request
+	request, err := json.Marshal(map[string]int{
+		"processors": p,
+		"memory":     m,
+	})
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("[WSAPICLI] Fi: wsapivm.go Fu: UpdateVM Obj:%#v\n", responseBody)
-
-	return &vm, err
+	buffer.Write(request)
+	log.Printf("[WSAPICLI] Fi: wsapivm.go Fu: UpdateVM Obj: Request Body %#v\n", buffer.String())
+	_, err = c.httpRequest("vms/"+i, "PUT", buffer)
+	if err != nil {
+		return nil, err
+	}
+	vm, err := GetVM(c, i)
+	if err != nil {
+		return nil, err
+	}
+	log.Printf("[WSAPICLI] Fi: wsapivm.go Fu: UpdateVM Obj: VM after %#v\n", vm)
+	err = SetNameDescription(vm.Path, n, d)
+	if err != nil {
+		return nil, err
+	}
+	vm, err = GetVM(c, i)
+	if err != nil {
+		return nil, err
+	}
+	log.Printf("[WSAPICLI] Fi: wsapivm.go Fu: UpdateVM Obj: VM before %#v\n", vm)
+	return vm, err
 }
 
 // Function to delete a VM in VmWare Worstation Input:
