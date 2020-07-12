@@ -139,7 +139,7 @@ func (c *Client) UpdateVM(i string, n string, d string, p int, m int) (*MyVm, er
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("[WSAPICLI] Fi: wsapivm.go Fu: UpdateVM Obj: VM after %#v\n", vm)
+	log.Printf("[WSAPICLI] Fi: wsapivm.go Fu: UpdateVM Obj: VM before %#v\n", vm)
 	err = SetNameDescription(vm.Path, n, d)
 	if err != nil {
 		return nil, err
@@ -148,7 +148,7 @@ func (c *Client) UpdateVM(i string, n string, d string, p int, m int) (*MyVm, er
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("[WSAPICLI] Fi: wsapivm.go Fu: UpdateVM Obj: VM before %#v\n", vm)
+	log.Printf("[WSAPICLI] Fi: wsapivm.go Fu: UpdateVM Obj: VM after %#v\n", vm)
 	return vm, err
 }
 
