@@ -7,7 +7,6 @@ PRIVATEKEYFILE = workstationapi-key.pem
 PK_EXISTS=$(shell [ -e $(PRIVATEKEYFILE) ] && echo 1 || echo 0 )
 CERTFILE = workstationapi-cert.pem
 CRT_EXISTS=$(shell [ -e $(CERTFILE) ] && echo 1 || echo 0 )
-IPADDRESS = 127.0.0.1
 PORT = 8697
 SENSIBLE_DATA_FILE = config.ini
 CONFIG_FILE = ~/.vmrestCfg
@@ -24,11 +23,11 @@ help:
 
 start_api_rest: --generateSSL ## Prepare environment for you can use a API REST of VmWare Workstation Pro and generate files for SSL
 ifeq ($(F1_EXISTS), 1)
-	@vmrest -k $(PRIVATEKEYFILE) -c $(CERTFILE) -i $(IPADDRESS) -p $(PORT) > /dev/null &
+	@vmrest -k $(PRIVATEKEYFILE) -c $(CERTFILE) -p $(PORT) > /dev/null &
 else
 	@cat $(SENSIBLE_DATA_FILE)
 	@vmrest -C $(CONFIG_FILE)
-	@vmrest -k $(PRIVATEKEYFILE) -c $(CERTFILE) -i $(IPADDRESS) -p $(PORT) > /dev/null &
+	@vmrest -k $(PRIVATEKEYFILE) -c $(CERTFILE) -p $(PORT) > /dev/null &
 endif
 
 stop_api_rest: ## Stop a API REST server of VmWare Workstation
