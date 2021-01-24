@@ -9,7 +9,7 @@ import (
 	vmx "github.com/hooklift/govmx"
 )
 
-// Auxiliar function to get the data of the VM and don't repeat code
+// GetVM Auxiliar function to get the data of the VM and don't repeat code
 // Input: c: pointer at the client of the API server, i: string with the ID yo VM
 func GetVM(c *Client, i string) (*MyVm, error) {
 	var vms []MyVm
@@ -65,7 +65,7 @@ func GetVM(c *Client, i string) (*MyVm, error) {
 	return &vm, nil
 }
 
-// With this function you can see the Denomination and Description of the VM
+// GetNameDescription With this function you can see the Denomination and Description of the VM
 // this information is in the vmx file of the machine for that you need know
 // which is the file of the vm. Input: p: string with the complete path of the file
 // Output: []string with 2 positions, first denomination and second description
@@ -91,7 +91,7 @@ func GetNameDescription(p string) ([]string, error) {
 	return output, nil
 }
 
-// With this function you can setting the Denomination and Description of the VM.
+// SetNameDescription With this function you can setting the Denomination and Description of the VM.
 // this information is in the vmx file of the machine for that you need know
 // which is the file of the vm. Input: p: string with the complete path of the file,
 // n: string with the denomination, d: string with the description err: variable with error if occur

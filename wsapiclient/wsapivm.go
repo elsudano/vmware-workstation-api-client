@@ -19,7 +19,7 @@ type MyVm struct {
 	Memory      int    `json:"memory"`
 }
 
-// Method GetAllVMs return array of MyVm and a error variable if occurr some problem
+// GetAllVMs Method return array of MyVm and a error variable if occurr some problem
 // Return: []MyVm and error
 func (c *Client) GetAllVMs() ([]MyVm, error) {
 	var vms []MyVm
@@ -63,7 +63,7 @@ func (c *Client) GetAllVMs() ([]MyVm, error) {
 	return vms, nil
 }
 
-// Function to create a new VM in VmWare Worstation Input:
+// CreateVM method to create a new VM in VmWare Worstation Input:
 // s: string with the ID of the origin VM, d: string with the denomination of the VM
 func (c *Client) CreateVM(s string, d string) (*MyVm, error) {
 	var vm MyVm
@@ -102,7 +102,7 @@ func (c *Client) CreateVM(s string, d string) (*MyVm, error) {
 	return &vm, err
 }
 
-// Method ReadVM return the object MyVm with the ID indicate in i.
+// ReadVM method return the object MyVm with the ID indicate in i.
 // Input: i: string with the ID of the VM, Return: pointer at the MyVm object
 // and error variable with the error if occurr
 func (c *Client) ReadVM(i string) (*MyVm, error) {
@@ -114,7 +114,7 @@ func (c *Client) ReadVM(i string) (*MyVm, error) {
 	return vm, nil
 }
 
-// Function to update a VM in VmWare Worstation Input:
+// UpdateVM method to update a VM in VmWare Worstation Input:
 // i: string with the ID of the VM to update, n: string with the denomination of VM
 // d: string with the description of the VM, p: int with the number of processors
 // m: int with the size of memory Output: pointer at the MyVm object
@@ -152,7 +152,46 @@ func (c *Client) UpdateVM(i string, n string, d string, p int, m int) (*MyVm, er
 	return vm, err
 }
 
-// Function to delete a VM in VmWare Worstation Input:
+// RegisterVM method to register a new VM in VmWare Worstation GUI:
+// n: string with the VM NAME, p: string with the path of the VM
+func (c *Client) RegisterVM(n string, p string) (*MyVm, error) {
+	var vm MyVm
+	var requestBody bytes.Buffer
+	request, err := json.Marshal(map[string]string{
+		"name": n,
+		"path": p,
+	})
+	if err != nil {
+		return nil, err
+	}
+	log.Printf("[WSAPICLI] Fi: wsapivm.go Fu: RegisterVM Obj:Request %#v\n", request)
+	requestBody.Write(request)
+	log.Printf("[WSAPICLI] Fi: wsapivm.go Fu: RegisterVM Obj:Request Body %#v\n", requestBody.String())
+	response, err := c.httpRequest("vms/registration", "POST", requestBody)
+	if err != nil {
+		return nil, err
+	}
+	// Piensa si tiene que ser en este punto en la parte de httpRequest
+	// tienes que poner en este punto un control de errores de lo que responde VMW
+	// si es diferente de create, ok, o delete que de un error y ponga a nil la vm y salga
+	log.Printf("[WSAPICLI] Fi: wsapivm.go Fu: RegisterVM Obj:response raw %#v\n", response)
+	responseBody := new(bytes.Buffer)
+	_, err = responseBody.ReadFrom(response)
+	if err != nil {
+		log.Printf("[WSAPICLI][ERROR] Fi: wsapivm.go Fu: RegisterVM Obj:Response Error %#v\n", err)
+		return nil, err
+	}
+	log.Printf("[WSAPICLI] Fi: wsapivm.go Fu: RegisterVM Obj:Response Body %#v\n", responseBody.String())
+	err = json.NewDecoder(responseBody).Decode(&vm)
+	if err != nil {
+		return nil, err
+	}
+
+	// Falta hacer un PUT para modificar los parametros de la instancia nueva. entre ellos el procesador la memoria y la network
+	return &vm, err
+}
+
+// DeleteVM method to delete a VM in VmWare Worstation Input:
 // i: string with the ID of the VM to update
 func (c *Client) DeleteVM(i string) error {
 	response, err := c.httpRequest("vms/"+i, "DELETE", bytes.Buffer{})

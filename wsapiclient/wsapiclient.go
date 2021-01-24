@@ -84,7 +84,7 @@ func New() (*Client, error) {
 	return c, err
 }
 
-// Method of object *Client to change the debug parameter
+// SwitchDebug method of object *Client to change the debug parameter
 // activate or disable the debug mode of the *Client.
 func (c *Client) SwitchDebug() {
 	// for config Debug mode
@@ -98,7 +98,7 @@ func (c *Client) SwitchDebug() {
 	}
 }
 
-// Method ConfigCli return a pointer of Client of API but now it's configure
+// ConfigCli method return a pointer of Client of API but now it's configure
 // Inputs: a: address of URL to server of API u: user for to authenticate
 // p: password of user, i: Insecure flag to http or https, d: debug mode
 func (c *Client) ConfigCli(a string, u string, p string, i bool, d bool) {
@@ -125,7 +125,7 @@ func (c *Client) ConfigCli(a string, u string, p string, i bool, d bool) {
 
 }
 
-// Method httpRequest return a body of the response the API REST server, Input:
+// httpRequest method return a body of the response the API REST server, Input:
 // p: URL path of the API REST of the sever, m: Type of method GET, PUT, POST, DELETE
 // pl: bytes.Buffer for read the Body of the request, Return: cl:
 func (c *Client) httpRequest(p string, m string, pl bytes.Buffer) (io.ReadCloser, error) {
@@ -167,7 +167,7 @@ func (c *Client) httpRequest(p string, m string, pl bytes.Buffer) (io.ReadCloser
 	return response.Body, nil
 }
 
-// Method requestPath show the URL to the request of httpClient, Input:
+// requestPath method show the URL to the request of httpClient, Input:
 // p: string just the path of the URL, Return: string with the complete URL to access
 func (c *Client) requestPath(p string) string {
 	r := fmt.Sprintf("%s/%s", c.BaseURL, p)

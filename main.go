@@ -111,8 +111,13 @@ func main() {
 		log.Fatalf("%s", err)
 	}
 
-	err = client.DeleteVM(VM.IdVM) // the id it's a test
+	VM, err = client.RegisterVM(VM.Denomination, VM.Path) // the id it's a test
 	if err != nil {
 		log.Fatalf("%s", err)
 	}
+
+	// err = client.DeleteVM(VM.IdVM) // the id it's a test
+	// if err != nil {
+	// 	log.Fatalf("%s", err)
+	// }
 }
