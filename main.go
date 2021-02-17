@@ -55,7 +55,7 @@ func main() {
 	// }}}
 
 	// To changing the config of debug you use this method
-	client.SwitchDebug()
+	// client.SwitchDebug()
 
 	// AllVMs, err := client.GetAllVMs()
 	// if err != nil {
@@ -72,7 +72,7 @@ func main() {
 	// 		value.Memory)
 	// }
 
-	VM, err := client.CreateVM("F76OJJ66M052TJE435D3AB69ORP6SAFR", "clone-test-copy") // the id it's a test
+	VM, err := client.CreateVM("F76OJJ66M052TJE435D3AB69ORP6SAFR", "clone-test-copy", "Test to INSERT description") // the id it's a test
 	fmt.Printf("ID: %v\nPath: %v\nDenomination: %v\nDescription: %s\nPower Status: %s\nProcessor: %d\nMemory: %d \n\n",
 		VM.IdVM,
 		VM.Path,

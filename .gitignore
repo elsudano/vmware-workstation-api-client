@@ -1,6 +1,6 @@
 # for binaries
 vmware-workstation-api-client*
-
+\releases/
 # for certificates
 *.pem
 config.ini

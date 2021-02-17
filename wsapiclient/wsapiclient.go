@@ -164,11 +164,14 @@ func (c *Client) httpRequest(p string, m string, pl bytes.Buffer) (io.ReadCloser
 		return response.Body, err
 	}
 	log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj:response %#v\n", response)
-	return response.Body, nil
+	return response.Body, err
 }
 
-// requestPath method show the URL to the request of httpClient, Input:
-// p: string just the path of the URL, Return: string with the complete URL to access
+// requestPath method show the URL to the request of httpClient.
+//Input:
+// p: string just the path of the URL.
+//Return:
+// string with the complete URL to access
 func (c *Client) requestPath(p string) string {
 	r := fmt.Sprintf("%s/%s", c.BaseURL, p)
 	log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: requestPath Obj:%#v\n", r)

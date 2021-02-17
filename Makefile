@@ -1,7 +1,8 @@
 SHELL = /bin/bash
 
 NAME = vmware-workstation-api-client
-VERSION = v0.0.1
+VERSION = v0.1.1
+DIRELEASES = releases/
 BINARY = $(NAME)_$(VERSION)
 PRIVATEKEYFILE = workstationapi-key.pem
 PK_EXISTS=$(shell [ -e $(PRIVATEKEYFILE) ] && echo 1 || echo 0 )
@@ -50,7 +51,7 @@ test_api_client: ## Test API client and list all virtual machine of VmWare Works
 
 build: ## Build the binary of the module
 	@go get
-	@go build -o $(BINARY)
+	@go build -o $(DIRELEASES)$(BINARY)
 
 clean: ## Clean the project, this only remove default config of API REST VmWare Workstation Pro, the cert, private key and binary
 	@rm -f $(PRIVATEKEYFILE)
