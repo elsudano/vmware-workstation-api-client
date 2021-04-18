@@ -18,7 +18,7 @@ func main() {
 
 	scanner := bufio.NewScanner(file)
 	scanner.Split(bufio.ScanLines)
-	var varuser, varpass, varurl string
+	var varuser, varpass, varurl, varparentid string
 	var varhttp, vardebug bool
 	for scanner.Scan() {
 		temp := strings.SplitN(scanner.Text(), ":", 2)
@@ -31,6 +31,9 @@ func main() {
 		}
 		if vtemp == "baseurl" {
 			varurl = strings.TrimSpace(temp[1])
+		}
+		if vtemp == "parentid" {
+			varparentid = strings.TrimSpace(temp[1])
 		}
 		if vtemp == "https" && strings.TrimSpace(temp[1]) == "true" {
 			varhttp = true
@@ -46,8 +49,9 @@ func main() {
 	file.Close()
 
 	// First option we will can create a client with the default values {{{
-	client, err := wsapiclient.New()
+	client, _ := wsapiclient.New()
 	client.ConfigCli(varurl, varuser, varpass, varhttp, vardebug)
+	fmt.Printf("Parent ID: %s\n", varparentid)
 	// }}}
 
 	// Second option we will setting the values in the creation moment {{{
@@ -72,7 +76,10 @@ func main() {
 	// 		value.Memory)
 	// }
 
-	VM, err := client.CreateVM("F76OJJ66M052TJE435D3AB69ORP6SAFR", "clone-test-copy", "Test to INSERT description") // the id it's a test
+	VM, err := client.CreateVM(varparentid, "clone-test-copy", "Test to INSERT description") // the id it's a test
+	if err != nil {
+		log.Fatalf("%s", err)
+	}
 	fmt.Printf("ID: %v\nPath: %v\nDenomination: %v\nDescription: %s\nPower Status: %s\nProcessor: %d\nMemory: %d \n\n",
 		VM.IdVM,
 		VM.Path,
@@ -81,11 +88,12 @@ func main() {
 		VM.PowerStatus,
 		VM.CPU.Processors,
 		VM.Memory)
-	if err != nil {
-		log.Fatalf("%s", err)
-	}
 
+	fmt.Printf("ID: %#v\n", VM.IdVM)
 	VM, err = client.ReadVM(VM.IdVM) // the id it's a test
+	if err != nil {
+		log.Fatalf("%s", err)
+	}
 	fmt.Printf("ID: %v\nPath: %v\nDenomination: %v\nDescription: %s\nPower Status: %s\nProcessor: %d\nMemory: %d \n\n",
 		VM.IdVM,
 		VM.Path,
@@ -94,9 +102,6 @@ func main() {
 		VM.PowerStatus,
 		VM.CPU.Processors,
 		VM.Memory)
-	if err != nil {
-		log.Fatalf("%s", err)
-	}
 
 	VM, err = client.UpdateVM(VM.IdVM, "clone-test-copy-change", "esta es una prueba de llenadao de datos", 2, 512) // the id it's a test
 	fmt.Printf("ID: %v\nPath: %v\nDenomination: %v\nDescription: %s\nPower Status: %s\nProcessor: %d\nMemory: %d \n\n",
@@ -116,8 +121,8 @@ func main() {
 		log.Fatalf("%s", err)
 	}
 
-	// err = client.DeleteVM(VM.IdVM) // the id it's a test
-	// if err != nil {
-	// 	log.Fatalf("%s", err)
-	// }
+	err = client.DeleteVM(VM.IdVM) // the id it's a test
+	if err != nil {
+		log.Fatalf("%s", err)
+	}
 }

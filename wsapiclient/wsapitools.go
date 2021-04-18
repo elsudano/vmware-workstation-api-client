@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 
-	vmx "github.com/hooklift/govmx"
+	vmx "github.com/johlandabee/govmx"
 )
 
 // GetVM Auxiliar function to get the data of the VM and don't repeat code
@@ -23,7 +23,7 @@ func GetVM(c *Client, i string) (*MyVm, error) {
 	}
 	err = json.NewDecoder(response).Decode(&vms)
 	if err != nil {
-		log.Fatalf("[WSAPICLI] Fi: wsapitools.go Fu: GetVM Message: I can't read the json structure %s", err)
+		log.Fatalf("[WSAPICLI][ERROR] Fi: wsapitools.go Fu: GetVM Message: I can't read the json structure %s", err)
 		return nil, err
 	}
 	log.Printf("[WSAPICLI] Fi: wsapitools.go Fu: GetVM Obj: List of VMs %#v\n", vms)
@@ -73,7 +73,7 @@ func GetNameDescription(p string) ([]string, error) {
 	output := make([]string, 2)
 	data, err := ioutil.ReadFile(p)
 	if err != nil {
-		log.Fatalf("[WSAPICLI] Fi: wsapitools.go Fu: GetNameDescription Message: Failed opening file %s, please make sure the config file exists", err)
+		log.Fatalf("[WSAPICLI][ERROR] Fi: wsapitools.go Fu: GetNameDescription Message: Failed opening file %s, please make sure the config file exists", err)
 		return nil, err
 	}
 
@@ -82,7 +82,7 @@ func GetNameDescription(p string) ([]string, error) {
 	vm := new(vmx.VirtualMachine)
 	err = vmx.Unmarshal(data, vm)
 	if err != nil {
-		log.Fatalf("[WSAPICLI] Fi: wsapitools.go Fu: GetNameDescription Obj: %#v", err)
+		log.Fatalf("[WSAPICLI][ERROR] Fi: wsapitools.go Fu: GetNameDescription Obj: %#v", err)
 		return nil, err
 	}
 	output[0] = vm.DisplayName
@@ -123,5 +123,40 @@ func SetNameDescription(p string, n string, d string) error {
 		return err
 	}
 	// en este punto tambien tienes que cambiar el nombre del fihero cuando se cambia la denominacion
+	return err
+}
+
+// SetParameter With this function you can set the value of the parameter.
+// this information is in the vmx file of the machine for that you need know
+// which is the file of the vm. Input: i: string with the id of the VM,
+// p: string with the name or param to set, v: string with the value of param err: variable with error if occur
+func (c *Client) SetParameter(i string, p string, v string) error {
+	requestBody := new(bytes.Buffer)
+	request, err := json.Marshal(map[string]string{
+		"name":  p,
+		"value": v,
+	})
+	if err != nil {
+		return err
+	}
+	log.Printf("[WSAPICLI] Fi: wsapitools.go Fu: SetParameter Obj:Request %#v\n", request)
+	requestBody.Write(request)
+	log.Printf("[WSAPICLI] Fi: wsapitools.go Fu: SetParameter Obj:Request Body %#v\n", requestBody.String())
+	response, err := c.httpRequest("/vms/"+i+"/configparams", "PUT", *requestBody)
+	if err != nil {
+		return err
+	}
+	log.Printf("[WSAPICLI] Fi: wsapitools.go Fu: SetParameter Obj:response raw %#v\n", response)
+	responseBody := new(bytes.Buffer)
+	_, err = responseBody.ReadFrom(response)
+	if err != nil {
+		log.Printf("[WSAPICLI][ERROR] Fi: wsapitools.go Fu: SetParameter Obj:Response Error %#v\n", err)
+		return err
+	}
+	log.Printf("[WSAPICLI] Fi: wsapitools.go Fu: SetParameter Obj:Response Body %#v\n", responseBody.String())
+	// err = json.NewDecoder(responseBody).Decode(&vm)
+	if err != nil {
+		return err
+	}
 	return err
 }

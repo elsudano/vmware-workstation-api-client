@@ -3,7 +3,7 @@ package wsapiclient
 import "testing"
 
 func TestNewClient(t *testing.T) {
-	_, err := NewClient("", "", "", false)
+	_, err := NewClient("", "", "", false, false)
 	if err != nil {
 		t.Errorf("%v\n", err)
 	}

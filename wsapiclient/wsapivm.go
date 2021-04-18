@@ -9,8 +9,8 @@ import (
 type MyVm struct {
 	IdVM         string `json:"id"`
 	Path         string `json:"path"`
-	Denomination string `json:"denomination"`
-	Description  string `json:"description"`
+	Denomination string `json:"displayName"`
+	Description  string `json:"annotation"`
 	// Image        string `json:"image"`
 	CPU struct {
 		Processors int `json:"processors"`
@@ -64,12 +64,12 @@ func (c *Client) GetAllVMs() ([]MyVm, error) {
 }
 
 // CreateVM method to create a new VM in VmWare Worstation Input:
-// s: string with the ID of the origin VM, d: string with the denomination of the VM
-func (c *Client) CreateVM(s string, d string) (*MyVm, error) {
+// s: string with the ID of the origin VM, n: string with the denomination of the VM, d: string with the description of VM
+func (c *Client) CreateVM(s string, n string, d string) (*MyVm, error) {
 	var vm MyVm
-	var requestBody bytes.Buffer
+	requestBody := new(bytes.Buffer)
 	request, err := json.Marshal(map[string]string{
-		"name":     d,
+		"name":     n,
 		"parentId": s,
 	})
 	if err != nil {
@@ -78,7 +78,7 @@ func (c *Client) CreateVM(s string, d string) (*MyVm, error) {
 	log.Printf("[WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:Request %#v\n", request)
 	requestBody.Write(request)
 	log.Printf("[WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:Request Body %#v\n", requestBody.String())
-	response, err := c.httpRequest("vms", "POST", requestBody)
+	response, err := c.httpRequest("vms", "POST", *requestBody)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +97,34 @@ func (c *Client) CreateVM(s string, d string) (*MyVm, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	// The following code we will use in the future when the VmWare fix it the method configparams
+	// request, err = json.Marshal(map[string]string{
+	// 	"name":  "annotation",
+	// 	"value": d,
+	// })
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// log.Printf("[WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:Request %#v\n", request)
+	// requestBody.Reset()
+	// requestBody.Write(request)
+	// log.Printf("[WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:Request Body %#v\n", requestBody.String())
+	// response, err = c.httpRequest("vms/"+vm.IdVM+"/configparams", "PUT", *requestBody)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// log.Printf("[WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:response raw %#v\n", response)
+	// responseBody.Reset()
+	// _, err = responseBody.ReadFrom(response)
+	// if err != nil {
+	// 	log.Printf("[WSAPICLI][ERROR] Fi: wsapivm.go Fu: CreateVM Obj:Response Error %#v\n", err)
+	// 	return nil, err
+	// }
+	// log.Printf("[WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:Response Body %#v\n", responseBody.String())
+	// err = json.NewDecoder(responseBody).Decode(&vm)
+	// if err != nil {
+	// 	return nil, err
+	// }
 	// Falta hacer un PUT para modificar los parametros de la instancia nueva. entre ellos el procesador la memoria y la network
 	return &vm, err
 }
@@ -106,12 +133,27 @@ func (c *Client) CreateVM(s string, d string) (*MyVm, error) {
 // Input: i: string with the ID of the VM, Return: pointer at the MyVm object
 // and error variable with the error if occurr
 func (c *Client) ReadVM(i string) (*MyVm, error) {
-	vm, err := GetVM(c, i)
+	var vms []MyVm
+	var vm MyVm
+	// If you want see the path of the VM it's necessary getting all VMs
+	// because the API of VmWare Workstation doesn't permit see this the another way
+	response, err := c.httpRequest("vms", "GET", bytes.Buffer{})
 	if err != nil {
+		log.Fatalf("[WSAPICLI][ERROR] Fi: wsapivm.go Fu: ReadVM Message: The request at the server API failed %s", err)
 		return nil, err
 	}
+	err = json.NewDecoder(response).Decode(&vms)
+	if err != nil {
+		log.Fatalf("[WSAPICLI][ERROR] Fi: wsapivm.go Fu: ReadVM Message: I can't read the json structure %s", err)
+		return nil, err
+	}
+	for tempvm, value := range vms {
+		if value.IdVM == i {
+			vm = vms[tempvm]
+		}
+	}
 	log.Printf("[WSAPICLI] Fi: wsapivm.go Fu: ReadVM Obj:VM %#v\n", vm)
-	return vm, nil
+	return &vm, nil
 }
 
 // UpdateVM method to update a VM in VmWare Worstation Input:
@@ -156,7 +198,7 @@ func (c *Client) UpdateVM(i string, n string, d string, p int, m int) (*MyVm, er
 // n: string with the VM NAME, p: string with the path of the VM
 func (c *Client) RegisterVM(n string, p string) (*MyVm, error) {
 	var vm MyVm
-	var requestBody bytes.Buffer
+	requestBody := new(bytes.Buffer)
 	request, err := json.Marshal(map[string]string{
 		"name": n,
 		"path": p,
@@ -167,7 +209,7 @@ func (c *Client) RegisterVM(n string, p string) (*MyVm, error) {
 	log.Printf("[WSAPICLI] Fi: wsapivm.go Fu: RegisterVM Obj:Request %#v\n", request)
 	requestBody.Write(request)
 	log.Printf("[WSAPICLI] Fi: wsapivm.go Fu: RegisterVM Obj:Request Body %#v\n", requestBody.String())
-	response, err := c.httpRequest("vms/registration", "POST", requestBody)
+	response, err := c.httpRequest("vms/registration", "POST", *requestBody)
 	if err != nil {
 		return nil, err
 	}

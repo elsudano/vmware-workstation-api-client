@@ -18,6 +18,7 @@ mv config.example config.ini
 ```bash
 User: 
 Password: 
+ParentId: F76OJJ66M052TJE435D3AB69ORP6SAFR
 BaseURL: https://localhost:8697/api
 Debug: false
 ```
@@ -26,11 +27,12 @@ Debug: false
 
 ```bash
 $ make
-build            Build the binary of the module
-clean            Clean the project, just remove default config of API REST VmWare Workstation, the cert, private key and binary
-start_api_rest   Prepare environment for you can use a API REST of VmWare Workstation Pro and generate files for SSL
-stop_api_rest    Stop a API REST server of VmWare Workstation
-test_api_client  Test API client and list all virtual machine of VmWare Workstation
+api_start                      Prepare environment for you can use a API REST of VmWare Workstation Pro and generate files for SSL
+api_status                     Check if the API is work ir not
+api_stop                       Stop a API REST server of VmWare Workstation
+api_test                       Test API client and list all virtual machine of VmWare Workstation
+build                          Build the binary of the module
+clean                          Clean the project, this only remove default config of API REST VmWare Workstation Pro, the cert, private key and binary
 ```
 
 * The follow step it's run the next command to create a SSL certificates and start the API with the values that you setting in config.ini
@@ -49,7 +51,7 @@ VMware Workstation REST API
 Copyright (C) 2018-2020 VMware Inc.
 All Rights Reserved
 
-vmrest 1.2.0 build-16341506
+vmrest 1.2.1 build-16341506
 Username:xxxxxxx
 New password:xxxxxxx
 Retype new password:
@@ -60,7 +62,7 @@ Credential updated successfully
 * Finally to testing if the client works, run the follow command:
 
 ```bash
-$ make test_api_client
+$ make api_test
 ```
 
 * The reult of the previous command it's a list of vms that you have in the VmWare Workstation

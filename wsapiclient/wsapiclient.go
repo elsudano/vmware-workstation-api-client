@@ -3,6 +3,8 @@ package wsapiclient
 import (
 	"bytes"
 	"crypto/tls"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -23,6 +25,11 @@ const (
 	// change behavior with ConfigCli method, it's better
 	// because you can change the behavior in the future
 )
+
+type VmError struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+}
 
 // Client object, this object contain: Client: *http.Client this the http client used to talk with API REST,
 // BaseURL: *url.URL object URL to storage URL to server, User: string name of user to authenticate in server
@@ -147,7 +154,7 @@ func (c *Client) httpRequest(p string, m string, pl bytes.Buffer) (io.ReadCloser
 	default:
 		req.Header.Add("Content-Type", "application/json")
 	}
-	log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj:request %#v\n", req)
+	log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: Rrequest before that run %#v\n", req)
 	response, err := c.Client.Do(req)
 	if err != nil {
 		log.Printf("[WSAPICLI][ERROR] Fi: wsapiclient.go Fu: httpRequest Obj:response error %#v\n", err)
@@ -160,8 +167,16 @@ func (c *Client) httpRequest(p string, m string, pl bytes.Buffer) (io.ReadCloser
 			log.Printf("[WSAPICLI][ERROR] Fi: wsapiclient.go Fu: httpRequest Obj:respBody %#v\n", responseBody)
 			return response.Body, err
 		}
-		log.Printf("[WSAPICLI][ERROR] Fi: wsapiclient.go Fu: httpRequest Obj:StatusCode %#v Body %#v\n", response.StatusCode, responseBody.String())
-		return response.Body, err
+		log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: Response Body before %#v\n", responseBody.String())
+		var vmerror VmError
+		err = json.NewDecoder(responseBody).Decode(&vmerror)
+		log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: Response Body %#v\n", responseBody)
+		if err != nil {
+			log.Fatalf("[WSAPICLI][ERROR] Fi: wsapiclient.go Fu: httpRequest Message: I can't read the json structure %s", err)
+			return nil, err
+		}
+		log.Printf("[WSAPICLI][ERROR] Fi: wsapiclient.go Fu: httpRequest Obj: ErrorCode: %#v %#v\n", vmerror.Code, vmerror.Message)
+		return response.Body, errors.New(vmerror.Message)
 	}
 	log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj:response %#v\n", response)
 	return response.Body, err
