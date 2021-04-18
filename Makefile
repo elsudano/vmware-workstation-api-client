@@ -1,9 +1,9 @@
 SHELL = /bin/bash
 
 NAME = vmware-workstation-api-client
-VERSION = v0.1.1
+VERSION = $(shell cat wsapiclient/wsapiclient.go | grep libraryVersion | awk '{print $$3}' | tr -d \")
 DIRELEASES = releases/
-BINARY = $(NAME)_$(VERSION)
+BINARY = $(NAME)_v$(VERSION)
 PRIVATEKEYFILE = workstationapi-key.pem
 PK_EXISTS=$(shell [ -e $(PRIVATEKEYFILE) ] && echo 1 || echo 0 )
 CERTFILE = workstationapi-cert.pem
@@ -59,7 +59,7 @@ build: ## Build the binary of the module
 clean: ## Clean the project, this only remove default config of API REST VmWare Workstation Pro, the cert, private key and binary
 	@rm -f $(PRIVATEKEYFILE)
 	@rm -f $(CERTFILE)
-	@rm -f $(BINARY)
+	@rm -f $(DIRELEASES)$(BINARY)
 	@rm -f $(CONFIG_FILE)
 
 #-------------------------------------------------------#
