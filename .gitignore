@@ -4,3 +4,5 @@ vmware-workstation-api-client*
 # for certificates
 *.pem
 config.ini
+debug.log
+output.txt

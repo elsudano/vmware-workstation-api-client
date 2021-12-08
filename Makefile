@@ -50,7 +50,8 @@ endif
 
 .PHONY += api_test
 api_test: ## Test API client and list all virtual machine of VmWare Workstation
-	@go run .
+	@go run . 2> debug.log
+	@echo -e "in order to review the Debug or errors run: 'less debug.log'"
 
 build: ## Build the binary of the module
 	@go get
