@@ -54,11 +54,13 @@ type Client struct {
 // d: bool to activate or not the debug, Return: *Client: pointer at the object Client,
 // error: when the client generate some error is storage in this var.
 func NewClient(a string, u string, p string, i bool, d bool) (*Client, error) {
+	log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: NewClient Obj:Input values %#v, %#v, %#v, %#v, %#v\n", a, u, p, i, d)
 	c := new(Client)
 	c.BaseURL, _ = url.Parse(a)
 	// log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: NewClient Obj:URL %#v\n", c.BaseURL)
 	c.User = u
 	c.Password = p
+	c.InsecureFlag = i
 	c.Debug = d
 	// Como estamos desarrollando una API que se encaga de comunicarnos con
 	// VmWare Workstation Pro API REST, y la propia API de Workstation se
@@ -78,7 +80,13 @@ func NewClient(a string, u string, p string, i bool, d bool) (*Client, error) {
 			},
 		},
 	}
-	// log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: NewClient Obj:web Client %#v\n", c.Client)
+	if c.Debug {
+		log.SetOutput(os.Stderr)
+	}
+	if !c.Debug {
+		log.SetOutput(ioutil.Discard)
+	}
+	log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: NewClient Obj:web Client %#v\n", c.Client)
 	return c, nil
 }
 
@@ -87,7 +95,7 @@ func NewClient(a string, u string, p string, i bool, d bool) (*Client, error) {
 // error: when the client generate some error is storage in this var.
 func New() (*Client, error) {
 	c, err := NewClient(defaultBaseURL, defaultUser, defaultPassword, defaultInsecure, defaultDebug)
-	// log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: New Obj:api Client %#v\n", c)
+	log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: New Obj:api Client %#v\n", c)
 	return c, err
 }
 
@@ -100,7 +108,7 @@ func (c *Client) SwitchDebug() {
 		c.Debug = false
 	}
 	if !c.Debug {
-		log.SetOutput(os.Stdout)
+		log.SetOutput(os.Stderr)
 		c.Debug = true
 	}
 }
@@ -110,12 +118,7 @@ func (c *Client) SwitchDebug() {
 // p: password of user, i: Insecure flag to http or https, d: debug mode
 func (c *Client) ConfigCli(a string, u string, p string, i bool, d bool) {
 	var err error
-	// for config Debug mode disable
-	if !d {
-		log.SetOutput(ioutil.Discard)
-		c.Debug = false
-	}
-	log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: ConfigCli Obj:Variables %#v, %#v, %#v, %#v\n", a, u, p, d)
+	log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: ConfigCli Obj:Variables %#v, %#v, %#v, %#v, %#v\n", a, u, p, i, d)
 	c.BaseURL, err = url.Parse(a)
 	if err != nil {
 		panic(err)
@@ -129,7 +132,19 @@ func (c *Client) ConfigCli(a string, u string, p string, i bool, d bool) {
 	log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: ConfigCli Obj:%#v\n", c.InsecureFlag)
 	c.Debug = d
 	log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: ConfigCli Obj:%#v\n", c.Debug)
-
+	c.Client = &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: i,
+			},
+		},
+	}
+	if c.Debug {
+		log.SetOutput(os.Stderr)
+	}
+	if !c.Debug {
+		log.SetOutput(ioutil.Discard)
+	}
 }
 
 // httpRequest method return a body of the response the API REST server, Input:
