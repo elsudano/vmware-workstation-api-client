@@ -1,4 +1,9 @@
-User: 
-Password: 
-BaseURL: https://localhost:8697/api
-Debug: false
+USER=
+PASSWORD=
+PARENTID=
+URLSCHEMA=https
+URLDOMAIN=localhost
+URLPORT=8697
+URLFOLDER=api
+INSECURE=
+DEBUG=
