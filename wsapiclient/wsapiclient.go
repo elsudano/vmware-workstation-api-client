@@ -160,16 +160,19 @@ func (c *Client) httpRequest(p string, m string, pl bytes.Buffer) (io.ReadCloser
 	req.SetBasicAuth(c.User, c.Password)
 	switch m {
 	case "GET":
+		// req.Header.Add("Accept", "application/vnd.vmware.vmw.rest-v1+json")
 		req.Header.Add("Content-Type", "application/vnd.vmware.vmw.rest-v1+json")
 	case "PUT":
+		// req.Header.Add("Accept", "application/vnd.vmware.vmw.rest-v1+json")
 		req.Header.Add("Content-Type", "application/vnd.vmware.vmw.rest-v1+json")
 	case "POST":
+		// req.Header.Add("Accept", "application/vnd.vmware.vmw.rest-v1+json")
 		req.Header.Add("Content-Type", "application/vnd.vmware.vmw.rest-v1+json")
 	case "DELETE":
 	default:
 		req.Header.Add("Content-Type", "application/json")
 	}
-	log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: Rrequest before that run %#v\n", req)
+	log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: Request before that run %#v\n", req)
 	response, err := c.Client.Do(req)
 	if err != nil {
 		log.Printf("[WSAPICLI][ERROR] Fi: wsapiclient.go Fu: httpRequest Obj:response error %#v\n", err)
@@ -190,7 +193,7 @@ func (c *Client) httpRequest(p string, m string, pl bytes.Buffer) (io.ReadCloser
 			log.Fatalf("[WSAPICLI][ERROR] Fi: wsapiclient.go Fu: httpRequest Message: I can't read the json structure %s", err)
 			return nil, err
 		}
-		log.Printf("[WSAPICLI][ERROR] Fi: wsapiclient.go Fu: httpRequest Obj: ErrorCode: %#v %#v\n", vmerror.Code, vmerror.Message)
+		log.Printf("[WSAPICLI][ERROR] Fi: wsapiclient.go Fu: httpRequest Obj: ErrorCode: %#v %#v %#v\n", vmerror.Code, response.StatusCode, vmerror.Message)
 		return response.Body, errors.New(vmerror.Message)
 	}
 	log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj:response %#v\n", response)

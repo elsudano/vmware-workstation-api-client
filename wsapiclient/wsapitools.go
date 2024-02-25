@@ -33,14 +33,14 @@ func GetVM(c *Client, i string) (*MyVm, error) {
 		}
 	}
 
-	vm.Denomination, err = GetDisplayName(vm.Path)
-	if err != nil {
-		return nil, err
-	}
-	vm.Description, err = GetAnnotation(vm.Path)
-	if err != nil {
-		return nil, err
-	}
+	// vm.Denomination, err = GetDisplayName(vm.Path)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// vm.Description, err = GetAnnotation(vm.Path)
+	// if err != nil {
+	// 	return nil, err
+	// }
 	response, err = c.httpRequest("vms/"+i, "GET", bytes.Buffer{})
 	if err != nil {
 		log.Fatalf("[WSAPICLI] Fi: wsapitools.go Fu: GetVM Message: The request at the server API failed %s", err)
