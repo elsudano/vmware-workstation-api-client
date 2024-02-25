@@ -61,6 +61,8 @@ publish: build ## Build and Publish a new TAG in GitHub
 	@git tag $(VERSION)
 	@git add .
 	@git commit -m "feat: We have created the new version ($(VERSION)) of the API Client"
+	@git pull --rebase
+	@git push
 
 clean: ## Clean the project, this only remove default config of API REST VmWare Workstation Pro, the cert, private key and binary
 	@rm -f $(PRIVATEKEYFILE)
