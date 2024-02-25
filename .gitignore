@@ -6,3 +6,4 @@ vmware-workstation-api-client*
 config.ini
 debug.log
 output.txt
+\.vscode
