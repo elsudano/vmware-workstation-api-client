@@ -58,7 +58,7 @@ build: ## Build the binary of the module
 	@go build -o $(DIRELEASES)$(BINARY)
 
 publish: build ## Build and Publish a new TAG in GitHub 
-	@git tag $(VERSION)
+	@git tag v$(VERSION)
 	@git add .
 	@git commit -m "feat: We have created the new version ($(VERSION)) of the API Client"
 	@git pull --rebase
