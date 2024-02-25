@@ -18,10 +18,10 @@ func main() {
 
 	scanner := bufio.NewScanner(file)
 	scanner.Split(bufio.ScanLines)
-	var varuser, varpass, varurl, varschema, vardomain, varport, varfolder, varparentid string
+	var varuser, varpass, varurl, varparentid string
 	var varinsecure, vardebug bool
 	for scanner.Scan() {
-		temp := strings.SplitN(scanner.Text(), "=", 2)
+		temp := strings.SplitN(scanner.Text(), ":", 2)
 		vtemp := strings.ToLower(temp[0])
 		vtemp2 := temp[1]
 		fmt.Printf("Temp: %s, Key: %s, Value: %s\n", temp, vtemp, vtemp2)
@@ -31,17 +31,8 @@ func main() {
 		if vtemp == "password" {
 			varpass = strings.TrimSpace(temp[1])
 		}
-		if vtemp == "urlschema" {
-			varschema = strings.TrimSpace(temp[1])
-		}
-		if vtemp == "urldomain" {
-			vardomain = strings.TrimSpace(temp[1])
-		}
-		if vtemp == "urlport" {
-			varport = strings.TrimSpace(temp[1])
-		}
-		if vtemp == "urlfolder" {
-			varfolder = strings.TrimSpace(temp[1])
+		if vtemp == "baseurl" {
+			varurl = strings.TrimSpace(temp[1])
 		}
 		if vtemp == "parentid" {
 			varparentid = strings.TrimSpace(temp[1])
@@ -61,9 +52,7 @@ func main() {
 			}
 		}
 	}
-	varurl = varschema + "://" + vardomain + ":" + varport + "/" + varfolder
-	fmt.Printf("varuser: %s, varpass: %s, varschema: %s, vardomain: %s, varport: %s, varfolder: %s, varparentid: %s, varinsecure: %v, vardebug: %v\n", varuser, varpass, varschema, vardomain, varport, varfolder, varparentid, varinsecure, vardebug)
-	fmt.Printf("VarURL: %s\n", varurl)
+	fmt.Printf("varuser: %s, varpass: %s, varurl: %s, varparentid: %s, varinsecure: %v, vardebug: %v\n", varuser, varpass, varurl, varparentid, varinsecure, vardebug)
 	file.Close()
 
 	// First option we will can create a client with the default values {{{
