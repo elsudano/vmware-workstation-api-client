@@ -54,10 +54,10 @@ type Client struct {
 // d: bool to activate or not the debug, Return: *Client: pointer at the object Client,
 // error: when the client generate some error is storage in this var.
 func NewClient(a string, u string, p string, i bool, d bool) (*Client, error) {
-	log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: NewClient Obj:Input values %#v, %#v, %#v, %#v, %#v\n", a, u, p, i, d)
+	log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: NewClient Obj:Input values %#v, %#v, %#v, %#v, %#v\n", a, u, p, i, d)
 	c := new(Client)
 	c.BaseURL, _ = url.Parse(a)
-	// log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: NewClient Obj:URL %#v\n", c.BaseURL)
+	// log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: NewClient Obj:URL %#v\n", c.BaseURL)
 	c.User = u
 	c.Password = p
 	c.InsecureFlag = i
@@ -86,7 +86,7 @@ func NewClient(a string, u string, p string, i bool, d bool) (*Client, error) {
 	if !c.Debug {
 		log.SetOutput(ioutil.Discard)
 	}
-	log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: NewClient Obj:web Client %#v\n", c.Client)
+	log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: NewClient Obj:web Client %#v\n", c.Client)
 	return c, nil
 }
 
@@ -95,7 +95,7 @@ func NewClient(a string, u string, p string, i bool, d bool) (*Client, error) {
 // error: when the client generate some error is storage in this var.
 func New() (*Client, error) {
 	c, err := NewClient(defaultBaseURL, defaultUser, defaultPassword, defaultInsecure, defaultDebug)
-	log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: New Obj:api Client %#v\n", c)
+	log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: New Obj:api Client %#v\n", c)
 	return c, err
 }
 
@@ -118,20 +118,20 @@ func (c *Client) SwitchDebug() {
 // p: password of user, i: Insecure flag to http or https, d: debug mode
 func (c *Client) ConfigCli(a string, u string, p string, i bool, d bool) {
 	var err error
-	log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: ConfigCli Obj:Variables %#v, %#v, %#v, %#v, %#v\n", a, u, p, i, d)
+	log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: ConfigCli Obj:Variables %#v, %#v, %#v, %#v, %#v\n", a, u, p, i, d)
 	c.BaseURL, err = url.Parse(a)
 	if err != nil {
 		panic(err)
 	}
-	log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: ConfigCli Obj:%#v\n", c.BaseURL)
+	log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: ConfigCli Obj:%#v\n", c.BaseURL)
 	c.User = u
-	log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: ConfigCli Obj:%#v\n", c.User)
+	log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: ConfigCli Obj:%#v\n", c.User)
 	c.Password = p
-	log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: ConfigCli Obj:%#v\n", c.Password)
+	log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: ConfigCli Obj:%#v\n", c.Password)
 	c.InsecureFlag = i
-	log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: ConfigCli Obj:%#v\n", c.InsecureFlag)
+	log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: ConfigCli Obj:%#v\n", c.InsecureFlag)
 	c.Debug = d
-	log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: ConfigCli Obj:%#v\n", c.Debug)
+	log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: ConfigCli Obj:%#v\n", c.Debug)
 	c.Client = &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
@@ -153,10 +153,10 @@ func (c *Client) ConfigCli(a string, u string, p string, i bool, d bool) {
 func (c *Client) httpRequest(p string, m string, pl bytes.Buffer) (io.ReadCloser, error) {
 	req, err := http.NewRequest(m, c.requestPath(p), &pl)
 	if err != nil {
-		log.Printf("[WSAPICLI][ERROR] Fi: wsapiclient.go Fu: httpRequest Obj:request error %#v\n", err)
+		log.Printf("[DEBUG][WSAPICLI][ERROR] Fi: wsapiclient.go Fu: httpRequest Obj:request error %#v\n", err)
 		return nil, err
 	}
-	log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj:buffer %#v\n", pl.String())
+	log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj:buffer %#v\n", pl.String())
 	req.SetBasicAuth(c.User, c.Password)
 	switch m {
 	case "GET":
@@ -172,31 +172,31 @@ func (c *Client) httpRequest(p string, m string, pl bytes.Buffer) (io.ReadCloser
 	default:
 		req.Header.Add("Content-Type", "application/json")
 	}
-	log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: Request before that run %#v\n", req)
+	log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: Request before that run %#v\n", req)
 	response, err := c.Client.Do(req)
 	if err != nil {
-		log.Printf("[WSAPICLI][ERROR] Fi: wsapiclient.go Fu: httpRequest Obj:response error %#v\n", err)
+		log.Printf("[DEBUG][WSAPICLI][ERROR] Fi: wsapiclient.go Fu: httpRequest Obj:response error %#v\n", err)
 		return nil, err
 	}
 	if response.StatusCode != http.StatusOK && response.StatusCode != http.StatusCreated && response.StatusCode != http.StatusNoContent {
 		responseBody := new(bytes.Buffer)
 		_, err := responseBody.ReadFrom(response.Body)
 		if err != nil {
-			log.Printf("[WSAPICLI][ERROR] Fi: wsapiclient.go Fu: httpRequest Obj:respBody %#v\n", responseBody)
+			log.Printf("[DEBUG][WSAPICLI][ERROR] Fi: wsapiclient.go Fu: httpRequest Obj:respBody %#v\n", responseBody)
 			return response.Body, err
 		}
-		log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: Response Body before %#v\n", responseBody.String())
+		log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: Response Body before %#v\n", responseBody.String())
 		var vmerror VmError
 		err = json.NewDecoder(responseBody).Decode(&vmerror)
-		log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: Response Body %#v\n", responseBody)
+		log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: Response Body %#v\n", responseBody)
 		if err != nil {
 			log.Fatalf("[WSAPICLI][ERROR] Fi: wsapiclient.go Fu: httpRequest Message: I can't read the json structure %s", err)
 			return nil, err
 		}
-		log.Printf("[WSAPICLI][ERROR] Fi: wsapiclient.go Fu: httpRequest Obj: ErrorCode: %#v %#v %#v\n", vmerror.Code, response.StatusCode, vmerror.Message)
+		log.Printf("[DEBUG][WSAPICLI][ERROR] Fi: wsapiclient.go Fu: httpRequest Obj: ErrorCode: %#v %#v %#v\n", vmerror.Code, response.StatusCode, vmerror.Message)
 		return response.Body, errors.New(vmerror.Message)
 	}
-	log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj:response %#v\n", response)
+	log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj:response %#v\n", response)
 	return response.Body, err
 }
 
@@ -207,6 +207,6 @@ func (c *Client) httpRequest(p string, m string, pl bytes.Buffer) (io.ReadCloser
 // string with the complete URL to access
 func (c *Client) requestPath(p string) string {
 	r := fmt.Sprintf("%s/%s", c.BaseURL, p)
-	log.Printf("[WSAPICLI] Fi: wsapiclient.go Fu: requestPath Obj:%#v\n", r)
+	log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: requestPath Obj:%#v\n", r)
 	return r
 }
