@@ -41,6 +41,7 @@ type ParamPayload struct {
 // Return: []MyVm and error
 func (c *Client) GetAllVMs() ([]MyVm, error) {
 	var vms []MyVm
+	var tmpparam ParamPayload
 	responseBody, err := c.httpRequest("vms", "GET", bytes.Buffer{})
 	if err != nil {
 		return nil, err
@@ -53,16 +54,6 @@ func (c *Client) GetAllVMs() ([]MyVm, error) {
 	}
 
 	for vm, value := range vms {
-		vms[vm].Denomination, err = GetDisplayName(vms[vm].Path)
-		if err != nil {
-			log.Fatalf("[WSAPICLI][ERROR] Fi: wsapivm.go Fu: GetAllVMs Message: Fail to obtain parameter Denomination %s", err)
-			return nil, err
-		}
-		vms[vm].Description, err = GetAnnotation(vms[vm].Path)
-		if err != nil {
-			log.Fatalf("[WSAPICLI][ERROR] Fi: wsapivm.go Fu: GetAllVMs Message: Fail to obtain parameter Description %s", err)
-			return nil, err
-		}
 		responseBody, err := c.httpRequest("vms/"+value.IdVM, "GET", bytes.Buffer{})
 		if err != nil {
 			return nil, err
@@ -76,6 +67,24 @@ func (c *Client) GetAllVMs() ([]MyVm, error) {
 			return nil, err
 		}
 		err = json.NewDecoder(responseBody).Decode(&vms[vm])
+		if err != nil {
+			return nil, err
+		}
+		responseBody, err = c.httpRequest("vms/"+value.IdVM+"/params/displayName", "GET", bytes.Buffer{})
+		if err != nil {
+			return nil, err
+		}
+		err = json.NewDecoder(responseBody).Decode(&tmpparam)
+		vms[vm].Denomination = tmpparam.Value
+		if err != nil {
+			return nil, err
+		}
+		responseBody, err = c.httpRequest("vms/"+value.IdVM+"/params/annotation", "GET", bytes.Buffer{})
+		if err != nil {
+			return nil, err
+		}
+		err = json.NewDecoder(responseBody).Decode(&tmpparam)
+		vms[vm].Description = tmpparam.Value
 		if err != nil {
 			return nil, err
 		}
@@ -102,10 +111,6 @@ func (c *Client) CreateVM(s string, n string, d string, p int, m int) (*MyVm, er
 	tempSettingVM.Processors = p
 	tempSettingVM.Memory = m
 	// var tempDataParam ParamPayload
-	// tempDataParam.Name = "DisplayName"
-	// tempDataParam.Value = n
-	// tempDataParam.Name = "Annotation"
-	// tempDataParam.Value = d
 	err := json.NewEncoder(requestBody).Encode(&tempDataVM)
 	if err != nil {
 		log.Printf("[WSAPICLI][ERROR] Fi: wsapivm.go Fu: CreateVM Obj:Encoding VM error %#v\n", err)
@@ -190,23 +195,35 @@ func (c *Client) CreateVM(s string, n string, d string, p int, m int) (*MyVm, er
 		return nil, err
 	}
 	// }}}
-	// --------- midwhile VmWare resolve the issue with the verb configureparams, we have create this  --------- {{{
-	err = SetDisplayName(vm.Path, n)
-	if err != nil {
-		log.Printf("[WSAPICLI][ERROR] Fi: wsapivm.go Fu: CreateVM Obj:Triying to set DisplayName %#v\n", err)
-		return nil, err
-	}
-	log.Printf("[WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj: We have change the Denomination %s", n)
-	vm.Denomination = n
-	err = SetAnnotation(vm.Path, d)
-	if err != nil {
-		log.Printf("[WSAPICLI][ERROR] Fi: wsapivm.go Fu: CreateVM Obj:Triying to set Annotation %#v\n", err)
-		return nil, err
-	}
-	log.Printf("[WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj: We have change the Description %s", d)
-	vm.Description = d
-	// }}}
-	// The following code we will use in the future when the VmWare fix it the method configparams
+	// The following code we will use in the future when the VmWare fix it the method configparams {{{
+	// ----- Now, we change the Denomination ----
+	// tempDataParam.Name = "displayName"
+	// tempDataParam.Value = n
+	// requestBody.Reset()
+	// err = json.NewEncoder(requestBody).Encode(&tempDataParam)
+	// if err != nil {
+	// 	log.Printf("[WSAPICLI][ERROR] Fi: wsapivm.go Fu: CreateVM Obj:Encoding Param error %#v\n", err)
+	// 	return nil, err
+	// }
+	// log.Printf("[WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:Request Body %#v\n", requestBody.String())
+	// response, err = c.httpRequest("vms/"+vm.IdVM+"/configparams", "PUT", *requestBody)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// log.Printf("[WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:response raw %#v\n", response)
+	// responseBody.Reset()
+	// _, err = responseBody.ReadFrom(response)
+	// if err != nil {
+	// 	log.Printf("[WSAPICLI][ERROR] Fi: wsapivm.go Fu: CreateVM Obj:Response Error in change description %#v\n", err)
+	// 	return nil, err
+	// }
+	// log.Printf("[WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:Response Body in change description %#v\n", responseBody.String())
+	// err = json.NewDecoder(responseBody).Decode(&vm)
+	// if err != nil {
+	// 	log.Printf("[WSAPICLI][ERROR] Fi: wsapivm.go Fu: CreateVM Obj:Response Error in change description %#v\n", err)
+	// 	return nil, err
+	// }
+	// ----- Now, we change the Description ----
 	// tempDataParam.Name = "annotation"
 	// tempDataParam.Value = d
 	// requestBody.Reset()
@@ -233,6 +250,7 @@ func (c *Client) CreateVM(s string, n string, d string, p int, m int) (*MyVm, er
 	// 	log.Printf("[WSAPICLI][ERROR] Fi: wsapivm.go Fu: CreateVM Obj:Response Error in change description %#v\n", err)
 	// 	return nil, err
 	// }
+	//}}}
 	return &vm, err
 }
 
@@ -344,14 +362,7 @@ func (c *Client) UpdateVM(i string, n string, d string, p int, m int) (*MyVm, er
 		return nil, err
 	}
 	log.Printf("[WSAPICLI] Fi: wsapivm.go Fu: UpdateVM Obj: VM before %#v\n", vm)
-	err = SetNameDescription(vm.Path, n, d)
-	if err != nil {
-		return nil, err
-	}
-	vm, err = GetVM(c, i)
-	if err != nil {
-		return nil, err
-	}
+	// ---- here we have to implement the code to update de description and denomination
 	log.Printf("[WSAPICLI] Fi: wsapivm.go Fu: UpdateVM Obj: VM after %#v\n", vm)
 	return vm, err
 }
@@ -390,8 +401,6 @@ func (c *Client) RegisterVM(n string, p string) (*MyVm, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	// Falta hacer un PUT para modificar los parametros de la instancia nueva. entre ellos el procesador la memoria y la network
 	return &vm, err
 }
 
