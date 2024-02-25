@@ -70,7 +70,7 @@ clean: ## Clean the project, this only remove default config of API REST VmWare 
 	@rm -f $(CERTFILE)
 	@rm -f $(DIRELEASES)$(BINARY)
 	@rm -f $(CONFIG_FILE)
-	@git tag -d $(VERSION)
+	@git tag -d v$(VERSION)
 
 #-------------------------------------------------------#
 #    Private Functions                                  #
