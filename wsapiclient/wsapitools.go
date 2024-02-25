@@ -18,15 +18,15 @@ func GetVM(c *Client, i string) (*MyVm, error) {
 	// because the API of VmWare Workstation doesn't permit see this the another way
 	response, err := c.httpRequest("vms", "GET", bytes.Buffer{})
 	if err != nil {
-		log.Fatalf("[WSAPICLI] Fi: wsapitools.go Fu: GetVM Message: The request at the server API failed %s", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetVM Message: The request at the server API failed %s", err)
 		return nil, err
 	}
 	err = json.NewDecoder(response).Decode(&vms)
 	if err != nil {
-		log.Fatalf("[WSAPICLI][ERROR] Fi: wsapitools.go Fu: GetVM Message: I can't read the json structure %s", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetVM Message: I can't read the json structure %s", err)
 		return nil, err
 	}
-	log.Printf("[WSAPICLI] Fi: wsapitools.go Fu: GetVM Obj: List of VMs %#v\n", vms)
+	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: GetVM Obj: List of VMs %#v\n", vms)
 	for tempvm, value := range vms {
 		if value.IdVM == i {
 			vm = vms[tempvm]
@@ -43,24 +43,24 @@ func GetVM(c *Client, i string) (*MyVm, error) {
 	// }
 	response, err = c.httpRequest("vms/"+i, "GET", bytes.Buffer{})
 	if err != nil {
-		log.Fatalf("[WSAPICLI] Fi: wsapitools.go Fu: GetVM Message: The request at the server API failed %s", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetVM Message: The request at the server API failed %s", err)
 		return nil, err
 	}
-	log.Printf("[WSAPICLI] Fi: wsapitools.go Fu: GetVM Obj:Body of VM %#v\n", response)
+	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: GetVM Obj:Body of VM %#v\n", response)
 	err = json.NewDecoder(response).Decode(&vm)
 	if err != nil {
-		log.Fatalf("[WSAPICLI] Fi: wsapitools.go Fu: GetVM Message: I can't read the json structure %s", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetVM Message: I can't read the json structure %s", err)
 		return nil, err
 	}
 	response, err = c.httpRequest("vms/"+i+"/power", "GET", bytes.Buffer{})
 	if err != nil {
-		log.Fatalf("[WSAPICLI] Fi: wsapitools.go Fu: GetVM Message: The request at the server API failed %s", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetVM Message: The request at the server API failed %s", err)
 		return nil, err
 	}
-	log.Printf("[WSAPICLI] Fi: wsapitools.go Fu: GetVM Obj:Body of power %#v\n", response)
+	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: GetVM Obj:Body of power %#v\n", response)
 	err = json.NewDecoder(response).Decode(&vm)
 	if err != nil {
-		log.Fatalf("[WSAPICLI] Fi: wsapitools.go Fu: GetVM Message: I can't read the json structure %s", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetVM Message: I can't read the json structure %s", err)
 		return nil, err
 	}
 	return &vm, nil
@@ -74,17 +74,17 @@ func GetVMFromFile(p string) (vmx.VirtualMachine, error) {
 	vm := new(vmx.VirtualMachine)
 	data, err := ioutil.ReadFile(p)
 	if err != nil {
-		log.Fatalf("[WSAPICLI][ERROR] Fi: wsapitools.go Fu: GetVMFromFile Message: Failed %s, please make sure the config file exists", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetVMFromFile Message: Failed %s, please make sure the config file exists", err)
 		return *vm, err
 	}
 
-	log.Printf("[WSAPICLI] Fi: wsapitools.go Fu: GetVMFromFile Obj: Data File %#v\n", string(data))
+	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: GetVMFromFile Obj: Data File %#v\n", string(data))
 	err = vmx.Unmarshal(data, vm)
 	if err != nil {
-		log.Fatalf("[WSAPICLI][ERROR] Fi: wsapitools.go Fu: GetVMFromFile Obj: %#v", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetVMFromFile Obj: %#v", err)
 		return *vm, err
 	}
-	log.Printf("[WSAPICLI] Fi: wsapitools.go Fu: GetVMFromFile Obj: VM  %#v\n", vm)
+	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: GetVMFromFile Obj: VM  %#v\n", vm)
 	return *vm, nil
 }
 
@@ -93,16 +93,16 @@ func GetVMFromFile(p string) (vmx.VirtualMachine, error) {
 // Input: p: string, with the parameter we want to change
 // Output: error if you obtain some error in the function
 func SetVMToFile(vm vmx.VirtualMachine, p string) error {
-	log.Printf("[WSAPICLI] Fi: wsapitools.go Fu: SetVMToFile Message: parameters %#v, %#v", vm, p)
+	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: SetVMToFile Message: parameters %#v, %#v", vm, p)
 	data, err := vmx.Marshal(vm)
 	if err != nil {
-		log.Fatalf("[WSAPICLI][ERROR] Fi: wsapitools.go Fu: SetVMToFile Message: Failed to save the VMX structure in memory %s", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: SetVMToFile Message: Failed to save the VMX structure in memory %s", err)
 		return err
 	}
-	log.Printf("[WSAPICLI] Fi: wsapitools.go Fu: SetVMToFile Obj: Data after read vm %#v\n", string(data))
+	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: SetVMToFile Obj: Data after read vm %#v\n", string(data))
 	err = ioutil.WriteFile(p, data, 0644)
 	if err != nil {
-		log.Fatalf("[WSAPICLI][ERROR] Fi: wsapitools.go Fu: SetVMToFile Message: Failed writing in file %s, please make sure the config file exists", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: SetVMToFile Message: Failed writing in file %s, please make sure the config file exists", err)
 		return err
 	}
 	return err
@@ -114,7 +114,7 @@ func SetVMToFile(vm vmx.VirtualMachine, p string) error {
 func GetAnnotation(p string) (string, error) {
 	vm, err := GetVMFromFile(p)
 	if err != nil {
-		log.Fatalf("[WSAPICLI][ERROR] Fi: wsapitools.go Fu: GetAnnotation Message: Failure to obtain the value of the Description %s", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetAnnotation Message: Failure to obtain the value of the Description %s", err)
 		return "", err
 	}
 	return vm.Annotation, nil
@@ -127,13 +127,13 @@ func GetAnnotation(p string) (string, error) {
 func SetAnnotation(p string, v string) error {
 	vm, err := GetVMFromFile(p)
 	if err != nil {
-		log.Fatalf("[WSAPICLI][ERROR] Fi: wsapitools.go Fu: SetAnnotation Message: We can't obtain the vmx object %s", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: SetAnnotation Message: We can't obtain the vmx object %s", err)
 		return err
 	}
 	vm.Annotation = v
 	err = SetVMToFile(vm, p)
 	if err != nil {
-		log.Fatalf("[WSAPICLI][ERROR] Fi: wsapitools.go Fu: SetAnnotation Message: We haven't be able to save the structure in the file %s", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: SetAnnotation Message: We haven't be able to save the structure in the file %s", err)
 		return err
 	}
 	return nil
@@ -145,7 +145,7 @@ func SetAnnotation(p string, v string) error {
 func GetDisplayName(p string) (string, error) {
 	vm, err := GetVMFromFile(p)
 	if err != nil {
-		log.Fatalf("[WSAPICLI][ERROR] Fi: wsapitools.go Fu: GetDisplayName Message: Failure to obtain the value of the Denomination %s", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetDisplayName Message: Failure to obtain the value of the Denomination %s", err)
 		return "", err
 	}
 	return vm.DisplayName, nil
@@ -158,13 +158,13 @@ func GetDisplayName(p string) (string, error) {
 func SetDisplayName(p string, v string) error {
 	vm, err := GetVMFromFile(p)
 	if err != nil {
-		log.Fatalf("[WSAPICLI][ERROR] Fi: wsapitools.go Fu: SetAnnotation Message: We can't obtain the vmx object %s", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: SetAnnotation Message: We can't obtain the vmx object %s", err)
 		return err
 	}
 	vm.DisplayName = v
 	err = SetVMToFile(vm, p)
 	if err != nil {
-		log.Fatalf("[WSAPICLI][ERROR] Fi: wsapitools.go Fu: SetAnnotation Message: We haven't be able to save the structure in the file %s", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: SetAnnotation Message: We haven't be able to save the structure in the file %s", err)
 		return err
 	}
 	return nil
@@ -175,34 +175,34 @@ func SetDisplayName(p string, v string) error {
 // which is the file of the vm. Input: p: string with the complete path of the file,
 // n: string with the denomination, d: string with the description err: variable with error if occur
 func SetNameDescription(p string, n string, d string) error {
-	log.Printf("[WSAPICLI] Fi: wsapitools.go Fu: SetNameDescription Message: parameters %#v, %#v, %#v", p, n, d)
+	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: SetNameDescription Message: parameters %#v, %#v, %#v", p, n, d)
 	data, err := ioutil.ReadFile(p)
 	if err != nil {
-		log.Fatalf("[WSAPICLI] Fi: wsapitools.go Fu: SetNameDescription Message: Failed opening file %s, please make sure the config file exists", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: SetNameDescription Message: Failed opening file %s, please make sure the config file exists", err)
 		return err
 	}
 
-	log.Printf("[WSAPICLI] Fi: wsapitools.go Fu: SetNameDescription Obj: File object %#v\n", string(data))
+	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: SetNameDescription Obj: File object %#v\n", string(data))
 
 	vm := new(vmx.VirtualMachine)
 	err = vmx.Unmarshal(data, vm)
 	if err != nil {
-		log.Fatalf("[WSAPICLI] Fi: wsapitools.go Fu: SetNameDescription Obj: %#v", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: SetNameDescription Obj: %#v", err)
 		return err
 	}
-	log.Printf("[WSAPICLI] Fi: wsapitools.go Fu: SetNameDescription Obj: VM %#v\n", vm)
+	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: SetNameDescription Obj: VM %#v\n", vm)
 
 	vm.DisplayName = n
 	vm.Annotation = d
 	data, err = vmx.Marshal(vm)
 	if err != nil {
-		log.Fatalf("[WSAPICLI][ERROR] Fi: wsapitools.go Fu: SetNameDescription Message: Failed to save the VMX structure in memory %s", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: SetNameDescription Message: Failed to save the VMX structure in memory %s", err)
 		return err
 	}
-	log.Printf("[WSAPICLI] Fi: wsapitools.go Fu: SetNameDescription Obj: Data File %#v\n", string(data))
+	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: SetNameDescription Obj: Data File %#v\n", string(data))
 	err = ioutil.WriteFile(p, data, 0644)
 	if err != nil {
-		log.Fatalf("[WSAPICLI][ERROR] Fi: wsapitools.go Fu: SetNameDescription Message: Failed writing in file %s, please make sure the config file exists", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: SetNameDescription Message: Failed writing in file %s, please make sure the config file exists", err)
 		return err
 	}
 	// en este punto tambien tienes que cambiar el nombre del fihero cuando se cambia la denominacion
@@ -222,21 +222,21 @@ func (c *Client) SetParameter(i string, p string, v string) error {
 	if err != nil {
 		return err
 	}
-	log.Printf("[WSAPICLI] Fi: wsapitools.go Fu: SetParameter Obj:Request %#v\n", request)
+	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: SetParameter Obj:Request %#v\n", request)
 	requestBody.Write(request)
-	log.Printf("[WSAPICLI] Fi: wsapitools.go Fu: SetParameter Obj:Request Body %#v\n", requestBody.String())
+	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: SetParameter Obj:Request Body %#v\n", requestBody.String())
 	response, err := c.httpRequest("/vms/"+i+"/configparams", "PUT", *requestBody)
 	if err != nil {
 		return err
 	}
-	log.Printf("[WSAPICLI] Fi: wsapitools.go Fu: SetParameter Obj:response raw %#v\n", response)
+	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: SetParameter Obj:response raw %#v\n", response)
 	responseBody := new(bytes.Buffer)
 	_, err = responseBody.ReadFrom(response)
 	if err != nil {
-		log.Printf("[WSAPICLI][ERROR] Fi: wsapitools.go Fu: SetParameter Obj:Response Error %#v\n", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: SetParameter Obj:Response Error %#v\n", err)
 		return err
 	}
-	log.Printf("[WSAPICLI] Fi: wsapitools.go Fu: SetParameter Obj:Response Body %#v\n", responseBody.String())
+	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: SetParameter Obj:Response Body %#v\n", responseBody.String())
 	// err = json.NewDecoder(responseBody).Decode(&vm)
 	if err != nil {
 		return err

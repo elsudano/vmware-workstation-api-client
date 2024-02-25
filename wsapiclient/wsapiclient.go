@@ -153,7 +153,7 @@ func (c *Client) ConfigCli(a string, u string, p string, i bool, d bool) {
 func (c *Client) httpRequest(p string, m string, pl bytes.Buffer) (io.ReadCloser, error) {
 	req, err := http.NewRequest(m, c.requestPath(p), &pl)
 	if err != nil {
-		log.Printf("[DEBUG][WSAPICLI][ERROR] Fi: wsapiclient.go Fu: httpRequest Obj:request error %#v\n", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj:request error %#v\n", err)
 		return nil, err
 	}
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj:buffer %#v\n", pl.String())
@@ -175,14 +175,14 @@ func (c *Client) httpRequest(p string, m string, pl bytes.Buffer) (io.ReadCloser
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: Request before that run %#v\n", req)
 	response, err := c.Client.Do(req)
 	if err != nil {
-		log.Printf("[DEBUG][WSAPICLI][ERROR] Fi: wsapiclient.go Fu: httpRequest Obj:response error %#v\n", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj:response error %#v\n", err)
 		return nil, err
 	}
 	if response.StatusCode != http.StatusOK && response.StatusCode != http.StatusCreated && response.StatusCode != http.StatusNoContent {
 		responseBody := new(bytes.Buffer)
 		_, err := responseBody.ReadFrom(response.Body)
 		if err != nil {
-			log.Printf("[DEBUG][WSAPICLI][ERROR] Fi: wsapiclient.go Fu: httpRequest Obj:respBody %#v\n", responseBody)
+			log.Printf("[ERROR][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj:respBody %#v\n", responseBody)
 			return response.Body, err
 		}
 		log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: Response Body before %#v\n", responseBody.String())
@@ -190,10 +190,10 @@ func (c *Client) httpRequest(p string, m string, pl bytes.Buffer) (io.ReadCloser
 		err = json.NewDecoder(responseBody).Decode(&vmerror)
 		log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: Response Body %#v\n", responseBody)
 		if err != nil {
-			log.Fatalf("[WSAPICLI][ERROR] Fi: wsapiclient.go Fu: httpRequest Message: I can't read the json structure %s", err)
+			log.Printf("[ERROR][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Message: I can't read the json structure %s", err)
 			return nil, err
 		}
-		log.Printf("[DEBUG][WSAPICLI][ERROR] Fi: wsapiclient.go Fu: httpRequest Obj: ErrorCode: %#v %#v %#v\n", vmerror.Code, response.StatusCode, vmerror.Message)
+		log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: ErrorCode: %#v %#v %#v\n", vmerror.Code, response.StatusCode, vmerror.Message)
 		return response.Body, errors.New(vmerror.Message)
 	}
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj:response %#v\n", response)

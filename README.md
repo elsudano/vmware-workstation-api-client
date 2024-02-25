@@ -33,6 +33,7 @@ api_stop                       Stop a API REST server of VmWare Workstation
 api_test                       Test API client and list all virtual machine of VmWare Workstation
 build                          Build the binary of the module
 clean                          Clean the project, this only remove default config of API REST VmWare Workstation Pro, the cert, private key and binary
+publish                        Build and Publish a new TAG in GitHub
 ```
 
 * The follow step it's run the next command to create a SSL certificates and start the API with the values that you setting in config.ini

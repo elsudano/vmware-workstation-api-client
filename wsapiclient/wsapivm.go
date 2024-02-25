@@ -113,7 +113,7 @@ func (c *Client) CreateVM(s string, n string, d string, p int, m int) (*MyVm, er
 	// var tempDataParam ParamPayload
 	err := json.NewEncoder(requestBody).Encode(&tempDataVM)
 	if err != nil {
-		log.Printf("[DEBUG][WSAPICLI][ERROR] Fi: wsapivm.go Fu: CreateVM Obj:Encoding VM error %#v\n", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:Encoding VM error %#v\n", err)
 		return nil, err
 	}
 	// }}}
@@ -121,14 +121,14 @@ func (c *Client) CreateVM(s string, n string, d string, p int, m int) (*MyVm, er
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:Request Body %#v\n", requestBody.String())
 	response, err := c.httpRequest("vms", "POST", *requestBody)
 	if err != nil {
-		log.Printf("[DEBUG][WSAPICLI][ERROR] Fi: wsapivm.go Fu: CreateVM Obj:Request Error %#v\n", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:Request Error %#v\n", err)
 		return nil, err
 	}
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:response raw %#v\n", response)
 	responseBody := new(bytes.Buffer)
 	_, err = responseBody.ReadFrom(response)
 	if err != nil {
-		log.Printf("[DEBUG][WSAPICLI][ERROR] Fi: wsapivm.go Fu: CreateVM Obj:Response Error %#v\n", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:Response Error %#v\n", err)
 		return nil, err
 	}
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:Response Body %#v\n", responseBody.String())
@@ -159,13 +159,13 @@ func (c *Client) CreateVM(s string, n string, d string, p int, m int) (*MyVm, er
 	// --------- Preparing the next request in order to get the power status of the vm --------- {{{
 	response, err = c.httpRequest("vms/"+vm.IdVM+"/power", "GET", bytes.Buffer{})
 	if err != nil {
-		log.Printf("[DEBUG][WSAPICLI][ERROR] Fi: wsapivm.go Fu: CreateVM Obj:Request Error in power status %#v\n", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:Request Error in power status %#v\n", err)
 		return nil, err
 	}
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:Response Body power status %#v\n", response)
 	err = json.NewDecoder(response).Decode(&vm)
 	if err != nil {
-		log.Printf("[DEBUG][WSAPICLI][ERROR] Fi: wsapivm.go Fu: CreateVM Obj:Response Error in power status %#v\n", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:Response Error in power status %#v\n", err)
 		return nil, err
 	}
 	// }}}
@@ -173,20 +173,20 @@ func (c *Client) CreateVM(s string, n string, d string, p int, m int) (*MyVm, er
 	requestBody.Reset()
 	err = json.NewEncoder(requestBody).Encode(&tempSettingVM)
 	if err != nil {
-		log.Printf("[DEBUG][WSAPICLI][ERROR] Fi: wsapivm.go Fu: CreateVM Obj:Encoding Settings error %#v\n", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:Encoding Settings error %#v\n", err)
 		return nil, err
 	}
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:Request Body %#v\n", requestBody.String())
 	response, err = c.httpRequest("vms/"+vm.IdVM, "PUT", *requestBody)
 	if err != nil {
-		log.Printf("[DEBUG][WSAPICLI][ERROR] Fi: wsapivm.go Fu: CreateVM Obj:Request Error %#v\n", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:Request Error %#v\n", err)
 		return nil, err
 	}
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:response raw %#v\n", response)
+	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:Response RAW %#v\n", response)
 	responseBody = new(bytes.Buffer)
 	_, err = responseBody.ReadFrom(response)
 	if err != nil {
-		log.Printf("[DEBUG][WSAPICLI][ERROR] Fi: wsapivm.go Fu: CreateVM Obj:Response Error %#v\n", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:Response Error %#v\n", err)
 		return nil, err
 	}
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:Response Body %#v\n", responseBody.String())
@@ -202,7 +202,7 @@ func (c *Client) CreateVM(s string, n string, d string, p int, m int) (*MyVm, er
 	// requestBody.Reset()
 	// err = json.NewEncoder(requestBody).Encode(&tempDataParam)
 	// if err != nil {
-	// 	log.Printf("[DEBUG][WSAPICLI][ERROR] Fi: wsapivm.go Fu: CreateVM Obj:Encoding Param error %#v\n", err)
+	// 	log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:Encoding Param error %#v\n", err)
 	// 	return nil, err
 	// }
 	// log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:Request Body %#v\n", requestBody.String())
@@ -214,13 +214,13 @@ func (c *Client) CreateVM(s string, n string, d string, p int, m int) (*MyVm, er
 	// responseBody.Reset()
 	// _, err = responseBody.ReadFrom(response)
 	// if err != nil {
-	// 	log.Printf("[DEBUG][WSAPICLI][ERROR] Fi: wsapivm.go Fu: CreateVM Obj:Response Error in change description %#v\n", err)
+	// 	log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:Response Error in change description %#v\n", err)
 	// 	return nil, err
 	// }
 	// log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:Response Body in change description %#v\n", responseBody.String())
 	// err = json.NewDecoder(responseBody).Decode(&vm)
 	// if err != nil {
-	// 	log.Printf("[DEBUG][WSAPICLI][ERROR] Fi: wsapivm.go Fu: CreateVM Obj:Response Error in change description %#v\n", err)
+	// 	log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:Response Error in change description %#v\n", err)
 	// 	return nil, err
 	// }
 	// ----- Now, we change the Description ----
@@ -229,7 +229,7 @@ func (c *Client) CreateVM(s string, n string, d string, p int, m int) (*MyVm, er
 	// requestBody.Reset()
 	// err = json.NewEncoder(requestBody).Encode(&tempDataParam)
 	// if err != nil {
-	// 	log.Printf("[DEBUG][WSAPICLI][ERROR] Fi: wsapivm.go Fu: CreateVM Obj:Encoding Param error %#v\n", err)
+	// 	log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:Encoding Param error %#v\n", err)
 	// 	return nil, err
 	// }
 	// log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:Request Body %#v\n", requestBody.String())
@@ -241,13 +241,13 @@ func (c *Client) CreateVM(s string, n string, d string, p int, m int) (*MyVm, er
 	// responseBody.Reset()
 	// _, err = responseBody.ReadFrom(response)
 	// if err != nil {
-	// 	log.Printf("[DEBUG][WSAPICLI][ERROR] Fi: wsapivm.go Fu: CreateVM Obj:Response Error in change description %#v\n", err)
+	// 	log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:Response Error in change description %#v\n", err)
 	// 	return nil, err
 	// }
 	// log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:Response Body in change description %#v\n", responseBody.String())
 	// err = json.NewDecoder(responseBody).Decode(&vm)
 	// if err != nil {
-	// 	log.Printf("[DEBUG][WSAPICLI][ERROR] Fi: wsapivm.go Fu: CreateVM Obj:Response Error in change description %#v\n", err)
+	// 	log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:Response Error in change description %#v\n", err)
 	// 	return nil, err
 	// }
 	//}}}
@@ -266,12 +266,12 @@ func (c *Client) ReadVM(i string) (*MyVm, error) {
 	// --------- Read the path and the ID of the vm in order to load in the function --------- {{{
 	response, err := c.httpRequest("vms", "GET", bytes.Buffer{})
 	if err != nil {
-		log.Fatalf("[WSAPICLI][ERROR] Fi: wsapivm.go Fu: ReadVM Message: The request at the server API failed %s", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: ReadVM Message: The request at the server API failed %s", err)
 		return nil, err
 	}
 	err = json.NewDecoder(response).Decode(&vms)
 	if err != nil {
-		log.Fatalf("[WSAPICLI][ERROR] Fi: wsapivm.go Fu: ReadVM Message: I can't read the json structure %s", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: ReadVM Message: I can't read the json structure %s", err)
 		return nil, err
 	}
 	for tempvm, value := range vms {
@@ -283,51 +283,51 @@ func (c *Client) ReadVM(i string) (*MyVm, error) {
 	// --------- Read the propierties of the VM in order to load --------- {{{
 	response, err = c.httpRequest("vms/"+vm.IdVM, "GET", bytes.Buffer{})
 	if err != nil {
-		log.Printf("[DEBUG][WSAPICLI][ERROR] Fi: wsapivm.go Fu: ReadVM Obj:Request Error trying get information %#v\n", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: ReadVM Obj:Request Error trying get information %#v\n", err)
 		return nil, err
 	}
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: ReadVM Obj:response raw get information %#v\n", response)
 	err = json.NewDecoder(response).Decode(&vm)
 	if err != nil {
-		log.Printf("[DEBUG][WSAPICLI][ERROR] Fi: wsapivm.go Fu: ReadVM Obj:Response Error trying get information %#v\n", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: ReadVM Obj:Response Error trying get information %#v\n", err)
 		return nil, err
 	}
 	// }}
 	// --------- Read the status of power of the vm --------- {{{
 	response, err = c.httpRequest("vms/"+vm.IdVM+"/power", "GET", bytes.Buffer{})
 	if err != nil {
-		log.Printf("[DEBUG][WSAPICLI][ERROR] Fi: wsapivm.go Fu: ReadVM Obj:Request Error in power status %#v\n", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: ReadVM Obj:Request Error in power status %#v\n", err)
 		return nil, err
 	}
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: ReadVM Obj:Response Body power status %#v\n", response)
 	err = json.NewDecoder(response).Decode(&vm)
 	if err != nil {
-		log.Printf("[DEBUG][WSAPICLI][ERROR] Fi: wsapivm.go Fu: ReadVM Obj:Response Error in power status %#v\n", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: ReadVM Obj:Response Error in power status %#v\n", err)
 		return nil, err
 	}
 	// }}
 	// --------- The last part is read the denomination and description of the vm --------- {{{
 	response, err = c.httpRequest("vms/"+vm.IdVM+"/params/displayName", "GET", bytes.Buffer{})
 	if err != nil {
-		log.Printf("[DEBUG][WSAPICLI][ERROR] Fi: wsapivm.go Fu: ReadVM Obj:trying get denomination %#v\n", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: ReadVM Obj:trying get denomination %#v\n", err)
 		return nil, err
 	}
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: ReadVM Obj:Response trying get denomination %#v\n", response)
 	err = json.NewDecoder(response).Decode(&tmpparam)
 	if err != nil {
-		log.Printf("[DEBUG][WSAPICLI][ERROR] Fi: wsapivm.go Fu: ReadVM Obj:Response Error trying get denomination %#v\n", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: ReadVM Obj:Response Error trying get denomination %#v\n", err)
 		return nil, err
 	}
 	vm.Denomination = tmpparam.Value
 	response, err = c.httpRequest("vms/"+vm.IdVM+"/params/annotation", "GET", bytes.Buffer{})
 	if err != nil {
-		log.Printf("[DEBUG][WSAPICLI][ERROR] Fi: wsapivm.go Fu: ReadVM Obj:trying get description %#v\n", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: ReadVM Obj:trying get description %#v\n", err)
 		return nil, err
 	}
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: ReadVM Obj:Response trying get description %#v\n", response)
 	err = json.NewDecoder(response).Decode(&tmpparam)
 	if err != nil {
-		log.Printf("[DEBUG][WSAPICLI][ERROR] Fi: wsapivm.go Fu: ReadVM Obj:Response Error trying get description %#v\n", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: ReadVM Obj:Response Error trying get description %#v\n", err)
 		return nil, err
 	}
 	vm.Description = tmpparam.Value
@@ -393,7 +393,7 @@ func (c *Client) RegisterVM(n string, p string) (*MyVm, error) {
 	responseBody := new(bytes.Buffer)
 	_, err = responseBody.ReadFrom(response)
 	if err != nil {
-		log.Printf("[DEBUG][WSAPICLI][ERROR] Fi: wsapivm.go Fu: RegisterVM Obj:Response Error %#v\n", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: RegisterVM Obj:Response Error %#v\n", err)
 		return nil, err
 	}
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: RegisterVM Obj:Response Body %#v\n", responseBody.String())
@@ -409,13 +409,13 @@ func (c *Client) RegisterVM(n string, p string) (*MyVm, error) {
 func (c *Client) DeleteVM(i string) error {
 	response, err := c.httpRequest("vms/"+i, "DELETE", bytes.Buffer{})
 	if err != nil {
-		log.Printf("[DEBUG][WSAPICLI][ERROR] Fi: wsapivm.go Fu: DeleteVM Obj:%#v\n", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: DeleteVM Obj:%#v\n", err)
 		return err
 	}
 	responseBody := new(bytes.Buffer)
 	_, err = responseBody.ReadFrom(response)
 	if err != nil {
-		log.Printf("[DEBUG][WSAPICLI][ERROR] Fi: wsapivm.go Fu: DeleteVM Obj:%#v, %#v\n", err, responseBody.String())
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: DeleteVM Obj:%#v, %#v\n", err, responseBody.String())
 		return err
 	}
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: DeleteVM Obj:%#v\n", responseBody)
