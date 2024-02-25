@@ -121,7 +121,14 @@ func main() {
 	// 	VM.CPU.Processors,
 	// 	VM.Memory)
 
-	// VM, err = client.UpdateVM(VM.IdVM, "clone-test-copy-change", "esta es una prueba de llenadao de datos", 2, 512) // the id it's a test
+	// _, err = client.RegisterVM(VM.Denomination, VM.Path) // the id it's a test
+	// if err != nil {
+	// 	log.Fatalf("%s", err)
+	// }
+
+	// time.Sleep(20 * time.Second)
+
+	// VM, err = client.UpdateVM(VM.IdVM, "clone-test-copy-change", "esta es una prueba de llenadao de datos", 1, 512) // the id it's a test
 	// fmt.Printf("ID: %v\nPath: %v\nDenomination: %v\nDescription: %s\nPower Status: %s\nProcessor: %d\nMemory: %d \n\n",
 	// 	VM.IdVM,
 	// 	VM.Path,
@@ -134,10 +141,7 @@ func main() {
 	// 	log.Fatalf("%s", err)
 	// }
 
-	// _, err = client.RegisterVM(VM.Denomination, VM.Path) // the id it's a test
-	// if err != nil {
-	// 	log.Fatalf("%s", err)
-	// }
+	// time.Sleep(30 * time.Second)
 
 	// err = client.DeleteVM(VM.IdVM) // the id it's a test
 	// if err != nil {
