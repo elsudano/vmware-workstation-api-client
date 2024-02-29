@@ -46,10 +46,10 @@ func (c *Client) GetAllVMs() ([]MyVm, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: GetAllVMs Obj:%#v\n", responseBody)
+	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: GetAllVMs Obj: Response Body%#v\n", responseBody)
 	err = json.NewDecoder(responseBody).Decode(&vms)
 	if err != nil {
-		log.Fatalf("[WSAPICLI][ERROR] Fi: wsapivm.go Fu: GetAllVMs Message: I can't read the json structure %s", err)
+		log.Printf("[WSAPICLI][ERROR] Fi: wsapivm.go Fu: GetAllVMs Message: I can't read the json structure %s", err)
 		return nil, err
 	}
 
@@ -89,7 +89,7 @@ func (c *Client) GetAllVMs() ([]MyVm, error) {
 			return nil, err
 		}
 	}
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: GetAllVMs Obj:%#v\n", vms)
+	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: GetAllVMs Obj: List of VMs %#v\n", vms)
 	return vms, nil
 }
 
@@ -142,12 +142,12 @@ func (c *Client) CreateVM(s string, n string, d string, p int, m int) (*MyVm, er
 	// --------- Read the path and the ID of the vm in order to load in the function --------- {{{
 	response, err = c.httpRequest("vms", "GET", bytes.Buffer{})
 	if err != nil {
-		log.Fatalf("[WSAPICLI][ERROR] Fi: wsapivm.go Fu: CreateVM Message: The request at the server API failed %s", err)
+		log.Printf("[WSAPICLI][ERROR] Fi: wsapivm.go Fu: CreateVM Message: The request at the server API failed %s", err)
 		return nil, err
 	}
 	err = json.NewDecoder(response).Decode(&vms)
 	if err != nil {
-		log.Fatalf("[WSAPICLI][ERROR] Fi: wsapivm.go Fu: CreateVM Message: I can't read the json structure %s", err)
+		log.Printf("[WSAPICLI][ERROR] Fi: wsapivm.go Fu: CreateVM Message: I can't read the json structure %s", err)
 		return nil, err
 	}
 	for tempvm, value := range vms {
@@ -404,6 +404,27 @@ func (c *Client) RegisterVM(n string, p string) (*MyVm, error) {
 	return &vm, err
 }
 
+// PowerSwitch method that permit you change the state of the instance, so you will change
+// from power-off to power-on the state of the instance.
+// i: string with the ID of the VM to change the state,
+// s: string with the state that will want between on, off, reset
+func (c *Client) PowerSwitch(i string, s string) error {
+	requestBody := bytes.NewBufferString(s)
+	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: PowerSwitch Obj: Request option %#v\n", requestBody.String())
+	response, err := c.httpRequest("vms/"+i+"/power", "PUT", *requestBody)
+	if err != nil {
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: PowerSwitch Obj: Response RAW %#v\n", err)
+		return err
+	}
+	responseBody := new(bytes.Buffer)
+	_, err = responseBody.ReadFrom(response)
+	if err != nil {
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: PowerSwitch Obj: Response Body RAW %#v, %#v\n", err, responseBody.String())
+		return err
+	}
+	return nil
+}
+
 // DeleteVM method to delete a VM in VmWare Worstation Input:
 // i: string with the ID of the VM to update
 func (c *Client) DeleteVM(i string) error {
@@ -418,6 +439,6 @@ func (c *Client) DeleteVM(i string) error {
 		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: DeleteVM Obj:%#v, %#v\n", err, responseBody.String())
 		return err
 	}
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: DeleteVM Obj:%#v\n", responseBody)
+	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: DeleteVM Obj:%#v\n", responseBody.String())
 	return nil
 }

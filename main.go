@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/elsudano/vmware-workstation-api-client/wsapiclient"
 )
@@ -62,78 +63,133 @@ func main() {
 	// }}}
 
 	// Second option we will setting the values in the creation moment {{{
-	client, _ := wsapiclient.NewClient(varurl, varuser, varpass, varinsecure, vardebug)
+	client, err := wsapiclient.NewClient(varurl, varuser, varpass, varinsecure, vardebug)
+	if err != nil {
+		log.Printf("[ERROR][MAIN] Fi: main.go Task: Creating client error %#v\n", err)
+	}
 	fmt.Printf("Parent ID: %s\n", varparentid)
 	// }}}
 
 	// To changing the config of debug you use this method
 	// client.SwitchDebug()
 
-	AllVMs, err := client.GetAllVMs()
+	// We get all the instances that we have in our VmWare Workstation
+	// AllVMs, err := client.GetAllVMs()
+	// if err != nil {
+	// 	log.Printf("[ERROR][MAIN] Fi: main.go Task: Listing VMs Error %#v\n", err)
+	// }
+	// for _, value := range AllVMs {
+	// 	fmt.Printf("ID: %v\nPath: %v\nDenomination: %v\nDescription: %s\nPower Status: %s\nProcessor: %d\nMemory: %d \n\n",
+	// 		value.IdVM,
+	// 		value.Path,
+	// 		value.Denomination,
+	// 		value.Description,
+	// 		value.PowerStatus,
+	// 		value.CPU.Processors,
+	// 		value.Memory)
+	// }
+
+	// After to read all the instances that we have in the list, we can create a new one to test it
+	VM, err := client.CreateVM(varparentid, "clone-test-copy", "Test to INSERT description", 2, 1024) // the id it's a test
 	if err != nil {
-		log.Fatalf("%s", err)
+		log.Printf("[ERROR][MAIN] Fi: main.go Task: Creating VMs Error %#v\n", err)
 	}
-	for _, value := range AllVMs {
-		fmt.Printf("ID: %v\nPath: %v\nDenomination: %v\nDescription: %s\nPower Status: %s\nProcessor: %d\nMemory: %d \n\n",
-			value.IdVM,
-			value.Path,
-			value.Denomination,
-			value.Description,
-			value.PowerStatus,
-			value.CPU.Processors,
-			value.Memory)
+	fmt.Printf("ID: %v\nPath: %v\nDenomination: %v\nDescription: %s\nPower Status: %s\nProcessor: %d\nMemory: %d \n\n",
+		VM.IdVM,
+		VM.Path,
+		VM.Denomination,
+		VM.Description,
+		VM.PowerStatus,
+		VM.CPU.Processors,
+		VM.Memory)
+
+	// Now we have one new instance, we can read which is the status
+	VM, err = client.ReadVM(VM.IdVM) // the id it's a test
+	if err != nil {
+		log.Printf("[ERROR][MAIN] Fi: main.go Task: First Reading VM Error %#v\n", err)
+	}
+	fmt.Printf("ID: %v\nPath: %v\nDenomination: %v\nDescription: %s\nPower Status: %s\nProcessor: %d\nMemory: %d \n\n",
+		VM.IdVM,
+		VM.Path,
+		VM.Denomination,
+		VM.Description,
+		VM.PowerStatus,
+		VM.CPU.Processors,
+		VM.Memory)
+
+	// We want to register the instance in the UI of the VmWare Workstaion
+	_, err = client.RegisterVM(VM.Denomination, VM.Path) // the id it's a test
+	if err != nil {
+		log.Printf("[ERROR][MAIN] Fi: main.go Task: Registering VM Error %#v\n", err)
 	}
 
-	// VM, err := client.CreateVM(varparentid, "clone-test-copy", "Test to INSERT description", 2, 1024) // the id it's a test
-	// if err != nil {
-	// 	log.Fatalf("%s", err)
-	// }
-	// fmt.Printf("ID: %v\nPath: %v\nDenomination: %v\nDescription: %s\nPower Status: %s\nProcessor: %d\nMemory: %d \n\n",
-	// 	VM.IdVM,
-	// 	VM.Path,
-	// 	VM.Denomination,
-	// 	VM.Description,
-	// 	VM.PowerStatus,
-	// 	VM.CPU.Processors,
-	// 	VM.Memory)
+	time.Sleep(10 * time.Second)
 
-	// VM, err = client.ReadVM(VM.IdVM) // the id it's a test
-	// if err != nil {
-	// 	log.Fatalf("%s", err)
-	// }
-	// fmt.Printf("ID: %v\nPath: %v\nDenomination: %v\nDescription: %s\nPower Status: %s\nProcessor: %d\nMemory: %d \n\n",
-	// 	VM.IdVM,
-	// 	VM.Path,
-	// 	VM.Denomination,
-	// 	VM.Description,
-	// 	VM.PowerStatus,
-	// 	VM.CPU.Processors,
-	// 	VM.Memory)
+	// After to register the instance, we will update the values of the instance with new onece
+	VM, err = client.UpdateVM(VM.IdVM, "clone-test-copy-change", "esta es una prueba de llenadao de datos", 1, 512) // the id it's a test
+	fmt.Printf("ID: %v\nPath: %v\nDenomination: %v\nDescription: %s\nPower Status: %s\nProcessor: %d\nMemory: %d \n\n",
+		VM.IdVM,
+		VM.Path,
+		VM.Denomination,
+		VM.Description,
+		VM.PowerStatus,
+		VM.CPU.Processors,
+		VM.Memory)
+	if err != nil {
+		log.Printf("[ERROR][MAIN] Fi: main.go Task: Updating VM Error %#v\n", err)
+	}
 
-	// _, err = client.RegisterVM(VM.Denomination, VM.Path) // the id it's a test
-	// if err != nil {
-	// 	log.Fatalf("%s", err)
-	// }
+	// We will read the new values
+	VM, err = client.ReadVM(VM.IdVM) // the id it's a test
+	if err != nil {
+		log.Printf("[ERROR][MAIN] Fi: main.go Task: Second Reading VM Error %#v\n", err)
+	}
+	fmt.Printf("ID: %v\nPath: %v\nDenomination: %v\nDescription: %s\nPower Status: %s\nProcessor: %d\nMemory: %d \n\n",
+		VM.IdVM,
+		VM.Path,
+		VM.Denomination,
+		VM.Description,
+		VM.PowerStatus,
+		VM.CPU.Processors,
+		VM.Memory)
 
-	// time.Sleep(20 * time.Second)
+	// We want to energize the instance in order to test the PowerSwitch method
+	err = client.PowerSwitch(VM.IdVM, "on") // the id it's a test
+	if err != nil {
+		log.Printf("[ERROR][MAIN] Fi: main.go Task: Energizing VM Error %#v\n", err)
+	}
 
-	// VM, err = client.UpdateVM(VM.IdVM, "clone-test-copy-change", "esta es una prueba de llenadao de datos", 1, 512) // the id it's a test
-	// fmt.Printf("ID: %v\nPath: %v\nDenomination: %v\nDescription: %s\nPower Status: %s\nProcessor: %d\nMemory: %d \n\n",
-	// 	VM.IdVM,
-	// 	VM.Path,
-	// 	VM.Denomination,
-	// 	VM.Description,
-	// 	VM.PowerStatus,
-	// 	VM.CPU.Processors,
-	// 	VM.Memory)
-	// if err != nil {
-	// 	log.Fatalf("%s", err)
-	// }
+	time.Sleep(60 * time.Second)
 
-	// time.Sleep(30 * time.Second)
+	// We will read the new state of the instance
+	VM, err = client.ReadVM(VM.IdVM) // the id it's a test
+	if err != nil {
+		log.Printf("[ERROR][MAIN] Fi: main.go Task: Third Reading VM Error %#v\n", err)
+	}
+	fmt.Printf("ID: %v\nPower Status: %s \n\n",
+		VM.IdVM,
+		VM.PowerStatus)
 
-	// err = client.DeleteVM(VM.IdVM) // the id it's a test
-	// if err != nil {
-	// 	log.Fatalf("%s", err)
-	// }
+	// We shutdown the instance in order to test the PowerSwitch method
+	err = client.PowerSwitch(VM.IdVM, "off") // the id it's a test
+	if err != nil {
+		log.Printf("[ERROR][MAIN] Fi: main.go Task: Shutting-down VM Error %#v\n", err)
+	}
+
+	time.Sleep(60 * time.Second)
+
+	// We want to know which was the power state of the instance
+	VM, err = client.ReadVM(VM.IdVM) // the id it's a test
+	if err != nil {
+		log.Printf("[ERROR][MAIN] Fi: main.go Task: Fourth Reading VM Error %#v\n", err)
+	}
+	fmt.Printf("ID: %v\nPower Status: %s \n\n",
+		VM.IdVM,
+		VM.PowerStatus)
+
+	// And finally we will delete the instance that we was created
+	err = client.DeleteVM(VM.IdVM) // the id it's a test
+	if err != nil {
+		log.Printf("%s", err)
+	}
 }

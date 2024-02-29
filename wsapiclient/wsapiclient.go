@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -84,7 +83,7 @@ func NewClient(a string, u string, p string, i bool, d bool) (*Client, error) {
 		log.SetOutput(os.Stderr)
 	}
 	if !c.Debug {
-		log.SetOutput(ioutil.Discard)
+		log.SetOutput(io.Discard)
 	}
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: NewClient Obj:web Client %#v\n", c.Client)
 	return c, nil
@@ -104,7 +103,7 @@ func New() (*Client, error) {
 func (c *Client) SwitchDebug() {
 	// for config Debug mode
 	if c.Debug {
-		log.SetOutput(ioutil.Discard)
+		log.SetOutput(io.Discard)
 		c.Debug = false
 	}
 	if !c.Debug {
@@ -143,7 +142,7 @@ func (c *Client) ConfigCli(a string, u string, p string, i bool, d bool) {
 		log.SetOutput(os.Stderr)
 	}
 	if !c.Debug {
-		log.SetOutput(ioutil.Discard)
+		log.SetOutput(io.Discard)
 	}
 }
 
@@ -156,7 +155,7 @@ func (c *Client) httpRequest(p string, m string, pl bytes.Buffer) (io.ReadCloser
 		log.Printf("[ERROR][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj:request error %#v\n", err)
 		return nil, err
 	}
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj:buffer %#v\n", pl.String())
+	log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: Buffer %#v\n", pl.String())
 	req.SetBasicAuth(c.User, c.Password)
 	switch m {
 	case "GET":
@@ -175,35 +174,34 @@ func (c *Client) httpRequest(p string, m string, pl bytes.Buffer) (io.ReadCloser
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: Request before that run %#v\n", req)
 	response, err := c.Client.Do(req)
 	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj:response error %#v\n", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: Response error %#v\n", err)
 		return nil, err
 	}
 	if response.StatusCode != http.StatusOK && response.StatusCode != http.StatusCreated && response.StatusCode != http.StatusNoContent {
 		responseBody := new(bytes.Buffer)
 		_, err := responseBody.ReadFrom(response.Body)
 		if err != nil {
-			log.Printf("[ERROR][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj:respBody %#v\n", responseBody)
+			log.Printf("[ERROR][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: ResponseBody RAW %#v\n", responseBody)
 			return response.Body, err
 		}
 		log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: Response Body before %#v\n", responseBody.String())
 		var vmerror VmError
 		err = json.NewDecoder(responseBody).Decode(&vmerror)
-		log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: Response Body %#v\n", responseBody)
 		if err != nil {
 			log.Printf("[ERROR][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Message: I can't read the json structure %s", err)
 			return nil, err
 		}
-		log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: ErrorCode: %#v %#v %#v\n", vmerror.Code, response.StatusCode, vmerror.Message)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: ErrorCode: %#v %#v %#v\n", vmerror.Code, response.StatusCode, vmerror.Message)
 		return response.Body, errors.New(vmerror.Message)
 	}
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj:response %#v\n", response)
+	log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: Response RAW %#v\n", response)
 	return response.Body, err
 }
 
 // requestPath method show the URL to the request of httpClient.
-//Input:
+// Input:
 // p: string just the path of the URL.
-//Return:
+// Return:
 // string with the complete URL to access
 func (c *Client) requestPath(p string) string {
 	r := fmt.Sprintf("%s/%s", c.BaseURL, p)

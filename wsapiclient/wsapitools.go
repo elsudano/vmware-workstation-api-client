@@ -3,8 +3,8 @@ package wsapiclient
 import (
 	"bytes"
 	"encoding/json"
-	"io/ioutil"
 	"log"
+	"os"
 
 	vmx "github.com/johlandabee/govmx"
 )
@@ -72,7 +72,7 @@ func GetVM(c *Client, i string) (*MyVm, error) {
 // Output: string, vmx.VirtualMachine structure, and error if you obtain some error in the function
 func GetVMFromFile(p string) (vmx.VirtualMachine, error) {
 	vm := new(vmx.VirtualMachine)
-	data, err := ioutil.ReadFile(p)
+	data, err := os.ReadFile(p)
 	if err != nil {
 		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetVMFromFile Message: Failed %s, please make sure the config file exists", err)
 		return *vm, err
@@ -100,7 +100,7 @@ func SetVMToFile(vm vmx.VirtualMachine, p string) error {
 		return err
 	}
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: SetVMToFile Obj: Data after read vm %#v\n", string(data))
-	err = ioutil.WriteFile(p, data, 0644)
+	err = os.WriteFile(p, data, 0644)
 	if err != nil {
 		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: SetVMToFile Message: Failed writing in file %s, please make sure the config file exists", err)
 		return err
@@ -176,7 +176,7 @@ func SetDisplayName(p string, v string) error {
 // n: string with the denomination, d: string with the description err: variable with error if occur
 func SetNameDescription(p string, n string, d string) error {
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: SetNameDescription Message: parameters %#v, %#v, %#v", p, n, d)
-	data, err := ioutil.ReadFile(p)
+	data, err := os.ReadFile(p)
 	if err != nil {
 		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: SetNameDescription Message: Failed opening file %s, please make sure the config file exists", err)
 		return err
@@ -200,7 +200,7 @@ func SetNameDescription(p string, n string, d string) error {
 		return err
 	}
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: SetNameDescription Obj: Data File %#v\n", string(data))
-	err = ioutil.WriteFile(p, data, 0644)
+	err = os.WriteFile(p, data, 0644)
 	if err != nil {
 		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: SetNameDescription Message: Failed writing in file %s, please make sure the config file exists", err)
 		return err
@@ -237,9 +237,5 @@ func (c *Client) SetParameter(i string, p string, v string) error {
 		return err
 	}
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: SetParameter Obj:Response Body %#v\n", responseBody.String())
-	// err = json.NewDecoder(responseBody).Decode(&vm)
-	if err != nil {
-		return err
-	}
-	return err
+	return nil
 }
