@@ -20,12 +20,12 @@ func GetVM(c *Client, i string) (*MyVm, error) {
 	// --------- This Block read the path and the ID of the vm in order to load in the function --------- {{{
 	response, err := c.httpRequest("vms", "GET", bytes.Buffer{})
 	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: ReadVM Message: The request at the server API failed %s", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetVM Message: The request at the server API failed %s", err)
 		return nil, err
 	}
 	err = json.NewDecoder(response).Decode(&vms)
 	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: ReadVM Message: I can't read the json structure %s", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetVM Message: I can't read the json structure %s", err)
 		return nil, err
 	}
 	for tempvm, value := range vms {
