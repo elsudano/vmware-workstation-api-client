@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	libraryVersion  = "1.0.9"
+	libraryVersion  = "1.0.10"
 	defaultUser     = "admin"
 	defaultPassword = "Adm1n#00"
 	defaultBaseURL  = "https://localhost:8697/api"
