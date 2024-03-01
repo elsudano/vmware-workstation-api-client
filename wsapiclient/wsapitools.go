@@ -14,55 +14,93 @@ import (
 func GetVM(c *Client, i string) (*MyVm, error) {
 	var vms []MyVm
 	var vm MyVm
+	var tmpparam ParamPayload
 	// If you want see the path of the VM it's necessary getting all VMs
 	// because the API of VmWare Workstation doesn't permit see this the another way
+	// --------- This Block read the path and the ID of the vm in order to load in the function --------- {{{
 	response, err := c.httpRequest("vms", "GET", bytes.Buffer{})
 	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetVM Message: The request at the server API failed %s", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: ReadVM Message: The request at the server API failed %s", err)
 		return nil, err
 	}
 	err = json.NewDecoder(response).Decode(&vms)
 	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetVM Message: I can't read the json structure %s", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: ReadVM Message: I can't read the json structure %s", err)
 		return nil, err
 	}
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: GetVM Obj: List of VMs %#v\n", vms)
 	for tempvm, value := range vms {
 		if value.IdVM == i {
 			vm = vms[tempvm]
 		}
 	}
-
-	// vm.Denomination, err = GetDisplayName(vm.Path)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// vm.Description, err = GetAnnotation(vm.Path)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	response, err = c.httpRequest("vms/"+i, "GET", bytes.Buffer{})
+	// }}}
+	// --------- This Block read the propierties of the VM in order to load --------- {{{
+	response, err = c.httpRequest("vms/"+vm.IdVM, "GET", bytes.Buffer{})
 	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetVM Message: The request at the server API failed %s", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetVM Obj: Request Error trying get information %#v\n", err)
 		return nil, err
 	}
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: GetVM Obj:Body of VM %#v\n", response)
+	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: GetVM Obj: Response raw get information %#v\n", response)
 	err = json.NewDecoder(response).Decode(&vm)
 	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetVM Message: I can't read the json structure %s", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetVM Obj: Response Error trying get information %#v\n", err)
 		return nil, err
 	}
-	response, err = c.httpRequest("vms/"+i+"/power", "GET", bytes.Buffer{})
+	// }}
+	// --------- This Block read the status of power of the vm --------- {{{
+	response, err = c.httpRequest("vms/"+vm.IdVM+"/power", "GET", bytes.Buffer{})
 	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetVM Message: The request at the server API failed %s", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetVM Obj: Request Error in power status %#v\n", err)
 		return nil, err
 	}
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: GetVM Obj:Body of power %#v\n", response)
+	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: GetVM Obj: Response Body power status %#v\n", response)
 	err = json.NewDecoder(response).Decode(&vm)
 	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetVM Message: I can't read the json structure %s", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetVM Obj: Response Error in power status %#v\n", err)
 		return nil, err
 	}
+	// }}
+	// --------- This block read the denomination and description of the vm --------- {{{
+	response, err = c.httpRequest("vms/"+vm.IdVM+"/params/displayName", "GET", bytes.Buffer{})
+	if err != nil {
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetVM Obj: Request trying get denomination %#v\n", err)
+		return nil, err
+	}
+	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: GetVM Obj: Response trying get denomination %#v\n", response)
+	err = json.NewDecoder(response).Decode(&tmpparam)
+	if err != nil {
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetVM Obj: Response Error trying get denomination %#v\n", err)
+		return nil, err
+	}
+	vm.Denomination = tmpparam.Value
+	response, err = c.httpRequest("vms/"+vm.IdVM+"/params/annotation", "GET", bytes.Buffer{})
+	if err != nil {
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetVM Obj: Request trying get description %#v\n", err)
+		return nil, err
+	}
+	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: GetVM Obj: Response trying get description %#v\n", response)
+	err = json.NewDecoder(response).Decode(&tmpparam)
+	if err != nil {
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetVM Obj: Response Error trying get description %#v\n", err)
+		return nil, err
+	}
+	vm.Description = tmpparam.Value
+	// }}}
+	// --------- This Block read the IP information --------- {{{
+	// we have that catch the error about of the VM is poweroff
+	response, err = c.httpRequest("vms/"+vm.IdVM+"/ip", "GET", bytes.Buffer{})
+	if err != nil {
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetVM Obj: Request trying get IP %#v\n", err)
+		return nil, err
+	}
+	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: GetVM Obj: Response trying get IP %#v\n", response)
+	err = json.NewDecoder(response).Decode(&vm)
+	if err != nil {
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetVM Obj: Response Error trying get IP %#v\n", err)
+		return nil, err
+	}
+	// }}}
+	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: GetVM Obj: VM %#v\n", vm)
 	return &vm, nil
 }
 

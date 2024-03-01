@@ -17,6 +17,7 @@ type MyVm struct {
 	}
 	PowerStatus string `json:"power_state"`
 	Memory      int    `json:"memory"`
+	Ip          string `json:"ip"`
 }
 
 // This struct is for create a VM, just for create because the API needs
@@ -101,7 +102,6 @@ func (c *Client) GetAllVMs() ([]MyVm, error) {
 // m: int with the number of memory in the VM
 func (c *Client) CreateVM(s string, n string, d string, p int, m int) (*MyVm, error) {
 	// --------- Preparing the request --------- {{{
-	var vms []MyVm
 	var vm MyVm
 	requestBody := new(bytes.Buffer)
 	var tempDataVM CreatePayload
@@ -137,38 +137,8 @@ func (c *Client) CreateVM(s string, n string, d string, p int, m int) (*MyVm, er
 		return nil, err
 	}
 	// }}}
-	// If you want see the path of the VM it's necessary getting all VMs
-	// because the API of VmWare Workstation doesn't permit see this the another way
-	// --------- Read the path and the ID of the vm in order to load in the function --------- {{{
-	response, err = c.httpRequest("vms", "GET", bytes.Buffer{})
-	if err != nil {
-		log.Printf("[WSAPICLI][ERROR] Fi: wsapivm.go Fu: CreateVM Message: The request at the server API failed %s", err)
-		return nil, err
-	}
-	err = json.NewDecoder(response).Decode(&vms)
-	if err != nil {
-		log.Printf("[WSAPICLI][ERROR] Fi: wsapivm.go Fu: CreateVM Message: I can't read the json structure %s", err)
-		return nil, err
-	}
-	for tempvm, value := range vms {
-		if value.IdVM == vm.IdVM {
-			vm = vms[tempvm]
-		}
-	}
-	// }}}
-	// --------- Preparing the next request in order to get the power status of the vm --------- {{{
-	response, err = c.httpRequest("vms/"+vm.IdVM+"/power", "GET", bytes.Buffer{})
-	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:Request Error in power status %#v\n", err)
-		return nil, err
-	}
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:Response Body power status %#v\n", response)
-	err = json.NewDecoder(response).Decode(&vm)
-	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:Response Error in power status %#v\n", err)
-		return nil, err
-	}
-	// }}}
+	// --------- This part read the Actual informations that we have about of the VM --------
+	GetVM(c, vm.IdVM)
 	// --------- We will change the values of the settings on the VM  --------- {{{
 	requestBody.Reset()
 	err = json.NewEncoder(requestBody).Encode(&tempSettingVM)
@@ -258,82 +228,7 @@ func (c *Client) CreateVM(s string, n string, d string, p int, m int) (*MyVm, er
 // Input: i: string with the ID of the VM, Return: pointer at the MyVm object
 // and error variable with the error if occurr
 func (c *Client) ReadVM(i string) (*MyVm, error) {
-	var vms []MyVm
-	var vm MyVm
-	var tmpparam ParamPayload
-	// If you want see the path of the VM it's necessary getting all VMs
-	// because the API of VmWare Workstation doesn't permit see this the another way
-	// --------- Read the path and the ID of the vm in order to load in the function --------- {{{
-	response, err := c.httpRequest("vms", "GET", bytes.Buffer{})
-	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: ReadVM Message: The request at the server API failed %s", err)
-		return nil, err
-	}
-	err = json.NewDecoder(response).Decode(&vms)
-	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: ReadVM Message: I can't read the json structure %s", err)
-		return nil, err
-	}
-	for tempvm, value := range vms {
-		if value.IdVM == i {
-			vm = vms[tempvm]
-		}
-	}
-	// }}}
-	// --------- Read the propierties of the VM in order to load --------- {{{
-	response, err = c.httpRequest("vms/"+vm.IdVM, "GET", bytes.Buffer{})
-	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: ReadVM Obj:Request Error trying get information %#v\n", err)
-		return nil, err
-	}
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: ReadVM Obj:response raw get information %#v\n", response)
-	err = json.NewDecoder(response).Decode(&vm)
-	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: ReadVM Obj:Response Error trying get information %#v\n", err)
-		return nil, err
-	}
-	// }}
-	// --------- Read the status of power of the vm --------- {{{
-	response, err = c.httpRequest("vms/"+vm.IdVM+"/power", "GET", bytes.Buffer{})
-	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: ReadVM Obj:Request Error in power status %#v\n", err)
-		return nil, err
-	}
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: ReadVM Obj:Response Body power status %#v\n", response)
-	err = json.NewDecoder(response).Decode(&vm)
-	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: ReadVM Obj:Response Error in power status %#v\n", err)
-		return nil, err
-	}
-	// }}
-	// --------- The last part is read the denomination and description of the vm --------- {{{
-	response, err = c.httpRequest("vms/"+vm.IdVM+"/params/displayName", "GET", bytes.Buffer{})
-	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: ReadVM Obj:trying get denomination %#v\n", err)
-		return nil, err
-	}
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: ReadVM Obj:Response trying get denomination %#v\n", response)
-	err = json.NewDecoder(response).Decode(&tmpparam)
-	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: ReadVM Obj:Response Error trying get denomination %#v\n", err)
-		return nil, err
-	}
-	vm.Denomination = tmpparam.Value
-	response, err = c.httpRequest("vms/"+vm.IdVM+"/params/annotation", "GET", bytes.Buffer{})
-	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: ReadVM Obj:trying get description %#v\n", err)
-		return nil, err
-	}
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: ReadVM Obj:Response trying get description %#v\n", response)
-	err = json.NewDecoder(response).Decode(&tmpparam)
-	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: ReadVM Obj:Response Error trying get description %#v\n", err)
-		return nil, err
-	}
-	vm.Description = tmpparam.Value
-	// }}
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: ReadVM Obj:VM %#v\n", vm)
-	return &vm, nil
+	return GetVM(c, i)
 }
 
 // UpdateVM method to update a VM in VmWare Worstation Input:
@@ -402,6 +297,12 @@ func (c *Client) RegisterVM(n string, p string) (*MyVm, error) {
 		return nil, err
 	}
 	return &vm, err
+}
+
+// GetNetwork Method to get all the Network information of the instance
+// i: string with the ID of the VM to get Network information,
+func (c *Client) GetNetwork(i string) error {
+	return nil
 }
 
 // PowerSwitch method that permit you change the state of the instance, so you will change
