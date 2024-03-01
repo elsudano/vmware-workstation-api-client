@@ -18,9 +18,13 @@ func GetVM(c *Client, i string) (*MyVm, error) {
 	// If you want see the path of the VM it's necessary getting all VMs
 	// because the API of VmWare Workstation doesn't permit see this the another way
 	// --------- This Block read the path and the ID of the vm in order to load in the function --------- {{{
-	response, err := c.httpRequest("vms", "GET", bytes.Buffer{})
+	response, vmerror, err := c.httpRequest("vms", "GET", bytes.Buffer{})
 	if err != nil {
 		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetVM Message: The request at the server API failed %s", err)
+		return nil, err
+	}
+	if vmerror.Code != 0 {
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetVM Message: The 1 error API was %d %s", vmerror.Code, vmerror.Message)
 		return nil, err
 	}
 	err = json.NewDecoder(response).Decode(&vms)
@@ -35,9 +39,13 @@ func GetVM(c *Client, i string) (*MyVm, error) {
 	}
 	// }}}
 	// --------- This Block read the propierties of the VM in order to load --------- {{{
-	response, err = c.httpRequest("vms/"+vm.IdVM, "GET", bytes.Buffer{})
+	response, vmerror, err = c.httpRequest("vms/"+vm.IdVM, "GET", bytes.Buffer{})
 	if err != nil {
 		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetVM Obj: Request Error trying get information %#v\n", err)
+		return nil, err
+	}
+	if vmerror.Code != 0 {
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetVM Message: The 2 error API was %d %s", vmerror.Code, vmerror.Message)
 		return nil, err
 	}
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: GetVM Obj: Response raw get information %#v\n", response)
@@ -48,9 +56,13 @@ func GetVM(c *Client, i string) (*MyVm, error) {
 	}
 	// }}
 	// --------- This Block read the status of power of the vm --------- {{{
-	response, err = c.httpRequest("vms/"+vm.IdVM+"/power", "GET", bytes.Buffer{})
+	response, vmerror, err = c.httpRequest("vms/"+vm.IdVM+"/power", "GET", bytes.Buffer{})
 	if err != nil {
 		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetVM Obj: Request Error in power status %#v\n", err)
+		return nil, err
+	}
+	if vmerror.Code != 0 {
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetVM Message: The 3 error API was %d %s", vmerror.Code, vmerror.Message)
 		return nil, err
 	}
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: GetVM Obj: Response Body power status %#v\n", response)
@@ -61,9 +73,13 @@ func GetVM(c *Client, i string) (*MyVm, error) {
 	}
 	// }}
 	// --------- This block read the denomination and description of the vm --------- {{{
-	response, err = c.httpRequest("vms/"+vm.IdVM+"/params/displayName", "GET", bytes.Buffer{})
+	response, vmerror, err = c.httpRequest("vms/"+vm.IdVM+"/params/displayName", "GET", bytes.Buffer{})
 	if err != nil {
 		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetVM Obj: Request trying get denomination %#v\n", err)
+		return nil, err
+	}
+	if vmerror.Code != 0 {
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetVM Message: The 4 error API was %d %s", vmerror.Code, vmerror.Message)
 		return nil, err
 	}
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: GetVM Obj: Response trying get denomination %#v\n", response)
@@ -73,9 +89,13 @@ func GetVM(c *Client, i string) (*MyVm, error) {
 		return nil, err
 	}
 	vm.Denomination = tmpparam.Value
-	response, err = c.httpRequest("vms/"+vm.IdVM+"/params/annotation", "GET", bytes.Buffer{})
+	response, vmerror, err = c.httpRequest("vms/"+vm.IdVM+"/params/annotation", "GET", bytes.Buffer{})
 	if err != nil {
 		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetVM Obj: Request trying get description %#v\n", err)
+		return nil, err
+	}
+	if vmerror.Code != 0 {
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetVM Message: The 5 error API was %d %s", vmerror.Code, vmerror.Message)
 		return nil, err
 	}
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: GetVM Obj: Response trying get description %#v\n", response)
@@ -88,16 +108,18 @@ func GetVM(c *Client, i string) (*MyVm, error) {
 	// }}}
 	// --------- This Block read the IP information --------- {{{
 	// we have that catch the error about of the VM is poweroff
-	response, err = c.httpRequest("vms/"+vm.IdVM+"/ip", "GET", bytes.Buffer{})
+	response, vmerror, err = c.httpRequest("vms/"+vm.IdVM+"/ip", "GET", bytes.Buffer{})
 	if err != nil {
 		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetVM Obj: Request trying get IP %#v\n", err)
 		return nil, err
 	}
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: GetVM Obj: Response trying get IP %#v\n", response)
-	err = json.NewDecoder(response).Decode(&vm)
-	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetVM Obj: Response Error trying get IP %#v\n", err)
-		return nil, err
+	if vmerror.Code == 0 {
+		err = json.NewDecoder(response).Decode(&vm)
+		if err != nil {
+			log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetVM Obj: Response Error trying get IP %#v\n", err)
+			return nil, err
+		}
 	}
 	// }}}
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: GetVM Obj: VM %#v\n", vm)
@@ -263,8 +285,12 @@ func (c *Client) SetParameter(i string, p string, v string) error {
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: SetParameter Obj:Request %#v\n", request)
 	requestBody.Write(request)
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: SetParameter Obj:Request Body %#v\n", requestBody.String())
-	response, err := c.httpRequest("/vms/"+i+"/configparams", "PUT", *requestBody)
+	response, vmerror, err := c.httpRequest("/vms/"+i+"/configparams", "PUT", *requestBody)
 	if err != nil {
+		return err
+	}
+	if vmerror.Code != 0 {
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetVM Message: The 7 error API was %d %s", vmerror.Code, vmerror.Message)
 		return err
 	}
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: SetParameter Obj:response raw %#v\n", response)

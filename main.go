@@ -159,7 +159,7 @@ func main() {
 		VM.Memory)
 
 	// We want to energize the instance in order to test the PowerSwitch method
-	err = client.PowerSwitch(VM.IdVM, "on") // the id it's a test
+	VM, err = client.PowerSwitch(VM.IdVM, "on") // the id it's a test
 	if err != nil {
 		log.Printf("[ERROR][MAIN] Fi: main.go Task: Energizing VM Error %#v\n", err)
 	}
@@ -171,12 +171,13 @@ func main() {
 	if err != nil {
 		log.Printf("[ERROR][MAIN] Fi: main.go Task: Third Reading VM Error %#v\n", err)
 	}
-	fmt.Printf("ID: %v\nPower Status: %s \n\n",
+	fmt.Printf("ID: %v\nPower Status: %s\nIP: %s \n\n",
 		VM.IdVM,
-		VM.PowerStatus)
+		VM.PowerStatus,
+		VM.Ip)
 
 	// We shutdown the instance in order to test the PowerSwitch method
-	err = client.PowerSwitch(VM.IdVM, "off") // the id it's a test
+	VM, err = client.PowerSwitch(VM.IdVM, "off") // the id it's a test
 	if err != nil {
 		log.Printf("[ERROR][MAIN] Fi: main.go Task: Shutting-down VM Error %#v\n", err)
 	}

@@ -43,50 +43,79 @@ type ParamPayload struct {
 func (c *Client) GetAllVMs() ([]MyVm, error) {
 	var vms []MyVm
 	var tmpparam ParamPayload
-	responseBody, err := c.httpRequest("vms", "GET", bytes.Buffer{})
+	responseBody, vmerror, err := c.httpRequest("vms", "GET", bytes.Buffer{})
 	if err != nil {
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: GetAllVMs M: The request error: %#v", err)
+		return nil, err
+	}
+	if vmerror.Code != 0 {
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: GetAllVMs M: The 1 error API was %d %s", vmerror.Code, vmerror.Message)
 		return nil, err
 	}
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: GetAllVMs Obj: Response Body%#v\n", responseBody)
 	err = json.NewDecoder(responseBody).Decode(&vms)
 	if err != nil {
-		log.Printf("[WSAPICLI][ERROR] Fi: wsapivm.go Fu: GetAllVMs Message: I can't read the json structure %s", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: GetAllVMs M: I can't read the json structure %s", err)
 		return nil, err
 	}
 
 	for vm, value := range vms {
-		responseBody, err := c.httpRequest("vms/"+value.IdVM, "GET", bytes.Buffer{})
+		responseBody, vmerror, err := c.httpRequest("vms/"+value.IdVM, "GET", bytes.Buffer{})
 		if err != nil {
+			log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: GetAllVMs M: The request error: %#v", err)
+			return nil, err
+		}
+		if vmerror.Code != 0 {
+			log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: GetAllVMs M: The 2 error API was %d %s", vmerror.Code, vmerror.Message)
 			return nil, err
 		}
 		err = json.NewDecoder(responseBody).Decode(&vms[vm])
 		if err != nil {
+			log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: GetAllVMs M: The Decoder error: %#v", err)
 			return nil, err
 		}
-		responseBody, err = c.httpRequest("vms/"+value.IdVM+"/power", "GET", bytes.Buffer{})
+		responseBody, vmerror, err = c.httpRequest("vms/"+value.IdVM+"/power", "GET", bytes.Buffer{})
 		if err != nil {
+			log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: GetAllVMs M: The request error: %#v", err)
+			return nil, err
+		}
+		if vmerror.Code != 0 {
+			log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: GetAllVMs M: The 3 error API was %d %s", vmerror.Code, vmerror.Message)
 			return nil, err
 		}
 		err = json.NewDecoder(responseBody).Decode(&vms[vm])
 		if err != nil {
+			log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: GetAllVMs M: The Decoder error: %#v", err)
 			return nil, err
 		}
-		responseBody, err = c.httpRequest("vms/"+value.IdVM+"/params/displayName", "GET", bytes.Buffer{})
+		responseBody, vmerror, err = c.httpRequest("vms/"+value.IdVM+"/params/displayName", "GET", bytes.Buffer{})
 		if err != nil {
+			log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: GetAllVMs M: The request error: %#v", err)
+			return nil, err
+		}
+		if vmerror.Code != 0 {
+			log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: GetAllVMs M: The 4 error API was %d %s", vmerror.Code, vmerror.Message)
 			return nil, err
 		}
 		err = json.NewDecoder(responseBody).Decode(&tmpparam)
 		vms[vm].Denomination = tmpparam.Value
 		if err != nil {
+			log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: GetAllVMs M: The Decoder error: %#v", err)
 			return nil, err
 		}
-		responseBody, err = c.httpRequest("vms/"+value.IdVM+"/params/annotation", "GET", bytes.Buffer{})
+		responseBody, vmerror, err = c.httpRequest("vms/"+value.IdVM+"/params/annotation", "GET", bytes.Buffer{})
 		if err != nil {
+			log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: GetAllVMs M: The request error: %#v", err)
+			return nil, err
+		}
+		if vmerror.Code != 0 {
+			log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: GetAllVMs M: The 5 error API was %d %s", vmerror.Code, vmerror.Message)
 			return nil, err
 		}
 		err = json.NewDecoder(responseBody).Decode(&tmpparam)
 		vms[vm].Description = tmpparam.Value
 		if err != nil {
+			log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: GetAllVMs M: The Decoder error: %#v", err)
 			return nil, err
 		}
 	}
@@ -119,9 +148,13 @@ func (c *Client) CreateVM(s string, n string, d string, p int, m int) (*MyVm, er
 	// }}}
 	// -------- Making the request in order to create the new vm --------- {{{
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:Request Body %#v\n", requestBody.String())
-	response, err := c.httpRequest("vms", "POST", *requestBody)
+	response, vmerror, err := c.httpRequest("vms", "POST", *requestBody)
 	if err != nil {
 		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:Request Error %#v\n", err)
+		return nil, err
+	}
+	if vmerror.Code != 0 {
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: GetAllVMs M: The 1 error API was %d %s", vmerror.Code, vmerror.Message)
 		return nil, err
 	}
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:response raw %#v\n", response)
@@ -134,6 +167,7 @@ func (c *Client) CreateVM(s string, n string, d string, p int, m int) (*MyVm, er
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:Response Body %#v\n", responseBody.String())
 	err = json.NewDecoder(responseBody).Decode(&vm)
 	if err != nil {
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj: Decode Error %#v\n", err)
 		return nil, err
 	}
 	// }}}
@@ -147,9 +181,13 @@ func (c *Client) CreateVM(s string, n string, d string, p int, m int) (*MyVm, er
 		return nil, err
 	}
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:Request Body %#v\n", requestBody.String())
-	response, err = c.httpRequest("vms/"+vm.IdVM, "PUT", *requestBody)
+	response, vmerror, err = c.httpRequest("vms/"+vm.IdVM, "PUT", *requestBody)
 	if err != nil {
 		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:Request Error %#v\n", err)
+		return nil, err
+	}
+	if vmerror.Code != 0 {
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: GetAllVMs M: The 2 error API was %d %s", vmerror.Code, vmerror.Message)
 		return nil, err
 	}
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:Response RAW %#v\n", response)
@@ -162,6 +200,7 @@ func (c *Client) CreateVM(s string, n string, d string, p int, m int) (*MyVm, er
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:Response Body %#v\n", responseBody.String())
 	err = json.NewDecoder(responseBody).Decode(&vm)
 	if err != nil {
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj: Decoder Error %#v\n", err)
 		return nil, err
 	}
 	// }}}
@@ -248,12 +287,18 @@ func (c *Client) UpdateVM(i string, n string, d string, p int, m int) (*MyVm, er
 	}
 	buffer.Write(request)
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: UpdateVM Obj: Request Body %#v\n", buffer.String())
-	_, err = c.httpRequest("vms/"+i, "PUT", buffer)
+	_, vmerror, err := c.httpRequest("vms/"+i, "PUT", buffer)
 	if err != nil {
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: UpdateVM Obj: Request Error %#v\n", err)
+		return nil, err
+	}
+	if vmerror.Code != 0 {
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: UpdateVM M: The 1 error API was %d %s", vmerror.Code, vmerror.Message)
 		return nil, err
 	}
 	vm, err := GetVM(c, i)
 	if err != nil {
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: UpdateVM Obj: Get Info Error %#v\n", err)
 		return nil, err
 	}
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: UpdateVM Obj: VM before %#v\n", vm)
@@ -272,18 +317,21 @@ func (c *Client) RegisterVM(n string, p string) (*MyVm, error) {
 		"path": p,
 	})
 	if err != nil {
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: RegisterVM M: Error preparing the request %#v\n", request)
 		return nil, err
 	}
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: RegisterVM Obj:Request %#v\n", request)
+	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: RegisterVM Obj: Body Request %#v\n", request)
 	requestBody.Write(request)
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: RegisterVM Obj:Request Body %#v\n", requestBody.String())
-	response, err := c.httpRequest("vms/registration", "POST", *requestBody)
+	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: RegisterVM Obj: Prepared Request Body %#v\n", requestBody.String())
+	response, vmerror, err := c.httpRequest("vms/registration", "POST", *requestBody)
 	if err != nil {
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: RegisterVM M: Requested Body %#v\n", requestBody.String())
 		return nil, err
 	}
-	// Piensa si tiene que ser en este punto en la parte de httpRequest
-	// tienes que poner en este punto un control de errores de lo que responde VMW
-	// si es diferente de create, ok, o delete que de un error y ponga a nil la vm y salga
+	if vmerror.Code != 0 {
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: RegisterVM M: The 1 error API was %d %s", vmerror.Code, vmerror.Message)
+		return nil, err
+	}
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: RegisterVM Obj:response raw %#v\n", response)
 	responseBody := new(bytes.Buffer)
 	_, err = responseBody.ReadFrom(response)
@@ -294,6 +342,7 @@ func (c *Client) RegisterVM(n string, p string) (*MyVm, error) {
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: RegisterVM Obj:Response Body %#v\n", responseBody.String())
 	err = json.NewDecoder(responseBody).Decode(&vm)
 	if err != nil {
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: RegisterVM Obj: Decode Error %#v\n", err)
 		return nil, err
 	}
 	return &vm, err
@@ -301,37 +350,50 @@ func (c *Client) RegisterVM(n string, p string) (*MyVm, error) {
 
 // GetNetwork Method to get all the Network information of the instance
 // i: string with the ID of the VM to get Network information,
-func (c *Client) GetNetwork(i string) error {
-	return nil
+func (c *Client) GetNetwork(i string) (*MyVm, error) {
+	var vm MyVm
+	return &vm, nil
 }
 
 // PowerSwitch method that permit you change the state of the instance, so you will change
 // from power-off to power-on the state of the instance.
 // i: string with the ID of the VM to change the state,
 // s: string with the state that will want between on, off, reset
-func (c *Client) PowerSwitch(i string, s string) error {
+func (c *Client) PowerSwitch(i string, s string) (*MyVm, error) {
+	vm, err := GetVM(c, i)
+	if err != nil {
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: PowerSwitch Obj: Error when Get VM %#v\n", err)
+		return nil, err
+	}
 	requestBody := bytes.NewBufferString(s)
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: PowerSwitch Obj: Request option %#v\n", requestBody.String())
-	response, err := c.httpRequest("vms/"+i+"/power", "PUT", *requestBody)
+	response, vmerror, err := c.httpRequest("vms/"+i+"/power", "PUT", *requestBody)
 	if err != nil {
 		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: PowerSwitch Obj: Response RAW %#v\n", err)
-		return err
+		return nil, err
 	}
-	responseBody := new(bytes.Buffer)
-	_, err = responseBody.ReadFrom(response)
+	if vmerror.Code != 0 {
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: PowerSwitch M: The 1 error API was %d %s", vmerror.Code, vmerror.Message)
+		return nil, err
+	}
+	err = json.NewDecoder(response).Decode(&vm)
 	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: PowerSwitch Obj: Response Body RAW %#v, %#v\n", err, responseBody.String())
-		return err
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: PowerSwitch Obj: Response Body RAW %#v, %#v\n", err, response)
+		return nil, err
 	}
-	return nil
+	return vm, nil
 }
 
 // DeleteVM method to delete a VM in VmWare Worstation Input:
 // i: string with the ID of the VM to update
 func (c *Client) DeleteVM(i string) error {
-	response, err := c.httpRequest("vms/"+i, "DELETE", bytes.Buffer{})
+	response, vmerror, err := c.httpRequest("vms/"+i, "DELETE", bytes.Buffer{})
 	if err != nil {
 		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: DeleteVM Obj:%#v\n", err)
+		return err
+	}
+	if vmerror.Code != 0 {
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: DeleteVM M: The 1 error API was %d %s", vmerror.Code, vmerror.Message)
 		return err
 	}
 	responseBody := new(bytes.Buffer)
