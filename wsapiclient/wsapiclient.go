@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"crypto/tls"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -149,11 +148,12 @@ func (c *Client) ConfigCli(a string, u string, p string, i bool, d bool) {
 // httpRequest method return a body of the response the API REST server, Input:
 // p: URL path of the API REST of the sever, m: Type of method GET, PUT, POST, DELETE
 // pl: bytes.Buffer for read the Body of the request, Return: cl:
-func (c *Client) httpRequest(p string, m string, pl bytes.Buffer) (io.ReadCloser, error) {
+func (c *Client) httpRequest(p string, m string, pl bytes.Buffer) (io.ReadCloser, VmError, error) {
+	var vmerror VmError
 	req, err := http.NewRequest(m, c.requestPath(p), &pl)
 	if err != nil {
 		log.Printf("[ERROR][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj:request error %#v\n", err)
-		return nil, err
+		return nil, vmerror, err
 	}
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: Buffer %#v\n", pl.String())
 	req.SetBasicAuth(c.User, c.Password)
@@ -175,27 +175,26 @@ func (c *Client) httpRequest(p string, m string, pl bytes.Buffer) (io.ReadCloser
 	response, err := c.Client.Do(req)
 	if err != nil {
 		log.Printf("[ERROR][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: Response error %#v\n", err)
-		return nil, err
+		return nil, vmerror, err
 	}
 	if response.StatusCode != http.StatusOK && response.StatusCode != http.StatusCreated && response.StatusCode != http.StatusNoContent {
 		responseBody := new(bytes.Buffer)
 		_, err := responseBody.ReadFrom(response.Body)
 		if err != nil {
 			log.Printf("[ERROR][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: ResponseBody RAW %#v\n", responseBody)
-			return response.Body, err
+			return response.Body, vmerror, err
 		}
 		log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: Response Body before %#v\n", responseBody.String())
-		var vmerror VmError
 		err = json.NewDecoder(responseBody).Decode(&vmerror)
 		if err != nil {
 			log.Printf("[ERROR][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Message: I can't read the json structure %s", err)
-			return nil, err
+			return nil, vmerror, err
 		}
 		log.Printf("[ERROR][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: ErrorCode: %#v %#v %#v\n", vmerror.Code, response.StatusCode, vmerror.Message)
-		return response.Body, errors.New(vmerror.Message)
+		return response.Body, vmerror, err
 	}
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: Response RAW %#v\n", response)
-	return response.Body, err
+	return response.Body, vmerror, err
 }
 
 // requestPath method show the URL to the request of httpClient.
