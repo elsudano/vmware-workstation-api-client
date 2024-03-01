@@ -79,12 +79,13 @@ func main() {
 	// 	log.Printf("[ERROR][MAIN] Fi: main.go Task: Listing VMs Error %#v\n", err)
 	// }
 	// for _, value := range AllVMs {
-	// 	fmt.Printf("ID: %v\nPath: %v\nDenomination: %v\nDescription: %s\nPower Status: %s\nProcessor: %d\nMemory: %d \n\n",
+	// 	fmt.Printf("ID: %v\nPath: %v\nDenomination: %v\nDescription: %s\nPower Status: %s\nIp: %s\nProcessor: %d\nMemory: %d \n\n",
 	// 		value.IdVM,
 	// 		value.Path,
 	// 		value.Denomination,
 	// 		value.Description,
 	// 		value.PowerStatus,
+	// 		value.Ip,
 	// 		value.CPU.Processors,
 	// 		value.Memory)
 	// }
@@ -94,12 +95,13 @@ func main() {
 	if err != nil {
 		log.Printf("[ERROR][MAIN] Fi: main.go Task: Creating VMs Error %#v\n", err)
 	}
-	fmt.Printf("ID: %v\nPath: %v\nDenomination: %v\nDescription: %s\nPower Status: %s\nProcessor: %d\nMemory: %d \n\n",
+	fmt.Printf("ID: %v\nPath: %v\nDenomination: %v\nDescription: %s\nPower Status: %s\nIp: %s\nProcessor: %d\nMemory: %d \n\n",
 		VM.IdVM,
 		VM.Path,
 		VM.Denomination,
 		VM.Description,
 		VM.PowerStatus,
+		VM.Ip,
 		VM.CPU.Processors,
 		VM.Memory)
 
@@ -108,12 +110,13 @@ func main() {
 	if err != nil {
 		log.Printf("[ERROR][MAIN] Fi: main.go Task: First Reading VM Error %#v\n", err)
 	}
-	fmt.Printf("ID: %v\nPath: %v\nDenomination: %v\nDescription: %s\nPower Status: %s\nProcessor: %d\nMemory: %d \n\n",
+	fmt.Printf("ID: %v\nPath: %v\nDenomination: %v\nDescription: %s\nPower Status: %s\nIp: %s\nProcessor: %d\nMemory: %d \n\n",
 		VM.IdVM,
 		VM.Path,
 		VM.Denomination,
 		VM.Description,
 		VM.PowerStatus,
+		VM.Ip,
 		VM.CPU.Processors,
 		VM.Memory)
 
@@ -127,12 +130,13 @@ func main() {
 
 	// After to register the instance, we will update the values of the instance with new onece
 	VM, err = client.UpdateVM(VM.IdVM, "clone-test-copy-change", "esta es una prueba de llenadao de datos", 1, 512) // the id it's a test
-	fmt.Printf("ID: %v\nPath: %v\nDenomination: %v\nDescription: %s\nPower Status: %s\nProcessor: %d\nMemory: %d \n\n",
+	fmt.Printf("ID: %v\nPath: %v\nDenomination: %v\nDescription: %s\nPower Status: %s\nIp: %s\nProcessor: %d\nMemory: %d \n\n",
 		VM.IdVM,
 		VM.Path,
 		VM.Denomination,
 		VM.Description,
 		VM.PowerStatus,
+		VM.Ip,
 		VM.CPU.Processors,
 		VM.Memory)
 	if err != nil {
@@ -144,12 +148,13 @@ func main() {
 	if err != nil {
 		log.Printf("[ERROR][MAIN] Fi: main.go Task: Second Reading VM Error %#v\n", err)
 	}
-	fmt.Printf("ID: %v\nPath: %v\nDenomination: %v\nDescription: %s\nPower Status: %s\nProcessor: %d\nMemory: %d \n\n",
+	fmt.Printf("ID: %v\nPath: %v\nDenomination: %v\nDescription: %s\nPower Status: %s\nIp: %s\nProcessor: %d\nMemory: %d \n\n",
 		VM.IdVM,
 		VM.Path,
 		VM.Denomination,
 		VM.Description,
 		VM.PowerStatus,
+		VM.Ip,
 		VM.CPU.Processors,
 		VM.Memory)
 
