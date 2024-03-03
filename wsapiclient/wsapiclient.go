@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	libraryVersion  = "1.0.11"
+	libraryVersion  = "1.0.12"
 	defaultUser     = "Admin"
 	defaultPassword = "Adm1n#00"
 	defaultBaseURL  = "https://localhost:8697/api"
@@ -173,6 +173,7 @@ func (c *Client) httpRequest(p string, m string, pl bytes.Buffer) (io.ReadCloser
 	}
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: Request before that run %#v\n", req)
 	response, err := c.Client.Do(req)
+	log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: Response after run %#v\n", response)
 	if err != nil {
 		log.Printf("[ERROR][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: Response error %#v\n", err)
 		return nil, vmerror, err

@@ -58,7 +58,7 @@ build: ## Build the binary of the module
 	@go build -o $(DIRELEASES)$(BINARY)
 	@export GOPRIVATE=github.com/elsudano/vmware-workstation-api-client; go get github.com/elsudano/vmware-workstation-api-client@v$(VERSION)
 
-publish: build ## Build and Publish a new TAG in GitHub 
+publish: build ## Build and Publish a new TAG in GitHub
 	@git tag v$(VERSION)
 	@git add .
 	@git commit -m "feat: We have created the new version ($(VERSION)) of the API Client"
