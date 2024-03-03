@@ -172,7 +172,7 @@ func (c *Client) CreateVM(s string, n string, d string, p int, m int) (*MyVm, er
 	}
 	// }}}
 	// --------- This part read the Actual informations that we have about of the VM --------
-	GetVM(c, vm.IdVM)
+	c.GetVM(vm.IdVM)
 	// --------- We will change the values of the settings on the VM  --------- {{{
 	requestBody.Reset()
 	err = json.NewEncoder(requestBody).Encode(&tempSettingVM)
@@ -267,17 +267,18 @@ func (c *Client) CreateVM(s string, n string, d string, p int, m int) (*MyVm, er
 // Input: i: string with the ID of the VM, Return: pointer at the MyVm object
 // and error variable with the error if occurr
 func (c *Client) ReadVM(i string) (*MyVm, error) {
-	return GetVM(c, i)
+	return c.GetVM(i)
 }
 
 // UpdateVM method to update a VM in VmWare Worstation Input:
 // i: string with the ID of the VM to update, n: string with the denomination of VM
 // d: string with the description of the VM, p: int with the number of processors
-// m: int with the size of memory Output: pointer at the MyVm object
+// m: int with the size of memory, s: Power State desired
+// Output: pointer at the MyVm object
 // and error variable with the error if occurr
-func (c *Client) UpdateVM(i string, n string, d string, p int, m int) (*MyVm, error) {
+func (c *Client) UpdateVM(i string, n string, d string, p int, m int, s string) (*MyVm, error) {
 	var buffer bytes.Buffer
-	// there prepare the body request
+	// Here we are preparing the update of the Processors and Memory in the VM {{{
 	request, err := json.Marshal(map[string]int{
 		"processors": p,
 		"memory":     m,
@@ -296,7 +297,15 @@ func (c *Client) UpdateVM(i string, n string, d string, p int, m int) (*MyVm, er
 		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: UpdateVM M: The 1 error API was %d %s", vmerror.Code, vmerror.Message)
 		return nil, err
 	}
-	vm, err := GetVM(c, i)
+	// }}}
+	/// Here We are preparing update the Power State of teh VM {{{
+	_, err = c.PowerSwitch(i, s)
+	if err != nil {
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: UpdateVM Obj: Power Switch Error %#v\n", err)
+		return nil, err
+	}
+	// }}}
+	vm, err := c.GetVM(i)
 	if err != nil {
 		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: UpdateVM Obj: Get Info Error %#v\n", err)
 		return nil, err
@@ -360,7 +369,7 @@ func (c *Client) GetNetwork(i string) (*MyVm, error) {
 // i: string with the ID of the VM to change the state,
 // s: string with the state that will want between on, off, reset
 func (c *Client) PowerSwitch(i string, s string) (*MyVm, error) {
-	vm, err := GetVM(c, i)
+	vm, err := c.GetVM(i)
 	if err != nil {
 		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: PowerSwitch Obj: Error when Get VM %#v\n", err)
 		return nil, err

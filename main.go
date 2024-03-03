@@ -129,7 +129,7 @@ func main() {
 	time.Sleep(10 * time.Second)
 
 	// After to register the instance, we will update the values of the instance with new onece
-	VM, err = client.UpdateVM(VM.IdVM, "clone-test-copy-change", "esta es una prueba de llenadao de datos", 1, 512) // the id it's a test
+	VM, err = client.UpdateVM(VM.IdVM, "clone-test-copy-change", "esta es una prueba de llenadao de datos", 1, 512, "off") // the id it's a test
 	fmt.Printf("ID: %v\nPath: %v\nDenomination: %v\nDescription: %s\nPower Status: %s\nIp: %s\nProcessor: %d\nMemory: %d \n\n",
 		VM.IdVM,
 		VM.Path,

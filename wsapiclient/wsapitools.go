@@ -11,7 +11,7 @@ import (
 
 // GetVM Auxiliar function to get the data of the VM and don't repeat code
 // Input: c: pointer at the client of the API server, i: string with the ID yo VM
-func GetVM(c *Client, i string) (*MyVm, error) {
+func (c *Client) GetVM(i string) (*MyVm, error) {
 	var vms []MyVm
 	var vm MyVm
 	var tmpparam ParamPayload
