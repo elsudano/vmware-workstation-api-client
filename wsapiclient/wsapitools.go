@@ -9,6 +9,11 @@ import (
 	vmx "github.com/johlandabee/govmx"
 )
 
+// This struct is for get and put information about of any Power State of the VM
+type PowerStatePayload struct {
+	Value string `json:"power_state"`
+}
+
 // GetVM Auxiliar function to get the data of the VM and don't repeat code
 // Input: c: pointer at the client of the API server, i: string with the ID yo VM
 func (c *Client) GetVM(i string) (*MyVm, error) {
@@ -66,7 +71,9 @@ func (c *Client) GetVM(i string) (*MyVm, error) {
 		return nil, err
 	}
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: GetVM Obj: Response Body power status %#v\n", response)
-	err = json.NewDecoder(response).Decode(&vm)
+	var power_state_payload PowerStatePayload
+	err = json.NewDecoder(response).Decode(&power_state_payload)
+	vm.PowerStatus = PowerStateConversor(power_state_payload.Value)
 	if err != nil {
 		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetVM Obj: Response Error in power status %#v\n", err)
 		return nil, err
@@ -124,6 +131,21 @@ func (c *Client) GetVM(i string) (*MyVm, error) {
 	// }}}
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: GetVM Obj: VM %#v\n", vm)
 	return &vm, nil
+}
+
+// PowerStateConversor We have to create this method, because the API of th VMWare Workstation
+// change the values of the Power State of the instance, I mean, If I send "on" the API change
+// the value for powerOn, and obviusly that is a big problem
+// ops: The original Power State
+func PowerStateConversor(ops string) string {
+	switch ops {
+	case "poweredOn":
+		return "on"
+	case "poweredOff":
+		return "off"
+	default:
+		return "Invalid Power State"
+	}
 }
 
 // GetVMFromFile - With this function we can obtain a vmx.VirtualMachine structure
