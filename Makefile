@@ -56,6 +56,7 @@ api_test: ## Test API client and list all virtual machine of VmWare Workstation
 build: ## Build the binary of the module
 	@go get -u
 	@go build -o $(DIRELEASES)$(BINARY)
+	@export GOPRIVATE=github.com/elsudano/vmware-workstation-api-client; go get github.com/elsudano/vmware-workstation-api-client@v$(VERSION)
 
 publish: build ## Build and Publish a new TAG in GitHub 
 	@git tag v$(VERSION)
