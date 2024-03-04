@@ -54,6 +54,7 @@ api_test: ## Test API client and list all virtual machine of VmWare Workstation
 	@echo -e "in order to review the Debug or errors run: 'less debug.log'"
 
 build: ## Build the binary of the module
+	@git tag v$(VERSION)
 	@go get -u
 	@go build -o $(DIRELEASES)$(BINARY)
 
