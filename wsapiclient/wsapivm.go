@@ -403,6 +403,7 @@ func (c *Client) PowerSwitch(i string, s string) (*MyVm, error) {
 // DeleteVM method to delete a VM in VmWare Worstation Input:
 // i: string with the ID of the VM to update
 func (c *Client) DeleteVM(i string) error {
+	c.PowerSwitch(i, "off")
 	response, vmerror, err := c.httpRequest("vms/"+i, "DELETE", bytes.Buffer{})
 	if err != nil {
 		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: DeleteVM Obj:%#v\n", err)
