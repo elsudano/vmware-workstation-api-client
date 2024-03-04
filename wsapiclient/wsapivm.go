@@ -278,39 +278,46 @@ func (c *Client) ReadVM(i string) (*MyVm, error) {
 // and error variable with the error if occurr
 func (c *Client) UpdateVM(i string, n string, d string, p int, m int, s string) (*MyVm, error) {
 	var buffer bytes.Buffer
-	// Here we are preparing the update of the Processors and Memory in the VM {{{
-	request, err := json.Marshal(map[string]int{
-		"processors": p,
-		"memory":     m,
-	})
-	if err != nil {
-		return nil, err
-	}
-	buffer.Write(request)
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: UpdateVM Obj: Request Body %#v\n", buffer.String())
-	_, vmerror, err := c.httpRequest("vms/"+i, "PUT", buffer)
-	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: UpdateVM Obj: Request Error %#v\n", err)
-		return nil, err
-	}
-	if vmerror.Code != 0 {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: UpdateVM M: The 1 error API was %d %s", vmerror.Code, vmerror.Message)
-		return nil, err
-	}
-	// }}}
-	/// Here We are preparing update the Power State of teh VM {{{
-	_, err = c.PowerSwitch(i, s)
-	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: UpdateVM Obj: Power Switch Error %#v\n", err)
-		return nil, err
-	}
-	// }}}
+	// We want to know which is the current status of teh VM
 	vm, err := c.GetVM(i)
 	if err != nil {
 		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: UpdateVM Obj: Get Info Error %#v\n", err)
 		return nil, err
 	}
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: UpdateVM Obj: VM before %#v\n", vm)
+	// Here we are preparing the update of the Processors and Memory in the VM {{{
+	if vm.CPU.Processors != p || vm.Memory != m {
+		c.PowerSwitch(vm.IdVM, "off")
+		request, err := json.Marshal(map[string]int{
+			"processors": p,
+			"memory":     m,
+		})
+		if err != nil {
+			return nil, err
+		}
+		buffer.Write(request)
+		log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: UpdateVM Obj: Request Body %#v\n", buffer.String())
+		_, vmerror, err := c.httpRequest("vms/"+i, "PUT", buffer)
+		if err != nil {
+			log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: UpdateVM Obj: Request Error %#v\n", err)
+			return nil, err
+		}
+		if vmerror.Code != 0 {
+			log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: UpdateVM M: The 1 error API was %d %s", vmerror.Code, vmerror.Message)
+			return nil, err
+		}
+		c.PowerSwitch(vm.IdVM, "on")
+	}
+	// }}}
+	/// Here We are preparing update the Power State of teh VM {{{
+	if vm.PowerStatus != s {
+		_, err = c.PowerSwitch(i, s)
+		if err != nil {
+			log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: UpdateVM Obj: Power Switch Error %#v\n", err)
+			return nil, err
+		}
+	}
+	// }}}
 	// ---- here we have to implement the code to update de description and denomination
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: UpdateVM Obj: VM after %#v\n", vm)
 	return vm, err
