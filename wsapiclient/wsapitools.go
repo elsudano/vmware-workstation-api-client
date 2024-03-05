@@ -1,10 +1,12 @@
 package wsapiclient
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"log"
 	"os"
+	"strings"
 
 	vmx "github.com/johlandabee/govmx"
 )
@@ -324,4 +326,52 @@ func (c *Client) SetParameter(i string, p string, v string) error {
 	}
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: SetParameter Obj:Response Body %#v\n", responseBody.String())
 	return nil
+}
+
+func InitialData(p string) (string, string, string, string, bool, bool, error) {
+	var user, pass, url, parentid string
+	var insecure, debug = false, false
+	fileInfo, err := os.Stat(p)
+	if err != nil {
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: InitialData M: Error while we trying to check the file: %#v", err)
+		return "", "", "", "", false, false, err
+	}
+	if fileInfo.Mode().IsDir() {
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: InitialData M: It is a directory, please select a config file")
+		return "", "", "", "", false, false, nil
+	} else if fileInfo.Mode().IsRegular() {
+		file, err := os.Open(p)
+		if err != nil {
+			log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: InitialData M: Failed opening file %s, please make sure the config file exists", err)
+			return "", "", "", "", false, false, err
+		}
+		scanner := bufio.NewScanner(file)
+		scanner.Split(bufio.ScanLines)
+		for scanner.Scan() {
+			temp := strings.SplitN(scanner.Text(), ":", 2)
+			key := strings.ToLower(temp[0])
+			if key == "user" {
+				user = strings.TrimSpace(temp[1])
+			}
+			if key == "password" {
+				pass = strings.TrimSpace(temp[1])
+			}
+			if key == "baseurl" {
+				url = strings.TrimSpace(temp[1])
+			}
+			if key == "parentid" {
+				parentid = strings.TrimSpace(temp[1])
+			}
+			if key == "insecure" && strings.TrimSpace(temp[1]) == "true" {
+				insecure = true
+			}
+			if key == "debug" && strings.TrimSpace(temp[1]) == "true" {
+				debug = true
+			}
+		}
+	} else {
+		log.Println("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: InitialData M: Something was wrong, please try again")
+		return "", "", "", "", false, false, nil
+	}
+	return url, user, pass, parentid, insecure, debug, nil
 }
