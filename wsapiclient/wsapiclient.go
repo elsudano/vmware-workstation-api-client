@@ -178,7 +178,12 @@ func (c *Client) httpRequest(p string, m string, pl bytes.Buffer) (io.ReadCloser
 		log.Printf("[ERROR][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: Response error %#v\n", err)
 		return nil, vmerror, err
 	}
-	if response.StatusCode != http.StatusOK && response.StatusCode != http.StatusCreated && response.StatusCode != http.StatusNoContent {
+	switch response.StatusCode {
+	case http.StatusOK, http.StatusCreated, http.StatusNoContent:
+		log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: StatusCode %#v\n", response.StatusCode)
+	case http.StatusConflict:
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: StatusCode409 RAW %#v\n", response)
+	default:
 		responseBody := new(bytes.Buffer)
 		_, err := responseBody.ReadFrom(response.Body)
 		if err != nil {
@@ -192,9 +197,9 @@ func (c *Client) httpRequest(p string, m string, pl bytes.Buffer) (io.ReadCloser
 			return nil, vmerror, err
 		}
 		log.Printf("[ERROR][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: ErrorCode: %#v %#v %#v\n", vmerror.Code, response.StatusCode, vmerror.Message)
+		log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: Response RAW %#v\n", response)
 		return response.Body, vmerror, err
 	}
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: Response RAW %#v\n", response)
 	return response.Body, vmerror, err
 }
 
