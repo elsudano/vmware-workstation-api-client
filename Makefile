@@ -53,12 +53,14 @@ api_test: ## Test API client and list all virtual machine of VmWare Workstation
 	@go run . 2> debug.log
 	@echo -e "in order to review the Debug or errors run: 'less debug.log'"
 
-build: ## Build the binary of the module
+prepare: ## We can prepare the code locally in order to create a new version of provider
+	@git tag v$(VERSION)
+
+build: prepare ## Build the binary of the module
 	@go get -u
 	@go build -o $(DIRELEASES)$(BINARY)
 
 publish: build ## Build and Publish a new TAG in GitHub
-	@git tag v$(VERSION)
 	@git add .
 	@git commit -m "feat: We have created the new version ($(VERSION)) of the API Client"
 	@git pull --rebase
