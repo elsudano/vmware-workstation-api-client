@@ -153,9 +153,17 @@ func (c *Client) CreateVM(s string, n string, d string, p int, m int) (*MyVm, er
 		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:Request Error %#v\n", err)
 		return nil, err
 	}
-	if vmerror.Code != 0 {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: GetAllVMs M: The 1 error API was %d %s", vmerror.Code, vmerror.Message)
+	switch vmerror.Code {
+	case 147:
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: CreateVM M: The 1 error API was %d %s", vmerror.Code, vmerror.Message)
 		return nil, err
+	case 109:
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: CreateVM M: The SourceVM was locked: %d %s", vmerror.Code, vmerror.Message)
+		// here we have to wait for unlock the SourceVM and then create the next one
+		// keep in mind that maybe is better do that in the provider side
+		return nil, err
+	default:
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: CreateVM M: Output Code %d and Message: %s", vmerror.Code, vmerror.Message)
 	}
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:response raw %#v\n", response)
 	responseBody := new(bytes.Buffer)
@@ -187,7 +195,7 @@ func (c *Client) CreateVM(s string, n string, d string, p int, m int) (*MyVm, er
 		return nil, err
 	}
 	if vmerror.Code != 0 {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: GetAllVMs M: The 2 error API was %d %s", vmerror.Code, vmerror.Message)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: CreateVM M: The 2 error API was %d %s", vmerror.Code, vmerror.Message)
 		return nil, err
 	}
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:Response RAW %#v\n", response)
@@ -293,6 +301,7 @@ func (c *Client) UpdateVM(i string, n string, d string, p int, m int, s string) 
 			"memory":     m,
 		})
 		if err != nil {
+			log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: UpdateVM Obj: Error Marsherling Body %#v\n", err)
 			return nil, err
 		}
 		buffer.Write(request)
