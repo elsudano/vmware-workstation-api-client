@@ -3,7 +3,9 @@ package wsapiclient
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"log"
+	"strconv"
 )
 
 type MyVm struct {
@@ -50,7 +52,7 @@ func (c *Client) GetAllVMs() ([]MyVm, error) {
 	}
 	if vmerror.Code != 0 {
 		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: GetAllVMs M: The 1 error API was %d %s", vmerror.Code, vmerror.Message)
-		return nil, err
+		return nil, errors.New(strconv.Itoa(vmerror.Code) + "," + vmerror.Message)
 	}
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: GetAllVMs Obj: Response Body%#v\n", responseBody)
 	err = json.NewDecoder(responseBody).Decode(&vms)
@@ -67,7 +69,7 @@ func (c *Client) GetAllVMs() ([]MyVm, error) {
 		}
 		if vmerror.Code != 0 {
 			log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: GetAllVMs M: The 2 error API was %d %s", vmerror.Code, vmerror.Message)
-			return nil, err
+			return nil, errors.New(strconv.Itoa(vmerror.Code) + "," + vmerror.Message)
 		}
 		err = json.NewDecoder(responseBody).Decode(&vms[vm])
 		if err != nil {
@@ -81,7 +83,7 @@ func (c *Client) GetAllVMs() ([]MyVm, error) {
 		}
 		if vmerror.Code != 0 {
 			log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: GetAllVMs M: The 3 error API was %d %s", vmerror.Code, vmerror.Message)
-			return nil, err
+			return nil, errors.New(strconv.Itoa(vmerror.Code) + "," + vmerror.Message)
 		}
 		err = json.NewDecoder(responseBody).Decode(&vms[vm])
 		if err != nil {
@@ -95,7 +97,7 @@ func (c *Client) GetAllVMs() ([]MyVm, error) {
 		}
 		if vmerror.Code != 0 {
 			log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: GetAllVMs M: The 4 error API was %d %s", vmerror.Code, vmerror.Message)
-			return nil, err
+			return nil, errors.New(strconv.Itoa(vmerror.Code) + "," + vmerror.Message)
 		}
 		err = json.NewDecoder(responseBody).Decode(&tmpparam)
 		vms[vm].Denomination = tmpparam.Value
@@ -110,7 +112,7 @@ func (c *Client) GetAllVMs() ([]MyVm, error) {
 		}
 		if vmerror.Code != 0 {
 			log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: GetAllVMs M: The 5 error API was %d %s", vmerror.Code, vmerror.Message)
-			return nil, err
+			return nil, errors.New(strconv.Itoa(vmerror.Code) + "," + vmerror.Message)
 		}
 		err = json.NewDecoder(responseBody).Decode(&tmpparam)
 		vms[vm].Description = tmpparam.Value
@@ -154,16 +156,22 @@ func (c *Client) CreateVM(s string, n string, d string, p int, m int) (*MyVm, er
 		return nil, err
 	}
 	switch vmerror.Code {
+	// here we have to wait for unlock the SourceVM and then create the next one
+	// keep in mind that maybe is better do that in the provider side
 	case 147:
 		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: CreateVM M: The 1 error API was %d %s", vmerror.Code, vmerror.Message)
-		return nil, err
+		return nil, errors.New(strconv.Itoa(vmerror.Code) + "," + vmerror.Message)
+	case 107:
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: CreateVM M: The SourceVM isn't powered off: %d %s", vmerror.Code, vmerror.Message)
+		return nil, errors.New(strconv.Itoa(vmerror.Code) + "," + vmerror.Message)
+	case 108:
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: CreateVM M: The VM already exists: %d %s", vmerror.Code, vmerror.Message)
+		return nil, errors.New(strconv.Itoa(vmerror.Code) + "," + vmerror.Message)
 	case 109:
 		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: CreateVM M: The SourceVM was locked: %d %s", vmerror.Code, vmerror.Message)
-		// here we have to wait for unlock the SourceVM and then create the next one
-		// keep in mind that maybe is better do that in the provider side
-		return nil, err
+		return nil, errors.New(strconv.Itoa(vmerror.Code) + "," + vmerror.Message)
 	default:
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: CreateVM M: Output Code %d and Message: %s", vmerror.Code, vmerror.Message)
+		log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: CreateVM M: Output Code %d and Message: %s", vmerror.Code, vmerror.Message)
 	}
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:response raw %#v\n", response)
 	responseBody := new(bytes.Buffer)
@@ -196,7 +204,7 @@ func (c *Client) CreateVM(s string, n string, d string, p int, m int) (*MyVm, er
 	}
 	if vmerror.Code != 0 {
 		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: CreateVM M: The 2 error API was %d %s", vmerror.Code, vmerror.Message)
-		return nil, err
+		return nil, errors.New(strconv.Itoa(vmerror.Code) + "," + vmerror.Message)
 	}
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj:Response RAW %#v\n", response)
 	responseBody = new(bytes.Buffer)
@@ -293,9 +301,21 @@ func (c *Client) UpdateVM(i string, n string, d string, p int, m int, s string) 
 		return nil, err
 	}
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: UpdateVM Obj: VM before %#v\n", vm)
+	/// Here We are preparing update the Power State of teh VM {{{
+	if vm.PowerStatus != s {
+		_, err = c.PowerSwitch(i, s)
+		if err != nil {
+			log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: UpdateVM Obj: Power Switch Error %#v\n", err)
+			return nil, err
+		}
+	}
+	// }}}
+	currentPowerStatus := vm.PowerStatus
 	// Here we are preparing the update of the Processors and Memory in the VM {{{
 	if vm.CPU.Processors != p || vm.Memory != m {
-		c.PowerSwitch(vm.IdVM, "off")
+		if currentPowerStatus != "off" {
+			c.PowerSwitch(vm.IdVM, "off")
+		}
 		request, err := json.Marshal(map[string]int{
 			"processors": p,
 			"memory":     m,
@@ -311,23 +331,23 @@ func (c *Client) UpdateVM(i string, n string, d string, p int, m int, s string) 
 			log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: UpdateVM Obj: Request Error %#v\n", err)
 			return nil, err
 		}
-		if vmerror.Code != 0 {
+		switch vmerror.Code {
+		// here we have to wait for unlock the SourceVM and then create the next one
+		// keep in mind that maybe is better do that in the provider side
+		case 147:
 			log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: UpdateVM M: The 1 error API was %d %s", vmerror.Code, vmerror.Message)
-			return nil, err
+			return nil, errors.New(strconv.Itoa(vmerror.Code) + "," + vmerror.Message)
+		default:
+			log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: UpdateVM M: Output Code %d and Message: %s", vmerror.Code, vmerror.Message)
 		}
-		c.PowerSwitch(vm.IdVM, "on")
-	}
-	// }}}
-	/// Here We are preparing update the Power State of teh VM {{{
-	if vm.PowerStatus != s {
-		_, err = c.PowerSwitch(i, s)
-		if err != nil {
-			log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: UpdateVM Obj: Power Switch Error %#v\n", err)
-			return nil, err
+		if currentPowerStatus == "on" {
+			c.PowerSwitch(vm.IdVM, "on")
 		}
 	}
 	// }}}
-	// ---- here we have to implement the code to update de description and denomination
+	// ---- here we have to implement the code to update de description and denomination{{{
+	// here you will need to use the API to change the values of the Denomination and Description
+	// }}}
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: UpdateVM Obj: VM after %#v\n", vm)
 	return vm, err
 }
@@ -355,7 +375,7 @@ func (c *Client) RegisterVM(n string, p string) (*MyVm, error) {
 	}
 	if vmerror.Code != 0 {
 		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: RegisterVM M: The 1 error API was %d %s", vmerror.Code, vmerror.Message)
-		return nil, err
+		return nil, errors.New(strconv.Itoa(vmerror.Code) + "," + vmerror.Message)
 	}
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: RegisterVM Obj:response raw %#v\n", response)
 	responseBody := new(bytes.Buffer)
@@ -399,7 +419,7 @@ func (c *Client) PowerSwitch(i string, s string) (*MyVm, error) {
 	}
 	if vmerror.Code != 0 {
 		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: PowerSwitch M: The 1 error API was %d %s", vmerror.Code, vmerror.Message)
-		return nil, err
+		return nil, errors.New(strconv.Itoa(vmerror.Code) + "," + vmerror.Message)
 	}
 	err = json.NewDecoder(response).Decode(&vm)
 	if err != nil {
@@ -420,7 +440,7 @@ func (c *Client) DeleteVM(i string) error {
 	}
 	if vmerror.Code != 0 {
 		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: DeleteVM M: The 1 error API was %d %s", vmerror.Code, vmerror.Message)
-		return err
+		return errors.New(strconv.Itoa(vmerror.Code) + "," + vmerror.Message)
 	}
 	responseBody := new(bytes.Buffer)
 	_, err = responseBody.ReadFrom(response)
