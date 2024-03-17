@@ -172,13 +172,9 @@ func (c *Client) httpRequest(p string, m string, pl bytes.Buffer) (io.ReadCloser
 		req.Header.Add("Content-Type", "application/json")
 	}
 	log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: Request before that run %#v\n", req)
+	// in this line we will need to create a management of queue
 	responseBody := new(bytes.Buffer)
 	response, err := c.Client.Do(req)
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: Response after run %#v\n", response)
-	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: Response error %#v\n", err)
-		return nil, vmerror, err
-	}
 	switch response.StatusCode {
 	case http.StatusOK, http.StatusCreated, http.StatusNoContent:
 		log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: StatusCode %#v\n", response.StatusCode)
@@ -212,6 +208,11 @@ func (c *Client) httpRequest(p string, m string, pl bytes.Buffer) (io.ReadCloser
 		}
 		log.Printf("[ERROR][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: ErrorCode: %#v %#v %#v\n", vmerror.Code, response.StatusCode, vmerror.Message)
 		log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: Response RAW %#v\n", response)
+		return nil, vmerror, err
+	}
+	log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: Response after run %#v\n", response)
+	if err != nil {
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: Response error %#v\n", err)
 		return nil, vmerror, err
 	}
 	return response.Body, vmerror, err
