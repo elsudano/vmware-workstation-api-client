@@ -26,38 +26,36 @@ func main() {
 	var varuser, varpass, varurl, varparentid string
 	var varinsecure, vardebug bool
 	for scanner.Scan() {
-		temp := strings.SplitN(scanner.Text(), ":", 2)
-		vtemp := strings.ToLower(temp[0])
-		vtemp2 := temp[1]
-		fmt.Println(
-			color.Ize(title_line_color, "Temp: "), color.Ize(value_color, temp),
-			color.Ize(title_line_color, "Key: "), color.Ize(value_color, vtemp),
-			color.Ize(title_line_color, "Value: "), color.Ize(value_color, vtemp2),
-		)
-		if vtemp == "user" {
-			varuser = strings.TrimSpace(temp[1])
-		}
-		if vtemp == "password" {
-			varpass = strings.TrimSpace(temp[1])
-		}
-		if vtemp == "baseurl" {
-			varurl = strings.TrimSpace(temp[1])
-		}
-		if vtemp == "parentid" {
-			varparentid = strings.TrimSpace(temp[1])
-		}
-		if vtemp == "insecure" {
-			if strings.TrimSpace(temp[1]) == "true" {
-				varinsecure = true
-			} else {
-				varinsecure = false
-			}
-		}
-		if vtemp == "debug" {
-			if strings.TrimSpace(temp[1]) == "true" {
-				vardebug = true
-			} else {
-				vardebug = false
+		array := strings.SplitN(scanner.Text(), ":", 2)
+		key := strings.ToLower(array[0])
+		value := array[1]
+		if !strings.HasPrefix(key, "#") {
+			fmt.Println(
+				color.Ize(title_line_color, "Temp: "), color.Ize(value_color, array),
+				color.Ize(title_line_color, "Key: "), color.Ize(value_color, key),
+				color.Ize(title_line_color, "Value: "), color.Ize(value_color, value),
+			)
+			switch key {
+			case "user":
+				varuser = strings.TrimSpace(value)
+			case "password":
+				varpass = strings.TrimSpace(value)
+			case "baseurl":
+				varurl = strings.TrimSpace(value)
+			case "parentid":
+				varparentid = strings.TrimSpace(value)
+			case "insecure":
+				if strings.TrimSpace(value) == "true" {
+					varinsecure = true
+				} else {
+					varinsecure = false
+				}
+			case "debug":
+				if strings.TrimSpace(value) == "true" {
+					vardebug = true
+				} else {
+					vardebug = false
+				}
 			}
 		}
 	}
@@ -83,6 +81,7 @@ func main() {
 	client, err := wsapiclient.NewClient(varurl, varuser, varpass, varinsecure, vardebug)
 	if err != nil {
 		log.Printf("[ERROR][MAIN] Fi: main.go Task: Creating client error %#v\n", err)
+		os.Exit(10)
 	}
 	fmt.Println(color.Ize(paragraph_color, "We can see here the value of the ParentID VM:"))
 	fmt.Println(color.Ize(title_line_color, "Parent ID:"), color.Ize(value_color, varparentid))
@@ -113,6 +112,7 @@ func main() {
 	VM, err := client.CreateVM(varparentid, "clone-test-copy", "Test to INSERT description", 1, 512) // the id it's a test
 	if err != nil {
 		log.Printf("[ERROR][MAIN] Fi: main.go Task: Creating VMs Error %#v\n", err)
+		os.Exit(11)
 	}
 	fmt.Println(color.Ize(paragraph_color, "We going to create the first VM in VMWare Workstation:"))
 	fmt.Println(color.Ize(title_line_color, "ID:"), color.Ize(value_color, VM.IdVM), "\n",
@@ -129,6 +129,7 @@ func main() {
 	VM, err = client.ReadVM(VM.IdVM) // the id it's a test
 	if err != nil {
 		log.Printf("[ERROR][MAIN] Fi: main.go Task: First Reading VM Error %#v\n", err)
+		os.Exit(12)
 	}
 	fmt.Println(color.Ize(paragraph_color, "Now we go to review the state of the VM that we have created:"))
 	fmt.Println(color.Ize(title_line_color, "ID:"), color.Ize(value_color, VM.IdVM), "\n",
@@ -147,6 +148,7 @@ func main() {
 	_, err = client.RegisterVM(VM.Denomination, VM.Path) // the id it's a test
 	if err != nil {
 		log.Printf("[ERROR][MAIN] Fi: main.go Task: Registering VM Error %#v\n", err)
+		os.Exit(13)
 	}
 	fmt.Println()
 
@@ -157,6 +159,7 @@ func main() {
 	VM, err = client.UpdateVM(VM.IdVM, "clone-test-copy-change", "esta es una prueba de llenadao de datos", 2, 1024, "on") // the id it's a test
 	if err != nil {
 		log.Printf("[ERROR][MAIN] Fi: main.go Task: Updating VM Error %#v\n", err)
+		os.Exit(14)
 	}
 	fmt.Println()
 
@@ -166,6 +169,7 @@ func main() {
 	VM, err = client.ReadVM(VM.IdVM) // the id it's a test
 	if err != nil {
 		log.Printf("[ERROR][MAIN] Fi: main.go Task: Second Reading VM Error %#v\n", err)
+		os.Exit(12)
 	}
 	fmt.Println(color.Ize(paragraph_color, "We can confirm that the VM is working properly:"))
 	fmt.Println(color.Ize(title_line_color, "ID:"), color.Ize(value_color, VM.IdVM), "\n",
@@ -184,6 +188,7 @@ func main() {
 	VM, err = client.PowerSwitch(VM.IdVM, "off") // the id it's a test
 	if err != nil {
 		log.Printf("[ERROR][MAIN] Fi: main.go Task: Energizing VM Error %#v\n", err)
+		os.Exit(15)
 	}
 	fmt.Println()
 
@@ -193,6 +198,7 @@ func main() {
 	VM, err = client.ReadVM(VM.IdVM) // the id it's a test
 	if err != nil {
 		log.Printf("[ERROR][MAIN] Fi: main.go Task: Third Reading VM Error %#v\n", err)
+		os.Exit(12)
 	}
 	fmt.Println(color.Ize(paragraph_color, "We confirm that the VM is off:"))
 	fmt.Println(color.Ize(title_line_color, "ID:"), color.Ize(value_color, VM.IdVM), "\n",
@@ -205,6 +211,7 @@ func main() {
 	err = client.DeleteVM(VM.IdVM) // the id it's a test
 	if err != nil {
 		log.Printf("%s", err)
+		os.Exit(16)
 	}
 	fmt.Println()
 }
