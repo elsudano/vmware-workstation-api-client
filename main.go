@@ -14,7 +14,7 @@ import (
 
 func main() {
 	paragraph_color := color.Blue
-	title_line_color := color.Green
+	title_line_color := color.White
 	value_color := color.Bold
 	file, err := os.Open("config.ini")
 	if err != nil {
@@ -92,22 +92,22 @@ func main() {
 	// client.SwitchDebug()
 
 	// We get all the instances that we have in our VmWare Workstation
-	// AllVMs, err := client.GetAllVMs()
-	// if err != nil {
-	// 	log.Printf("[ERROR][MAIN] Fi: main.go Task: Listing VMs Error %#v\n", err)
-	// }
-	// fmt.Println(color.Ize(paragraph_color, "Now we go to list all teh VMs that we have in the VMWare Workstation:"))
-	// for _, value := range AllVMs {
-	// fmt.Println(color.Ize(title_line_color, "ID:"), color.Ize(value_color, VM.IdVM),"\n",
-	// 	color.Ize(title_line_color, "Path:"), color.Ize(value_color, VM.Path),"\n",
-	// 	color.Ize(title_line_color, "Denomination:"), color.Ize(value_color, VM.Denomination),"\n",
-	// 	color.Ize(title_line_color, "Description:"), color.Ize(value_color, VM.Description),"\n",
-	// 	color.Ize(title_line_color, "Power Status:"), color.Ize(value_color, VM.PowerStatus),"\n",
-	// 	color.Ize(title_line_color, "Ip:"), color.Ize(value_color, VM.Ip),"\n",
-	// 	color.Ize(title_line_color, "Processor:"), color.Ize(value_color, VM.CPU.Processors),"\n",
-	// 	color.Ize(title_line_color, "Memory:"), color.Ize(value_color, VM.Memory),
-	// )
-	// }
+	AllVMs, err := client.GetAllVMs()
+	if err != nil {
+		log.Printf("[ERROR][MAIN] Fi: main.go Task: Listing VMs Error %#v\n", err)
+	}
+	fmt.Println(color.Ize(paragraph_color, "Now we go to list all teh VMs that we have in the VMWare Workstation:"))
+	for _, VM := range AllVMs {
+		fmt.Println(color.Ize(title_line_color, "ID:"), color.Ize(value_color, VM.IdVM), "\n",
+			color.Ize(title_line_color, "Path:"), color.Ize(value_color, VM.Path), "\n",
+			color.Ize(title_line_color, "Denomination:"), color.Ize(value_color, VM.Denomination), "\n",
+			color.Ize(title_line_color, "Description:"), color.Ize(value_color, VM.Description), "\n",
+			color.Ize(title_line_color, "Power Status:"), color.Ize(value_color, VM.PowerStatus), "\n",
+			color.Ize(title_line_color, "Ip:"), color.Ize(value_color, VM.Ip), "\n",
+			color.Ize(title_line_color, "Processor:"), color.Ize(value_color, VM.CPU.Processors), "\n",
+			color.Ize(title_line_color, "Memory:"), color.Ize(value_color, VM.Memory),
+		)
+	}
 
 	// After to read all the instances that we have in the list, we can create a new one to test it
 	VM, err := client.CreateVM(varparentid, "clone-test-copy", "Test to INSERT description", 1, 512) // the id it's a test
