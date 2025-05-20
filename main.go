@@ -12,10 +12,34 @@ import (
 	"github.com/elsudano/vmware-workstation-api-client/wsapiclient"
 )
 
+var paragraph_color = color.Blue
+var title_line_color = color.White
+var value_color = color.Yellow
+
+func PrintVM(VM *wsapiclient.MyVm) {
+	fmt.Println(
+		color.Ize(title_line_color, " ID:"), color.Ize(value_color, VM.IdVM), "\n",
+		color.Ize(title_line_color, "Path:"), color.Ize(value_color, VM.Path), "\n",
+		color.Ize(title_line_color, "Denomination:"), color.Ize(value_color, VM.Denomination), "\n",
+		color.Ize(title_line_color, "Description:"), color.Ize(value_color, VM.Description), "\n",
+		color.Ize(title_line_color, "Processor:"), color.Ize(value_color, VM.CPU.Processors), "\n",
+		color.Ize(title_line_color, "Memory:"), color.Ize(value_color, VM.Memory), "\n",
+		color.Ize(title_line_color, "Power Status:"), color.Ize(value_color, VM.PowerStatus), "\n",
+		color.Ize(title_line_color, "HostName:"), color.Ize(value_color, VM.DNS.Hostname), "\n",
+		color.Ize(title_line_color, "DomainName:"), color.Ize(value_color, VM.DNS.Domainname), "\n",
+		color.Ize(title_line_color, "DNServers:"), color.Ize(value_color, VM.DNS.Servers),
+	)
+	if VM.NICS != nil {
+		for nic := range VM.NICS {
+			fmt.Println(
+				color.Ize(title_line_color, " Mac:"), color.Ize(value_color, VM.NICS[nic].Mac), "\n",
+				color.Ize(title_line_color, "Ip:"), color.Ize(value_color, VM.NICS[nic].Ip),
+			)
+		}
+	}
+}
+
 func main() {
-	paragraph_color := color.Blue
-	title_line_color := color.White
-	value_color := color.Bold
 	file, err := os.Open("config.ini")
 	if err != nil {
 		log.Fatalf("Failed opening file %s, please make sure the config file exists", err)
@@ -91,127 +115,81 @@ func main() {
 	// client.SwitchDebug()
 
 	// We get all the instances that we have in our VmWare Workstation
+	fmt.Println(color.Ize(paragraph_color, "Now we going to list all the VMs that we have in the VMWare Workstation:"))
 	AllVMs, err := client.GetAllVMs()
 	if err != nil {
 		log.Printf("[ERROR][MAIN] Fi: main.go Task: Listing VMs Error %#v\n", err)
+		// os.Exit(11)
 	}
-	fmt.Println(color.Ize(paragraph_color, "Now we go to list all teh VMs that we have in the VMWare Workstation:"))
-	for _, VM := range AllVMs {
-		fmt.Println(color.Ize(title_line_color, "ID:"), color.Ize(value_color, VM.IdVM), "\n",
-			color.Ize(title_line_color, "Path:"), color.Ize(value_color, VM.Path), "\n",
-			color.Ize(title_line_color, "Denomination:"), color.Ize(value_color, VM.Denomination), "\n",
-			color.Ize(title_line_color, "Description:"), color.Ize(value_color, VM.Description), "\n",
-			color.Ize(title_line_color, "Power Status:"), color.Ize(value_color, VM.PowerStatus), "\n",
-			color.Ize(title_line_color, "Ip:"), color.Ize(value_color, VM.Ip), "\n",
-			color.Ize(title_line_color, "Processor:"), color.Ize(value_color, VM.CPU.Processors), "\n",
-			color.Ize(title_line_color, "Memory:"), color.Ize(value_color, VM.Memory),
-		)
+	for _, item := range AllVMs {
+		if item.IdVM != "II82IG14IV0UHB7QHAI3J0G44RJBGNR5" { // is just because this VM is encripted
+			VM, err := client.LoadVM(item.IdVM)
+			if err != nil {
+				log.Printf("[ERROR][MAIN] Fi: main.go Task: First time Reading VM Error %#v\n", err)
+				os.Exit(13)
+			}
+			PrintVM(VM)
+		}
 	}
-
 	// After to read all the instances that we have in the list, we can create a new one to test it
-	VM, err := client.CreateVM(varparentid, "clone-test-copy", "Test to INSERT description", 1, 512) // the id it's a test
+	fmt.Println(color.Ize(paragraph_color, "We are using the CreateVM method to create the VM test."))
+	VM, err := client.CreateVM(varparentid, "clone-test-copy", "Test to INSERT description", 2, 1024)
 	if err != nil {
 		log.Printf("[ERROR][MAIN] Fi: main.go Task: Creating VMs Error %#v\n", err)
-		os.Exit(11)
-	}
-	fmt.Println(color.Ize(paragraph_color, "We going to create the first VM in VMWare Workstation:"))
-	fmt.Println(color.Ize(title_line_color, "ID:"), color.Ize(value_color, VM.IdVM), "\n",
-		color.Ize(title_line_color, "Path:"), color.Ize(value_color, VM.Path), "\n",
-		color.Ize(title_line_color, "Denomination:"), color.Ize(value_color, VM.Denomination), "\n",
-		color.Ize(title_line_color, "Description:"), color.Ize(value_color, VM.Description), "\n",
-		color.Ize(title_line_color, "Power Status:"), color.Ize(value_color, VM.PowerStatus), "\n",
-		color.Ize(title_line_color, "Ip:"), color.Ize(value_color, VM.Ip), "\n",
-		color.Ize(title_line_color, "Processor:"), color.Ize(value_color, VM.CPU.Processors), "\n",
-		color.Ize(title_line_color, "Memory:"), color.Ize(value_color, VM.Memory),
-	)
-	fmt.Println()
-	// Now we have one new instance, we can read which is the status
-	VM, err = client.ReadVM(VM.IdVM) // the id it's a test
-	if err != nil {
-		log.Printf("[ERROR][MAIN] Fi: main.go Task: First Reading VM Error %#v\n", err)
 		os.Exit(12)
 	}
-	fmt.Println(color.Ize(paragraph_color, "Now we go to review the state of the VM that we have created:"))
-	fmt.Println(color.Ize(title_line_color, "ID:"), color.Ize(value_color, VM.IdVM), "\n",
-		color.Ize(title_line_color, "Path:"), color.Ize(value_color, VM.Path), "\n",
-		color.Ize(title_line_color, "Denomination:"), color.Ize(value_color, VM.Denomination), "\n",
-		color.Ize(title_line_color, "Description:"), color.Ize(value_color, VM.Description), "\n",
-		color.Ize(title_line_color, "Power Status:"), color.Ize(value_color, VM.PowerStatus), "\n",
-		color.Ize(title_line_color, "Ip:"), color.Ize(value_color, VM.Ip), "\n",
-		color.Ize(title_line_color, "Processor:"), color.Ize(value_color, VM.CPU.Processors), "\n",
-		color.Ize(title_line_color, "Memory:"), color.Ize(value_color, VM.Memory),
-	)
-	fmt.Println()
-
-	// We want to register the instance in the UI of the VmWare Workstaion
-	fmt.Println(color.Ize(paragraph_color, "After that, we have registered in the UI of VMWare Workstation"))
-	_, err = client.RegisterVM(VM.Denomination, VM.Path) // the id it's a test
+	// Now we have one new instance, we can read which is the status
+	fmt.Println(color.Ize(paragraph_color, "Now we going to review the state of the VM that we have created:"))
+	VM, err = client.LoadVM(VM.IdVM)
 	if err != nil {
-		log.Printf("[ERROR][MAIN] Fi: main.go Task: Registering VM Error %#v\n", err)
+		log.Printf("[ERROR][MAIN] Fi: main.go Task: First time Reading VM Error %#v\n", err)
 		os.Exit(13)
 	}
-	fmt.Println()
-
-	time.Sleep(10 * time.Second)
-
+	PrintVM(VM)
+	// We want to register the instance in the UI of the VmWare Workstaion
+	// fmt.Println(color.Ize(paragraph_color, "After that, we have registered in the UI of VMWare Workstation"))
+	// _, err = client.RegisterVM(VM.Denomination, VM.Path)
+	// if err != nil {
+	// 	log.Printf("[ERROR][MAIN] Fi: main.go Task: Registering VM Error %#v\n", err)
+	// 	os.Exit(14)
+	// }
+	// time.Sleep(10 * time.Second)
 	// After to register the instance, we will update the values of the instance with new onece
-	fmt.Println(color.Ize(paragraph_color, "Now, we going to Powerize the VM with the UpdateVM method:"))
-	VM, err = client.UpdateVM(VM.IdVM, "clone-test-copy-change", "esta es una prueba de llenadao de datos", 2, 1024, "on") // the id it's a test
+	fmt.Println(color.Ize(paragraph_color, "Now, we going to Energize the VM with the UpdateVM method."))
+	VM, err = client.UpdateVM(VM.IdVM, "clone-test-copy-change", "esta es una prueba de llenadao de datos", 2, 1024, "on")
 	if err != nil {
 		log.Printf("[ERROR][MAIN] Fi: main.go Task: Updating VM Error %#v\n", err)
-		os.Exit(14)
-	}
-	fmt.Println()
-
-	time.Sleep(60 * time.Second)
-
-	// We will read the new values
-	VM, err = client.ReadVM(VM.IdVM) // the id it's a test
-	if err != nil {
-		log.Printf("[ERROR][MAIN] Fi: main.go Task: Second Reading VM Error %#v\n", err)
-		os.Exit(12)
-	}
-	fmt.Println(color.Ize(paragraph_color, "We can confirm that the VM is working properly:"))
-	fmt.Println(color.Ize(title_line_color, "ID:"), color.Ize(value_color, VM.IdVM), "\n",
-		color.Ize(title_line_color, "Path:"), color.Ize(value_color, VM.Path), "\n",
-		color.Ize(title_line_color, "Denomination:"), color.Ize(value_color, VM.Denomination), "\n",
-		color.Ize(title_line_color, "Description:"), color.Ize(value_color, VM.Description), "\n",
-		color.Ize(title_line_color, "Power Status:"), color.Ize(value_color, VM.PowerStatus), "\n",
-		color.Ize(title_line_color, "Ip:"), color.Ize(value_color, VM.Ip), "\n",
-		color.Ize(title_line_color, "Processor:"), color.Ize(value_color, VM.CPU.Processors), "\n",
-		color.Ize(title_line_color, "Memory:"), color.Ize(value_color, VM.Memory),
-	)
-	fmt.Println()
-
-	// We want to energize the instance in order to test the PowerSwitch method
-	fmt.Println(color.Ize(paragraph_color, "Now, we going to shutdown the VM with the PowerSwich method"))
-	VM, err = client.PowerSwitch(VM.IdVM, "off") // the id it's a test
-	if err != nil {
-		log.Printf("[ERROR][MAIN] Fi: main.go Task: Energizing VM Error %#v\n", err)
 		os.Exit(15)
 	}
-	fmt.Println()
-
-	time.Sleep(60 * time.Second)
-
-	// We will read the new state of the instance
-	VM, err = client.ReadVM(VM.IdVM) // the id it's a test
+	time.Sleep(60 * time.Second) // we need to wait because the VM take time to be ready
+	// fmt.Println(color.Ize(paragraph_color, "We can confirm that the VM is working properly:"))
+	// VM, err = client.LoadVM(VM.IdVM)
+	// if err != nil {
+	// 	log.Printf("[ERROR][MAIN] Fi: main.go Task: Second time Reading VM Error %#v\n", err)
+	// 	os.Exit(16)
+	// }
+	PrintVM(VM)
+	// We want to shutdown the instance in order to test the UpdateVM method
+	fmt.Println(color.Ize(paragraph_color, "Now, we going to shutdown and change the propierties of the VM with the UpdateVM method"))
+	VM, err = client.UpdateVM(VM.IdVM, "clone-test-copy-change", "esta es una prueba de llenadao de datos", 1, 512, "off")
 	if err != nil {
-		log.Printf("[ERROR][MAIN] Fi: main.go Task: Third Reading VM Error %#v\n", err)
-		os.Exit(12)
+		log.Printf("[ERROR][MAIN] Fi: main.go Task: Updating VM Error %#v\n", err)
+		os.Exit(17)
 	}
-	fmt.Println(color.Ize(paragraph_color, "We confirm that the VM is off:"))
-	fmt.Println(color.Ize(title_line_color, "ID:"), color.Ize(value_color, VM.IdVM), "\n",
-		color.Ize(title_line_color, "Power Status:"), color.Ize(value_color, VM.PowerStatus),
-	)
-	fmt.Println()
-
+	time.Sleep(30 * time.Second)
+	// fmt.Println(color.Ize(paragraph_color, "We confirm that the VM is off and it's propierties has changed:"))
+	// VM, err = client.LoadVM(VM.IdVM)
+	// if err != nil {
+	// 	log.Printf("[ERROR][MAIN] Fi: main.go Task: Third time Reading VM Error %#v\n", err)
+	// 	os.Exit(18)
+	// }
+	PrintVM(VM)
 	// And finally we will delete the instance that we was created
-	fmt.Println(color.Ize(paragraph_color, "And finally we destroy the VM"))
-	err = client.DeleteVM(VM.IdVM) // the id it's a test
+	fmt.Println(color.Ize(paragraph_color, "And finally we have deleted the VM"))
+	err = client.DeleteVM(VM.IdVM)
 	if err != nil {
 		log.Printf("%s", err)
-		os.Exit(16)
+		os.Exit(19)
 	}
 	fmt.Println()
 }
