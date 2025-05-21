@@ -206,6 +206,11 @@ func (c *Client) CreateVM(s string, n string, d string, p int, m int) (*MyVm, er
 		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj: Decoder Error %#v\n", err)
 		return nil, err
 	}
+	err = c.RenewMAC(&vm)
+	if err != nil {
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: CreateVM Obj: RenewMAC Error %#v\n", err)
+		return nil, err
+	}
 	// ----- Now, we change the Denomination ----
 	// tempDataParam.Name = "displayName"
 	// tempDataParam.Value = n
