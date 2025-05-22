@@ -13,7 +13,7 @@ func TestNewClient(t *testing.T) {
 	if err != nil {
 		t.Errorf("%v\n", err)
 	}
-	VM, err := apiClient.GetVM("545OMDAL1R520604HKNKA6TTK6TBNOHK")
+	VM, err := apiClient.LoadVM("545OMDAL1R520604HKNKA6TTK6TBNOHK")
 	if VM.Denomination != "parentvm" || err != nil {
 		t.Errorf("[ERROR][WSAPICLI] Fi: wsapiclient_test.go Fu: TestNewClient M: You need make sure that the ParentVM it's called 'parentvm' %#v", err)
 	}
