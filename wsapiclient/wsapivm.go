@@ -287,28 +287,28 @@ func (c *Client) CreateVM(s string, n string, d string, p int, m int) (*MyVm, er
 func (c *Client) LoadVM(i string) (*MyVm, error) {
 	vm, err := c.GetVM(i)
 	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: ReadVM M: GetVM %#v\n", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: LoadVM M: GetVM %#v\n", err)
 		return nil, err
 	}
 	err = c.GetBasicInfo(vm)
 	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: ReadVM M: GetBasicInfo %#v\n", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: LoadVM M: GetBasicInfo %#v\n", err)
 		return nil, err
 	}
 	err = c.GetDenominationDescription(vm)
 	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: ReadVM M: GetDenominationDescription %#v\n", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: LoadVM M: GetDenominationDescription %#v\n", err)
 		return nil, err
 	}
 	err = c.GetPowerStatus(vm)
 	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: ReadVM M: GetPowerStatus %#v\n", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: LoadVM M: GetPowerStatus %#v\n", err)
 		return nil, err
 	}
 	if vm.PowerStatus == "on" {
 		err = c.GetNetwork(vm)
 		if err != nil {
-			log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: ReadVM M: PowerStatus %#v\n", err)
+			log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: LoadVM M: PowerStatus %#v\n", err)
 			return nil, err
 		}
 	}

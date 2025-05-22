@@ -10,20 +10,22 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 )
 
 const (
-	libraryVersion  = "1.1.17"
-	defaultUser     = "Admin"
-	defaultPassword = "Adm1n#00"
-	defaultBaseURL  = "https://localhost:8697/api"
-	defaultInsecure = true
-	defaultDebug    = false
+	libraryVersion    = "1.1.17"
+	defaultUser       = "Admin"
+	defaultPassword   = "Adm1n#00"
+	defaultBaseURL    = "http://localhost:8697/api"
+	defaultInsecure   = true
+	defaultDebugLevel = "NONE" // DEBUG, ERROR, INFO, NONE
 	// don't change this value, always activate Debug Mode
 	// change behavior with ConfigCli method, it's better
 	// because you can change the behavior in the future
 )
 
+// VmError that's rhe error that the API give us in different situations handling resources
 type VmError struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
@@ -33,44 +35,34 @@ type VmError struct {
 // BaseURL: *url.URL object URL to storage URL to server, User: string name of user to authenticate in server
 // Password: string password of user, Debug: bool that show the debug it's active or not
 type Client struct {
-	// HTTP client used to communicate with the DO API.
-	Client *http.Client
-	// Base URL for API requests.
-	BaseURL *url.URL
-	// User to access
-	User string
-	// Password of User
-	Password string
-	// Insecure Mode
+	Client       *http.Client
+	BaseURL      *url.URL
+	User         string
+	Password     string
 	InsecureFlag bool
-	// Debug Mode
-	Debug bool
+	DebugLevel   string
 }
 
-// NewClient constructor of the Client object Input: a: URL address to the API REST server
-// u: string with the user to connect at API REST, p: string with the password,
-// d: bool to activate or not the debug, Return: *Client: pointer at the object Client,
-// error: when the client generate some error is storage in this var.
-func NewClient(a string, u string, p string, i bool, d bool) (*Client, error) {
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: NewClient Obj:Input values %#v, %#v, %#v, %#v, %#v\n", a, u, p, i, d)
+// NewClient constructor of the Client object
+// Inputs:
+// a: (string) URL address to the API REST server.
+// u: (string) String with the user to connect at API REST.
+// p: (string) String with the password.
+// i: (bool) True if we have generated the https certificates in our API.
+// d: (string) Level of Debug that we want.
+// Outputs:
+// *Client: (pointer) Pointer at the object Client,
+// error: (error) when the client generate some error is storage in this var.
+func NewClient(a string, u string, p string, i bool, d string) (*Client, error) {
 	c := new(Client)
 	c.BaseURL, _ = url.Parse(a)
-	// log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: NewClient Obj:URL %#v\n", c.BaseURL)
 	c.User = u
 	c.Password = p
 	c.InsecureFlag = i
-	c.Debug = d
-	// Como estamos desarrollando una API que se encaga de comunicarnos con
-	// VmWare Workstation Pro API REST, y la propia API de Workstation se
-	// accede a través de un cliente web necesitamos generar un cliente
-	// para poder realizar las peticiones.
-	//
-	// Por eso con esta variable creamos un cliente el cual nos permite realizar
-	// peticiones sobre paginas https pero sin la necesidad de la verificaión
-	// del certificado de la pagina, esto se hace por si la pagina tiene un
-	// certificado auto-firmado.
-	//
-	// Esto solo es valido para testing, se ha de quitar para validar correctamente
+	c.DebugLevel = (strings.ToUpper(d))
+	if c.DebugLevel == "DEBUG" {
+		log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: NewClient Input values %#v, %#v, %#v, %#v, %#v\n", a, u, p, i, d)
+	}
 	c.Client = &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
@@ -78,13 +70,18 @@ func NewClient(a string, u string, p string, i bool, d bool) (*Client, error) {
 			},
 		},
 	}
-	if c.Debug {
+	if c.DebugLevel != "NONE" {
 		log.SetOutput(os.Stderr)
 	}
-	if !c.Debug {
+	if c.DebugLevel == "NONE" {
 		log.SetOutput(io.Discard)
 	}
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: NewClient Obj:web Client %#v\n", c.Client)
+	if c.DebugLevel == "DEBUG" {
+		log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: NewClient  Client %#v\n", c.Client)
+	}
+	if c.DebugLevel == "INFO" {
+		log.Printf("[INFO][WSAPICLI] Fi: wsapiclient.go Fu: NewClient we completed tasks")
+	}
 	return c, nil
 }
 
@@ -92,44 +89,78 @@ func NewClient(a string, u string, p string, i bool, d bool) (*Client, error) {
 // with values by default, Return: *Client: pointer at the object Client,
 // error: when the client generate some error is storage in this var.
 func New() (*Client, error) {
-	c, err := NewClient(defaultBaseURL, defaultUser, defaultPassword, defaultInsecure, defaultDebug)
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: New Obj:api Client %#v\n", c)
+	c, err := NewClient(defaultBaseURL, defaultUser, defaultPassword, defaultInsecure, defaultDebugLevel)
+	if err != nil && c.DebugLevel == "ERROR" {
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapiclient.go Fu: New Error creating the client %#v\n", err)
+	}
+	if c.DebugLevel == "DEBUG" {
+		log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: New api Client %#v\n", c)
+	}
+	if c.DebugLevel == "INFO" {
+		log.Printf("[INFO][WSAPICLI] Fi: wsapiclient.go Fu: New we completed tasks")
+	}
 	return c, err
 }
 
 // SwitchDebug method of object *Client to change the debug parameter
 // activate or disable the debug mode of the *Client.
-func (c *Client) SwitchDebug() {
-	// for config Debug mode
-	if c.Debug {
+// Imputs:
+// c: (pointer) The pointer of the client that we are using
+// l: (string) The Level of the Debug that we want.
+func (c *Client) SwitchDebugLevel(l string) {
+	switch l {
+	case "NONE":
 		log.SetOutput(io.Discard)
-		c.Debug = false
-	}
-	if !c.Debug {
+		c.DebugLevel = "NONE"
+	case "INFO":
 		log.SetOutput(os.Stderr)
-		c.Debug = true
+		c.DebugLevel = "INFO"
+	case "ERROR":
+		log.SetOutput(os.Stderr)
+		c.DebugLevel = "ERROR"
+	case "DEBUG":
+		log.SetOutput(os.Stderr)
+		c.DebugLevel = "DEBUG"
+	default:
+		log.SetOutput(io.Discard)
+		c.DebugLevel = "NONE"
+	}
+	if c.DebugLevel == "INFO" {
+		log.Printf("[INFO][WSAPICLI] Fi: wsapiclient.go Fu: SwitchDebugLevel we completed tasks")
 	}
 }
 
 // ConfigCli method return a pointer of Client of API but now it's configure
 // Inputs: a: address of URL to server of API u: user for to authenticate
 // p: password of user, i: Insecure flag to http or https, d: debug mode
-func (c *Client) ConfigCli(a string, u string, p string, i bool, d bool) {
+func (c *Client) ConfigCli(a string, u string, p string, i bool, d string) {
 	var err error
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: ConfigCli Obj:Variables %#v, %#v, %#v, %#v, %#v\n", a, u, p, i, d)
-	c.BaseURL, err = url.Parse(a)
-	if err != nil {
-		panic(err)
+	if c.DebugLevel == "DEBUG" {
+		log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: ConfigCli Variables %#v, %#v, %#v, %#v, %#v\n", a, u, p, i, d)
 	}
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: ConfigCli Obj:%#v\n", c.BaseURL)
+	c.BaseURL, err = url.Parse(a)
+	if err != nil && (c.DebugLevel == "ERROR" || c.DebugLevel == "DEBUG") {
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapiclient.go Fu: ConfigCli Api Client %#v\n", err)
+	}
+	if c.DebugLevel == "DEBUG" {
+		log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: ConfigCli BaseURL: %#v\n", c.BaseURL)
+	}
 	c.User = u
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: ConfigCli Obj:%#v\n", c.User)
+	if c.DebugLevel == "DEBUG" {
+		log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: ConfigCli User: %#v\n", c.User)
+	}
 	c.Password = p
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: ConfigCli Obj:%#v\n", c.Password)
+	if c.DebugLevel == "DEBUG" {
+		log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: ConfigCli Password: %#v\n", c.Password)
+	}
 	c.InsecureFlag = i
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: ConfigCli Obj:%#v\n", c.InsecureFlag)
-	c.Debug = d
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: ConfigCli Obj:%#v\n", c.Debug)
+	if c.DebugLevel == "DEBUG" {
+		log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: ConfigCli http/s: %#v\n", c.InsecureFlag)
+	}
+	c.DebugLevel = d
+	if c.DebugLevel == "DEBUG" {
+		log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: ConfigCli Debug Level: %#v\n", c.DebugLevel)
+	}
 	c.Client = &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
@@ -137,11 +168,13 @@ func (c *Client) ConfigCli(a string, u string, p string, i bool, d bool) {
 			},
 		},
 	}
-	if c.Debug {
+	if c.DebugLevel != "NONE" {
 		log.SetOutput(os.Stderr)
-	}
-	if !c.Debug {
+	} else {
 		log.SetOutput(io.Discard)
+	}
+	if c.DebugLevel == "INFO" {
+		log.Printf("[INFO][WSAPICLI] Fi: wsapiclient.go Fu: ConfigCli we completed tasks")
 	}
 }
 
@@ -151,11 +184,13 @@ func (c *Client) ConfigCli(a string, u string, p string, i bool, d bool) {
 func (c *Client) httpRequest(p string, m string, pl bytes.Buffer) (io.ReadCloser, VmError, error) {
 	var vmerror VmError
 	req, err := http.NewRequest(m, c.requestPath(p), &pl)
-	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj:request error %#v\n", err)
+	if err != nil && (c.DebugLevel == "ERROR" || c.DebugLevel == "DEBUG") {
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest request error %#v\n", err)
 		return nil, vmerror, err
 	}
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: Buffer %#v\n", pl.String())
+	if c.DebugLevel == "DEBUG" {
+		log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest  Buffer %#v\n", pl.String())
+	}
 	req.SetBasicAuth(c.User, c.Password)
 	switch m {
 	case "GET":
@@ -171,48 +206,61 @@ func (c *Client) httpRequest(p string, m string, pl bytes.Buffer) (io.ReadCloser
 	default:
 		req.Header.Add("Content-Type", "application/json")
 	}
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: Request before that run %#v\n", req)
+	if c.DebugLevel == "DEBUG" {
+		log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest  Request before that run %#v\n", req)
+	}
 	// in this line we will need to create a management of queue
 	responseBody := new(bytes.Buffer)
 	response, err := c.Client.Do(req)
 	switch response.StatusCode {
 	case http.StatusOK, http.StatusCreated, http.StatusNoContent:
-		log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: StatusCode %#v\n", response.StatusCode)
+		if c.DebugLevel == "DEBUG" {
+			log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest  StatusCode %#v\n", response.StatusCode)
+		}
 	case http.StatusConflict:
 		err = json.NewDecoder(response.Body).Decode(&vmerror)
-		if err != nil {
-			log.Printf("[ERROR][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: Decoding Response Body %#v\n", err)
+		if err != nil && (c.DebugLevel == "ERROR" || c.DebugLevel == "DEBUG") {
+			log.Printf("[ERROR][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest  Decoding Response Body %#v\n", err)
 			return nil, vmerror, err
 		}
-		log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: StatusCode %#v Code Error %#v Message: %#v\n", response.StatusCode, vmerror.Code, vmerror.Message)
+		if c.DebugLevel == "DEBUG" {
+			log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest  StatusCode %#v Code Error %#v Message: %#v\n", response.StatusCode, vmerror.Code, vmerror.Message)
+		}
 		return nil, vmerror, err
 	case http.StatusInternalServerError:
 		err = json.NewDecoder(response.Body).Decode(&vmerror)
-		if err != nil {
-			log.Printf("[ERROR][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: Decoding Response Body %#v\n", err)
+		if err != nil && (c.DebugLevel == "ERROR" || c.DebugLevel == "DEBUG") {
+			log.Printf("[ERROR][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest  Decoding Response Body %#v\n", err)
 			return nil, vmerror, err
 		}
-		log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: StatusCode %#v Code Error %#v Message: %#v\n", response.StatusCode, vmerror.Code, vmerror.Message)
+		if c.DebugLevel == "DEBUG" {
+			log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest  StatusCode %#v Code Error %#v Message: %#v\n", response.StatusCode, vmerror.Code, vmerror.Message)
+		}
 		return nil, vmerror, err
 	default:
 		_, err = responseBody.ReadFrom(response.Body)
-		if err != nil {
-			log.Printf("[ERROR][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: ResponseBody RAW %#v\n", responseBody)
+		if err != nil && (c.DebugLevel == "ERROR" || c.DebugLevel == "DEBUG") {
+			log.Printf("[ERROR][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest  ResponseBody RAW %#v\n", responseBody)
 			return nil, vmerror, err
 		}
-		log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: Response Body before %#v\n", responseBody.String())
+		if c.DebugLevel == "DEBUG" {
+			log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest  Response Body before %#v\n", responseBody.String())
+		}
 		err = json.NewDecoder(responseBody).Decode(&vmerror)
-		if err != nil {
+		if err != nil && (c.DebugLevel == "ERROR" || c.DebugLevel == "DEBUG") {
 			log.Printf("[ERROR][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Message: I can't read the json structure %s", err)
 			return nil, vmerror, err
 		}
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: ErrorCode: %#v %#v %#v\n", vmerror.Code, response.StatusCode, vmerror.Message)
-		log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: Response RAW %#v\n", response)
+		if c.DebugLevel == "DEBUG" {
+			log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest  Response RAW %#v\n", response)
+		}
 		return nil, vmerror, err
 	}
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: Response after run %#v\n", response)
-	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest Obj: Response error %#v\n", err)
+	if c.DebugLevel == "DEBUG" {
+		log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest  Response after run %#v\n", response)
+	}
+	if err != nil && (c.DebugLevel == "ERROR" || c.DebugLevel == "DEBUG") {
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapiclient.go Fu: httpRequest  Response error %#v\n", err)
 		return nil, vmerror, err
 	}
 	return response.Body, vmerror, err
@@ -225,6 +273,8 @@ func (c *Client) httpRequest(p string, m string, pl bytes.Buffer) (io.ReadCloser
 // string with the complete URL to access
 func (c *Client) requestPath(p string) string {
 	r := fmt.Sprintf("%s/%s", c.BaseURL, p)
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: requestPath Obj:%#v\n", r)
+	if c.DebugLevel == "DEBUG" {
+		log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: requestPath %#v\n", r)
+	}
 	return r
 }

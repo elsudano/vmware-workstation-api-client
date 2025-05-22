@@ -47,8 +47,8 @@ func main() {
 
 	scanner := bufio.NewScanner(file)
 	scanner.Split(bufio.ScanLines)
-	var varuser, varpass, varurl, varparentid string
-	var varinsecure, vardebug bool
+	var varuser, varpass, varurl, varparentid, vardebug string
+	var varinsecure bool
 	for scanner.Scan() {
 		array := strings.SplitN(scanner.Text(), ":", 2)
 		key := strings.ToLower(array[0])
@@ -75,11 +75,7 @@ func main() {
 					varinsecure = false
 				}
 			case "debug":
-				if strings.TrimSpace(value) == "true" {
-					vardebug = true
-				} else {
-					vardebug = false
-				}
+				vardebug = strings.TrimSpace(value)
 			}
 		}
 	}
@@ -112,7 +108,7 @@ func main() {
 	// }}}
 
 	// To changing the config of debug you use this method
-	// client.SwitchDebug()
+	// client.SwitchDebugLevel("NONE")
 
 	// We get all the instances that we have in our VmWare Workstation
 	fmt.Println(color.Ize(paragraph_color, "Now we going to list all the VMs that we have in the VMWare Workstation:"))

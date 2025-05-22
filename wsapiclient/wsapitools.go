@@ -58,7 +58,7 @@ func (c *Client) GetVM(i string) (*MyVm, error) {
 func (c *Client) GetBasicInfo(vm *MyVm) error {
 	response, vmerror, err := c.httpRequest("vms/"+vm.IdVM, "GET", bytes.Buffer{})
 	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetBasicInfo M: Request Error Getting Information %#v\n", err)
+		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetBasicInfo Error Code %d M: %#v", vmerror.Code, vmerror.Message)
 		return err
 	}
 	switch vmerror.Code {
@@ -200,6 +200,7 @@ func (c *Client) PowerSwitch(vm *MyVm, s string) error {
 // Outputs:
 // s: (string) The normalized string
 func PowerStateConversor(ops string) (s string) {
+	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: PowerStateConversor M: We have called this method")
 	switch ops {
 	case "poweredOn":
 		return "on"
@@ -275,22 +276,22 @@ func (c *Client) SetParameter(vm *MyVm, p string, v string) error {
 // insecure: (bool) If our API works with HTTP we will set true here
 // debug: (bool) If we need troubleshot our API we will set true here
 // error: (error) When the function catch some error print it here
-func InitialData(f string) (string, string, string, string, bool, bool, error) {
-	var user, pass, url, parentid string
-	var insecure, debug = false, false
+func InitialData(f string) (string, string, string, string, bool, string, error) {
+	var user, pass, url, debug, parentid string
+	var insecure = false
 	fileInfo, err := os.Stat(f)
 	if err != nil {
 		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: InitialData M: Error while we trying to check the file: %#v", err)
-		return "", "", "", "", false, false, err
+		return "", "", "", "", false, "", err
 	}
 	if fileInfo.Mode().IsDir() {
 		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: InitialData M: It is a directory, please select a config file")
-		return "", "", "", "", false, false, nil
+		return "", "", "", "", false, "", nil
 	} else if fileInfo.Mode().IsRegular() {
 		file, err := os.Open(f)
 		if err != nil {
 			log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: InitialData M: Failed opening file %s, please make sure the config file exists", err)
-			return "", "", "", "", false, false, err
+			return "", "", "", "", false, "", err
 		}
 		scanner := bufio.NewScanner(file)
 		scanner.Split(bufio.ScanLines)
@@ -312,13 +313,13 @@ func InitialData(f string) (string, string, string, string, bool, bool, error) {
 			if key == "insecure" && strings.TrimSpace(temp[1]) == "true" {
 				insecure = true
 			}
-			if key == "debug" && strings.TrimSpace(temp[1]) == "true" {
-				debug = true
+			if key == "debug" {
+				debug = strings.TrimSpace(temp[1])
 			}
 		}
 	} else {
 		log.Println("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: InitialData M: Something was wrong, please try again")
-		return "", "", "", "", false, false, nil
+		return "", "", "", "", false, "", nil
 	}
 	return url, user, pass, parentid, insecure, debug, nil
 }
