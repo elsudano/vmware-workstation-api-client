@@ -65,16 +65,17 @@ func NewClient(a string, u string, p string, i bool, d string) (*Client, error) 
 	}
 	c.Client = &http.Client{
 		Transport: &http.Transport{
+			// DisableKeepAlives: false,
 			TLSClientConfig: &tls.Config{
 				InsecureSkipVerify: i,
 			},
 		},
 	}
-	if c.DebugLevel != "NONE" {
-		log.SetOutput(os.Stderr)
-	}
-	if c.DebugLevel == "NONE" {
+
+	if c.DebugLevel == "INFO" || c.DebugLevel == "ERROR" || c.DebugLevel == "DEBUG" {
 		log.SetOutput(io.Discard)
+	} else {
+		log.SetOutput(os.Stderr)
 	}
 	if c.DebugLevel == "DEBUG" {
 		log.Printf("[DEBUG][WSAPICLI] Fi: wsapiclient.go Fu: NewClient  Client %#v\n", c.Client)
