@@ -5,10 +5,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"log"
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/rs/zerolog/log"
 )
 
 // GetVM Auxiliar function to get the data of the VM and don't repeat code
@@ -26,18 +27,18 @@ func (c *Client) GetVM(i string) (*MyVm, error) {
 	// --------- This Block read the path and the ID of the vm in order to load in the function --------- {{{
 	response, vmerror, err := c.httpRequest("vms", "GET", bytes.Buffer{})
 	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetVM Message: The request at the server API failed %s", err)
+		log.Error().Err(err).Msg("We can't made the API call.")
 		return nil, err
 	}
 	switch vmerror.Code {
 	case 0:
 		err = json.NewDecoder(response).Decode(&vms)
 		if err != nil {
-			log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetVM Message: I can't read the json structure %s", err)
+			log.Error().Err(err).Msg("The response JSON is malformed.")
 			return nil, err
 		}
 	default:
-		log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: GetBasicInfo Obj: Output Code %d and Message: %s", vmerror.Code, vmerror.Message)
+		log.Error().Msgf("We haven't handled this error Code: %d Message: %s", vmerror.Code, vmerror.Message)
 		return nil, errors.New(strconv.Itoa(vmerror.Code) + "," + vmerror.Message)
 	}
 	for tempvm, value := range vms {
@@ -45,7 +46,8 @@ func (c *Client) GetVM(i string) (*MyVm, error) {
 			vm = vms[tempvm]
 		}
 	}
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: GetVM Obj: VM %#v\n", vm)
+	log.Debug().Msgf("VM: %#v", vm)
+	log.Info().Msg("We have loaded the ID and Path values.")
 	return &vm, nil
 }
 
@@ -58,25 +60,26 @@ func (c *Client) GetVM(i string) (*MyVm, error) {
 func (c *Client) GetBasicInfo(vm *MyVm) error {
 	response, vmerror, err := c.httpRequest("vms/"+vm.IdVM, "GET", bytes.Buffer{})
 	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetBasicInfo Error Code %d M: %#v", vmerror.Code, vmerror.Message)
+		log.Error().Err(err).Msg("We couldn't complete the API call.")
 		return err
 	}
 	switch vmerror.Code {
 	case 0:
-		log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: GetBasicInfo M: Response Raw Information %#v\n", response)
 		err = json.NewDecoder(response).Decode(&vm)
 		if err != nil {
-			log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetBasicInfo M: Response Error Getting Information %#v\n", err)
+			log.Error().Err(err).Msg("The response JSON is malformed.")
 			return err
 		}
 	case 110:
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetBasicInfo Code %d M: %s", vmerror.Code, vmerror.Message)
-		return errors.New("Code:" + strconv.Itoa(vmerror.Code) + " Msg:" + vmerror.Message)
+		err = errors.New("Code:" + strconv.Itoa(vmerror.Code) + " Msg:" + vmerror.Message)
+		log.Error().Msgf("Code: %d Message: %s", vmerror.Code, vmerror.Message)
+		return err
 	default:
-		log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: GetBasicInfo M: Output Code %d and Message: %s", vmerror.Code, vmerror.Message)
+		log.Error().Msgf("We haven't handled this error Code: %d Message: %s", vmerror.Code, vmerror.Message)
 		return errors.New(strconv.Itoa(vmerror.Code) + "," + vmerror.Message)
 	}
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: GetBasicInfo Obj: VM %#v\n", vm)
+	log.Debug().Msgf("VM: %#v", vm)
+	log.Info().Msg("We have loaded the Processor and Memory values.")
 	return nil
 }
 
@@ -91,41 +94,40 @@ func (c *Client) GetDenominationDescription(vm *MyVm) error {
 	var param ParamPayload
 	response, vmerror, err := c.httpRequest("vms/"+vm.IdVM+"/params/displayName", "GET", bytes.Buffer{})
 	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetDenominationDescription M: Request Error Getting Denomination %#v\n", err)
+		log.Error().Err(err).Msg("We couldn't complete the API call.")
 		return err
 	}
 	switch vmerror.Code {
 	case 0:
-		log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: GetDenominationDescription M: Response Getting Denomination %#v\n", response)
 		err = json.NewDecoder(response).Decode(&param)
 		if err != nil {
-			log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetDenominationDescription M: Error Decoding Denomination %#v\n", err)
+			log.Error().Err(err).Msg("The response JSON is malformed.")
 			return err
 		}
 	default:
-		log.Printf("[DEBUG][WSAPICLI] Fi: wsapinet.go Fu: GetDenominationDescription M: Output Code %d and Message: %s", vmerror.Code, vmerror.Message)
+		log.Error().Msgf("We haven't handled this error Code: %d Message: %s", vmerror.Code, vmerror.Message)
 		return errors.New(strconv.Itoa(vmerror.Code) + "," + vmerror.Message)
 	}
 	vm.Denomination = param.Value
 	response, vmerror, err = c.httpRequest("vms/"+vm.IdVM+"/params/annotation", "GET", bytes.Buffer{})
 	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetDenominationDescription M: Request Error Getting Description %#v\n", err)
+		log.Error().Err(err).Msg("We couldn't complete the API call.")
 		return err
 	}
 	switch vmerror.Code {
 	case 0:
-		log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: GetDenominationDescription M: Response Getting Description %#v\n", response)
 		err = json.NewDecoder(response).Decode(&param)
 		if err != nil {
-			log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetDenominationDescription M: Error Decoding Description %#v\n", err)
+			log.Error().Err(err).Msg("The response JSON is malformed.")
 			return err
 		}
 	default:
-		log.Printf("[DEBUG][WSAPICLI] Fi: wsapinet.go Fu: GetDenominationDescription M: Output Code %d and Message: %s", vmerror.Code, vmerror.Message)
+		log.Error().Msgf("We haven't handled this error Code: %d Message: %s", vmerror.Code, vmerror.Message)
 		return errors.New(strconv.Itoa(vmerror.Code) + "," + vmerror.Message)
 	}
 	vm.Description = param.Value
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: GetDenominationDescription Obj: VM %#v\n", vm)
+	log.Debug().Msgf("VM: %#v", vm)
+	log.Info().Msg("We have loaded the Denomination and Description values.")
 	return nil
 }
 
@@ -139,23 +141,23 @@ func (c *Client) GetPowerStatus(vm *MyVm) error {
 	var power_state_payload PowerStatePayload
 	response, vmerror, err := c.httpRequest("vms/"+vm.IdVM+"/power", "GET", bytes.Buffer{})
 	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetPowerStatus Obj: Request Error Power Status %#v\n", err)
+		log.Error().Err(err).Msg("We couldn't complete the API call.")
 		return err
 	}
 	switch vmerror.Code {
 	case 0:
-		log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: GetPowerStatus Obj: Response Power Status %#v\n", response)
 		err = json.NewDecoder(response).Decode(&power_state_payload)
 		vm.PowerStatus = PowerStateConversor(power_state_payload.Value)
 		if err != nil {
-			log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetPowerStatus Obj: Decoding Power Status %#v\n", err)
+			log.Error().Err(err).Msg("The response JSON is malformed.")
 			return err
 		}
 	default:
-		log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: GetPowerStatus Obj: Output Code %d and Message: %s", vmerror.Code, vmerror.Message)
+		log.Error().Msgf("We haven't handled this error Code: %d Message: %s", vmerror.Code, vmerror.Message)
 		return errors.New(strconv.Itoa(vmerror.Code) + "," + vmerror.Message)
 	}
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: GetPowerStatus Obj: VM %#v\n", vm)
+	log.Debug().Msgf("VM: %#v", vm)
+	log.Info().Msg("We have loaded the Power State value.")
 	return nil
 }
 
@@ -170,10 +172,10 @@ func (c *Client) GetPowerStatus(vm *MyVm) error {
 func (c *Client) PowerSwitch(vm *MyVm, s string) error {
 	var power_state_payload PowerStatePayload
 	requestBody := bytes.NewBufferString(s)
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapivm.go Fu: PowerSwitch Obj: Request option %#v\n", requestBody.String())
+	log.Debug().Msgf("The state that we want is: %#v", s)
 	response, vmerror, err := c.httpRequest("vms/"+vm.IdVM+"/power", "PUT", *requestBody)
 	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: PowerSwitch M: Response RAW %#v\n", err)
+		log.Error().Err(err).Msg("We couldn't complete the API call.")
 		return err
 	}
 	switch vmerror.Code {
@@ -181,14 +183,15 @@ func (c *Client) PowerSwitch(vm *MyVm, s string) error {
 		err = json.NewDecoder(response).Decode(&power_state_payload)
 		vm.PowerStatus = PowerStateConversor(power_state_payload.Value)
 		if err != nil {
-			log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: PowerSwitch M: Response Body RAW %#v, %#v\n", err, response)
+			log.Error().Err(err).Msg("The response JSON is malformed.")
 			return err
 		}
 	default:
-		log.Printf("[DEBUG][WSAPICLI] Fi: wsapinet.go Fu: PowerSwitch M: Output Code %d and Message: %s", vmerror.Code, vmerror.Message)
+		log.Error().Msgf("We haven't handled this error Code: %d Message: %s", vmerror.Code, vmerror.Message)
 		return errors.New(strconv.Itoa(vmerror.Code) + "," + vmerror.Message)
 	}
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: PowerSwitch Obj: VM %#v\n", vm)
+	log.Debug().Msgf("VM: %#v", vm)
+	log.Info().Msg("We have changed the Power State.")
 	return nil
 }
 
@@ -200,7 +203,8 @@ func (c *Client) PowerSwitch(vm *MyVm, s string) error {
 // Outputs:
 // s: (string) The normalized string
 func PowerStateConversor(ops string) (s string) {
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: PowerStateConversor M: We have called this method")
+	log.Debug().Msgf("Power State RAW: %#v", ops)
+	log.Info().Msg("We have converted the Power State.")
 	switch ops {
 	case "poweredOn":
 		return "on"
@@ -230,37 +234,32 @@ func (c *Client) SetParameter(vm *MyVm, p string, v string) error {
 	param.Name = p
 	param.Value = v
 	request, err := json.Marshal(param)
-	// request, err := json.Marshal(map[string]string{
-	// 	"name":  p,
-	// 	"value": v,
-	// })
 	if err != nil {
-		log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: SetParameter Obj:%#v\n", err)
+		log.Error().Err(err).Msgf("Trying to encode this request: %#v", param)
 		return err
 	}
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: SetParameter Obj:Request %#v\n", request)
 	requestBody := new(bytes.Buffer)
 	requestBody.Write(request)
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: SetParameter Obj:Request Body %#v\n", requestBody.String())
+	log.Debug().Msgf("Request Human Readable: %#v", requestBody.String())
 	response, vmerror, err := c.httpRequest("/vms/"+vm.IdVM+"/configparams", "PUT", *requestBody)
 	if err != nil {
 		return err
 	}
 	switch vmerror.Code {
 	case 0:
-		log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: SetParameter Obj:response raw %#v\n", response)
 		responseBody := new(bytes.Buffer)
 		_, err = responseBody.ReadFrom(response)
 		if err != nil {
-			log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: SetParameter Obj:Response Error %#v\n", err)
+			log.Error().Err(err).Msg("The response JSON is malformed.")
 			return err
 		}
-		log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: SetParameter Obj:Response Body %#v\n", responseBody.String())
+		log.Debug().Msgf("Response Human Readable: %#v", responseBody.String())
 	default:
-		log.Printf("[DEBUG][WSAPICLI] Fi: wsapinet.go Fu: SetParameter Obj: Output Code %d and Message: %s", vmerror.Code, vmerror.Message)
+		log.Error().Msgf("We haven't handled this error Code: %d Message: %s", vmerror.Code, vmerror.Message)
 		return errors.New(strconv.Itoa(vmerror.Code) + "," + vmerror.Message)
 	}
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: SetParameter Obj: VM %#v\n", vm)
+	log.Debug().Msgf("VM: %#v", vm)
+	log.Info().Msgf("We have defined new value in parameter: %#v", p)
 	return nil
 }
 
@@ -281,16 +280,16 @@ func InitialData(f string) (string, string, string, string, bool, string, error)
 	var insecure = false
 	fileInfo, err := os.Stat(f)
 	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: InitialData M: Error while we trying to check the file: %#v", err)
+		log.Error().Err(err).Msg("While we trying to check the file.")
 		return "", "", "", "", false, "", err
 	}
 	if fileInfo.Mode().IsDir() {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: InitialData M: It is a directory, please select a config file")
+		log.Error().Err(err).Msg("It is a directory, please select a config file.")
 		return "", "", "", "", false, "", nil
 	} else if fileInfo.Mode().IsRegular() {
 		file, err := os.Open(f)
 		if err != nil {
-			log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: InitialData M: Failed opening file %s, please make sure the config file exists", err)
+			log.Error().Err(err).Msg("Failed opening file, please make sure the config file exists.")
 			return "", "", "", "", false, "", err
 		}
 		scanner := bufio.NewScanner(file)
@@ -318,7 +317,7 @@ func InitialData(f string) (string, string, string, string, bool, string, error)
 			}
 		}
 	} else {
-		log.Println("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: InitialData M: Something was wrong, please try again")
+		log.Error().Msgf("We haven't handled this error, something was wrong, please try again")
 		return "", "", "", "", false, "", nil
 	}
 	return url, user, pass, parentid, insecure, debug, nil

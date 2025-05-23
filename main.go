@@ -3,13 +3,13 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/TwiN/go-color"
 	"github.com/elsudano/vmware-workstation-api-client/wsapiclient"
+	"github.com/rs/zerolog/log"
 )
 
 var paragraph_color = color.Blue
@@ -42,9 +42,8 @@ func PrintVM(VM *wsapiclient.MyVm) {
 func main() {
 	file, err := os.Open("config.ini")
 	if err != nil {
-		log.Fatalf("Failed opening file %s, please make sure the config file exists", err)
+		log.Error().Err(err).Msgf("Failed opening file %s, please make sure the config file exists", err)
 	}
-
 	scanner := bufio.NewScanner(file)
 	scanner.Split(bufio.ScanLines)
 	var varuser, varpass, varurl, varparentid, vardebug string
@@ -94,13 +93,13 @@ func main() {
 	// First option we will can create a client with the default values {{{
 	// client, _ := wsapiclient.New()
 	// client.ConfigCli(varurl, varuser, varpass, varinsecure, vardebug)
-	// fmt.Printf("Parent ID: %s\n", varparentid)
+	// fmt.Printf("Parent ID: %s", varparentid)
 	// }}}
 
 	// Second option we will setting the values in the creation moment {{{
 	client, err := wsapiclient.NewClient(varurl, varuser, varpass, varinsecure, vardebug)
 	if err != nil {
-		log.Printf("[ERROR][MAIN] Fi: main.go Task: Creating client error %#v\n", err)
+		log.Error().Err(err).Msgf("Creating client error %#v", err)
 		os.Exit(10)
 	}
 	fmt.Println(color.Ize(paragraph_color, "We can see here the value of the ParentID VM:"))
@@ -114,14 +113,14 @@ func main() {
 	fmt.Println(color.Ize(paragraph_color, "Now we going to list all the VMs that we have in the VMWare Workstation:"))
 	AllVMs, err := client.GetAllVMs()
 	if err != nil {
-		log.Printf("[ERROR][MAIN] Fi: main.go Task: Listing VMs Error %#v\n", err)
+		log.Error().Err(err).Msg("We can't show this VM by")
 		// os.Exit(11)
 	}
 	for _, item := range AllVMs {
 		if item.IdVM != "II82IG14IV0UHB7QHAI3J0G44RJBGNR5" { // is just because this VM is encripted
 			VM, err := client.LoadVM(item.IdVM)
 			if err != nil {
-				log.Printf("[ERROR][MAIN] Fi: main.go Task: First time Reading VM Error %#v\n", err)
+				log.Error().Err(err).Msgf("First time Reading VM Error %#v", err)
 				os.Exit(13)
 			}
 			PrintVM(VM)
@@ -131,14 +130,14 @@ func main() {
 	fmt.Println(color.Ize(paragraph_color, "We are using the CreateVM method to create the VM test."))
 	VM, err := client.CreateVM(varparentid, "clone-test-copy", "Test to INSERT description", 2, 1024)
 	if err != nil {
-		log.Printf("[ERROR][MAIN] Fi: main.go Task: Creating VMs Error %#v\n", err)
+		log.Error().Err(err).Msgf("Creating VMs Error %#v", err)
 		os.Exit(12)
 	}
 	// Now we have one new instance, we can read which is the status
 	fmt.Println(color.Ize(paragraph_color, "Now we going to review the state of the VM that we have created:"))
 	VM, err = client.LoadVM(VM.IdVM)
 	if err != nil {
-		log.Printf("[ERROR][MAIN] Fi: main.go Task: First time Reading VM Error %#v\n", err)
+		log.Error().Err(err).Msgf("First time Reading VM Error %#v", err)
 		os.Exit(13)
 	}
 	PrintVM(VM)
@@ -146,7 +145,7 @@ func main() {
 	// fmt.Println(color.Ize(paragraph_color, "After that, we have registered in the UI of VMWare Workstation"))
 	// _, err = client.RegisterVM(VM.Denomination, VM.Path)
 	// if err != nil {
-	// 	log.Printf("[ERROR][MAIN] Fi: main.go Task: Registering VM Error %#v\n", err)
+	//	log.Error().Err(err).Msgf("Registering VM Error %#v", err)
 	// 	os.Exit(14)
 	// }
 	// time.Sleep(10 * time.Second)
@@ -154,14 +153,14 @@ func main() {
 	fmt.Println(color.Ize(paragraph_color, "Now, we going to Energize the VM with the UpdateVM method."))
 	VM, err = client.UpdateVM(VM.IdVM, "clone-test-copy-change", "esta es una prueba de llenadao de datos", 2, 1024, "on")
 	if err != nil {
-		log.Printf("[ERROR][MAIN] Fi: main.go Task: Updating VM Error %#v\n", err)
+		log.Error().Err(err).Msgf("Updating VM Error %#v", err)
 		os.Exit(15)
 	}
 	time.Sleep(60 * time.Second) // we need to wait because the VM take time to be ready
 	// fmt.Println(color.Ize(paragraph_color, "We can confirm that the VM is working properly:"))
 	// VM, err = client.LoadVM(VM.IdVM)
 	// if err != nil {
-	// 	log.Printf("[ERROR][MAIN] Fi: main.go Task: Second time Reading VM Error %#v\n", err)
+	//	log.Error().Err(err).Msgf("Second time Reading VM Error %#v", err)
 	// 	os.Exit(16)
 	// }
 	PrintVM(VM)
@@ -169,14 +168,14 @@ func main() {
 	fmt.Println(color.Ize(paragraph_color, "Now, we going to shutdown and change the propierties of the VM with the UpdateVM method"))
 	VM, err = client.UpdateVM(VM.IdVM, "clone-test-copy-change", "esta es una prueba de llenadao de datos", 1, 512, "off")
 	if err != nil {
-		log.Printf("[ERROR][MAIN] Fi: main.go Task: Updating VM Error %#v\n", err)
+		log.Error().Err(err).Msgf("Updating VM Error %#v", err)
 		os.Exit(17)
 	}
 	time.Sleep(30 * time.Second)
 	// fmt.Println(color.Ize(paragraph_color, "We confirm that the VM is off and it's propierties has changed:"))
 	// VM, err = client.LoadVM(VM.IdVM)
 	// if err != nil {
-	// 	log.Printf("[ERROR][MAIN] Fi: main.go Task: Third time Reading VM Error %#v\n", err)
+	//	log.Error().Err(err).Msgf("Third time Reading VM Error %#v", err)
 	// 	os.Exit(18)
 	// }
 	PrintVM(VM)
@@ -184,7 +183,7 @@ func main() {
 	fmt.Println(color.Ize(paragraph_color, "And finally we have deleted the VM"))
 	err = client.DeleteVM(VM.IdVM)
 	if err != nil {
-		log.Printf("%s", err)
+		log.Error().Err(err).Msgf("DeleteVM Error %#v", err)
 		os.Exit(19)
 	}
 	fmt.Println()

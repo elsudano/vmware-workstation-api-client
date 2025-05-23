@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"log"
 	"strconv"
+
+	"github.com/rs/zerolog/log"
 )
 
 // This struct is for get and put information about NIC of the VM
@@ -34,25 +35,25 @@ type nicPayload struct {
 func (c *Client) GetNetwork(vm *MyVm) error {
 	response, vmerror, err := c.httpRequest("vms/"+vm.IdVM+"/nicips", "GET", bytes.Buffer{})
 	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapinet.go Fu: GetNetwork Obj:  %#v\n", err)
+		log.Error().Err(err).Msg("We couldn't complete the API call.")
 		return err
 	}
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapinet.go Fu: GetNetwork Obj: Requesting network information %#v\n", response)
 	switch vmerror.Code {
 	case 0:
 		err = json.NewDecoder(response).Decode(&vm)
 		if err != nil {
-			log.Printf("[ERROR][WSAPICLI] Fi: wsapinet.go Fu: GetNetwork Obj: Error decoding Info Network %#v\n", err)
+			log.Error().Err(err).Msg("The response JSON is malformed.")
 			return err
 		}
-		log.Printf("[DEBUG][WSAPICLI] Fi: wsapinet.go Fu: GetNetwork Obj: Response VM %#v\n", vm)
 	case 118:
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapinet.go Fu: GetNetwork Code %d M: %s", vmerror.Code, vmerror.Message)
+		log.Error().Msgf("Code: %d Message: %s", vmerror.Code, vmerror.Message)
 		return errors.New("Code:" + strconv.Itoa(vmerror.Code) + " Msg:" + vmerror.Message)
 	default:
-		log.Printf("[DEBUG][WSAPICLI] Fi: wsapinet.go Fu: GetNetwork Output Code %d M: %s", vmerror.Code, vmerror.Message)
+		log.Error().Msgf("We haven't handled this error Code: %d Message: %s", vmerror.Code, vmerror.Message)
 		return errors.New("Code:" + strconv.Itoa(vmerror.Code) + " Msg:" + vmerror.Message)
 	}
+	log.Debug().Msgf("VM: %#v", vm)
+	log.Info().Msg("We have read the Network Information.")
 	return err
 }
 
@@ -75,31 +76,29 @@ func (c *Client) RenewMAC(vm *MyVm) error {
 	// }
 	response, vmerror, err := c.httpRequest("vms/"+vm.IdVM+"/nic", "GET", bytes.Buffer{})
 	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapinet.go Fu: RenewMAC Obj:  %#v\n", err)
+		log.Error().Err(err).Msg("We couldn't complete the API call.")
 		return err
 	}
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapinet.go Fu: RenewMAC Obj: Getting NIC %#v\n", response)
 	switch vmerror.Code {
 	case 0:
 		err = json.NewDecoder(response).Decode(&currentNIC)
 		if err != nil {
-			log.Printf("[ERROR][WSAPICLI] Fi: wsapinet.go Fu: RenewMAC Obj: Error decoding Info NIC %#v\n", err)
+			log.Error().Err(err).Msg("The response JSON is malformed.")
 			return err
 		}
 	default:
-		log.Printf("[DEBUG][WSAPICLI] Fi: wsapinet.go Fu: RenewMAC Output Code %d M: %s", vmerror.Code, vmerror.Message)
+		log.Error().Msgf("We haven't handled this error Code: %d Message: %s", vmerror.Code, vmerror.Message)
 		return errors.New("Code:" + strconv.Itoa(vmerror.Code) + " Msg:" + vmerror.Message)
 	}
-	response, vmerror, err = c.httpRequest("vms/"+vm.IdVM+"/nic/"+strconv.Itoa(currentNIC.NICS[0].Index), "DELETE", bytes.Buffer{})
+	_, vmerror, err = c.httpRequest("vms/"+vm.IdVM+"/nic/"+strconv.Itoa(currentNIC.NICS[0].Index), "DELETE", bytes.Buffer{})
 	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapinet.go Fu: RenewMAC Obj:  %#v\n", err)
+		log.Error().Err(err).Msg("We couldn't complete the API call to delete the NIC.")
 		return err
 	}
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapinet.go Fu: RenewMAC Obj: Deleting NIC %#v\n", response)
 	switch vmerror.Code {
 	case 0:
 	default:
-		log.Printf("[DEBUG][WSAPICLI] Fi: wsapinet.go Fu: RenewMAC Output Code %d M: %s", vmerror.Code, vmerror.Message)
+		log.Error().Msgf("We haven't handled this error Code: %d Message: %s", vmerror.Code, vmerror.Message)
 		return errors.New("Code:" + strconv.Itoa(vmerror.Code) + " Msg:" + vmerror.Message)
 	}
 	if currentNIC.NICS[0].Type == "bridged" {
@@ -111,25 +110,25 @@ func (c *Client) RenewMAC(vm *MyVm) error {
 	}
 	err = json.NewEncoder(requestBody).Encode(&newNIC)
 	if err != nil {
-		log.Printf("[DEBUG][WSAPICLI] Fi: wsapinet.go Fu: RenewMAC Obj:%#v\n", err)
+		log.Error().Err(err).Msg("The NIC JSON is malformed.")
 		return err
 	}
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapinet.go Fu: RenewMAC Obj:Request Body %#v\n", requestBody.String())
-	response, vmerror, err = c.httpRequest("vms/"+vm.IdVM+"/nic", "POST", *requestBody)
+	log.Debug().Msgf("Request RAW: %#v", requestBody.String())
+	_, vmerror, err = c.httpRequest("vms/"+vm.IdVM+"/nic", "POST", *requestBody)
 	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapinet.go Fu: RenewMAC Obj:  %#v\n", err)
+		log.Error().Err(err).Msg("We couldn't complete the API call to create the NIC.")
 		return err
 	}
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapinet.go Fu: RenewMAC Obj: Creating NIC %#v\n", response)
 	switch vmerror.Code {
 	case 0:
 	case 121:
-		log.Printf("[DEBUG][WSAPICLI] Fi: wsapinet.go Fu: RenewMAC Code %d M: %s", vmerror.Code, vmerror.Message)
+		log.Error().Msgf("Code: %d Message: %s", vmerror.Code, vmerror.Message)
 		return errors.New("Code:" + strconv.Itoa(vmerror.Code) + " Msg:" + vmerror.Message)
 	default:
-		log.Printf("[DEBUG][WSAPICLI] Fi: wsapinet.go Fu: RenewMAC Output Code %d M: %s", vmerror.Code, vmerror.Message)
+		log.Error().Msgf("We haven't handled this error Code: %d Message: %s", vmerror.Code, vmerror.Message)
 		return errors.New("Code:" + strconv.Itoa(vmerror.Code) + " Msg:" + vmerror.Message)
 	}
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapinet.go Fu: RenewMAC Obj: VM %#v\n", vm)
+	log.Debug().Msgf("VM: %#v", vm)
+	log.Info().Msg("We have changed the MAC address.")
 	return err
 }
