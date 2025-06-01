@@ -20,6 +20,7 @@ import (
 // vm: (pointer) pointer to the VM that we are handeling
 // err: (error) If we will have some error we can handle it here.
 func (c *Client) GetVM(i string) (*MyVm, error) {
+	log.Info().Msgf("The VM Id value is: %#v", i)
 	var vms []MyVm
 	var vm MyVm
 	// If you want see the path of the VM it's necessary getting all VMs
@@ -41,9 +42,11 @@ func (c *Client) GetVM(i string) (*MyVm, error) {
 		log.Error().Msgf("We haven't handled this error Code: %d Message: %s", vmerror.Code, vmerror.Message)
 		return nil, errors.New(strconv.Itoa(vmerror.Code) + "," + vmerror.Message)
 	}
+	log.Debug().Msgf("List of VMs: %#v", vms)
 	for tempvm, value := range vms {
 		if value.IdVM == i {
 			vm = vms[tempvm]
+			// poner un break cuando la encuentre
 		}
 	}
 	log.Debug().Msgf("VM: %#v", vm)

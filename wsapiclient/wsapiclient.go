@@ -62,7 +62,12 @@ type Client struct {
 // error: (error) when the client generate some error is storage in this var.
 func NewClient(a string, u string, p string, i bool, d string) (*Client, error) {
 	c := new(Client)
-	c.BaseURL, _ = url.Parse(a)
+	URL, err := url.Parse(strings.TrimSpace(a))
+	if err != nil {
+		log.Error().Err(err).Msgf("We can't parsed the URL: %#v", err)
+		return nil, err
+	}
+	c.BaseURL = URL
 	c.User = u
 	c.Password = p
 	c.InsecureFlag = i
@@ -276,11 +281,11 @@ func (c *Client) httpRequest(p string, m string, pl bytes.Buffer) (io.ReadCloser
 
 // requestPath method show the URL to the request of httpClient.
 // Input:
-// p: string just the path of the URL.
+// p: (string) just the path of the URL.
 // Return:
-// string with the complete URL to access
+// (string) with the complete URL to access
 func (c *Client) requestPath(p string) string {
 	r := fmt.Sprintf("%s/%s", c.BaseURL, p)
-	log.Debug().Str("URL", c.BaseURL.Host+"/"+p).Msg("The complete")
+	log.Debug().Str("URL", c.BaseURL.Host+"/"+p).Msg("The whole endpoint that we will visit.")
 	return r
 }
