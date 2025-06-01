@@ -16,9 +16,9 @@ type MyVm struct {
 	Denomination string `json:"displayName"`
 	Description  string `json:"annotation"`
 	PowerStatus  string `json:"power_state"`
-	Memory       int    `json:"memory"`
+	Memory       int32  `json:"memory"`
 	CPU          struct {
-		Processors int `json:"processors"`
+		Processors int32 `json:"processors"`
 	}
 	NICS []struct {
 		Mac string   `json:"mac"`
