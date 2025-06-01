@@ -65,6 +65,7 @@ func (c *Client) GetVMbyName(n string) (*MyVm, error) {
 	log.Info().Msgf("The VM name value is: %#v", n)
 	var vms []MyVm
 	var vm MyVm
+	var param ParamPayload
 	// If you want see the path of the VM it's necessary getting all VMs
 	// because the API of VmWare Workstation doesn't allow see this the another way
 	// --------- This Block read the path and the ID of the vm in order to load in the function --------- {{{
@@ -86,7 +87,17 @@ func (c *Client) GetVMbyName(n string) (*MyVm, error) {
 	}
 	log.Debug().Msgf("List of VMs: %#v", vms)
 	for tempvm, value := range vms {
-		if value.Denomination == n {
+		response, _, err = c.httpRequest("vms/"+value.IdVM+"/params/displayName", "GET", bytes.Buffer{})
+		if err != nil {
+			log.Error().Err(err).Msg("We couldn't complete the API call.")
+			return nil, err
+		}
+		err = json.NewDecoder(response).Decode(&param)
+		if err != nil {
+			log.Error().Err(err).Msg("The response JSON is malformed.")
+			return nil, err
+		}
+		if param.Value == n {
 			vm = vms[tempvm]
 			break
 		}
