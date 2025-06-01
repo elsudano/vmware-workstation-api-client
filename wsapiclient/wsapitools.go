@@ -46,7 +46,49 @@ func (c *Client) GetVM(i string) (*MyVm, error) {
 	for tempvm, value := range vms {
 		if value.IdVM == i {
 			vm = vms[tempvm]
-			// poner un break cuando la encuentre
+			break
+		}
+	}
+	log.Debug().Msgf("VM: %#v", vm)
+	log.Info().Msg("We have loaded the ID and Path values.")
+	return &vm, nil
+}
+
+// GetVMbyName Auxiliar function to get the data of the VM and don't repeat code
+// Input:
+// c: (pointer) pointer at the client of the API server,
+// n: (string) The name of the VM that we want to get.
+// Outputs:
+// vm: (pointer) pointer to the VM that we are handling
+// err: (error) If we will have some error we can handle it here.
+func (c *Client) GetVMbyName(n string) (*MyVm, error) {
+	log.Info().Msgf("The VM name value is: %#v", n)
+	var vms []MyVm
+	var vm MyVm
+	// If you want see the path of the VM it's necessary getting all VMs
+	// because the API of VmWare Workstation doesn't allow see this the another way
+	// --------- This Block read the path and the ID of the vm in order to load in the function --------- {{{
+	response, vmerror, err := c.httpRequest("vms", "GET", bytes.Buffer{})
+	if err != nil {
+		log.Error().Err(err).Msg("We can't made the API call.")
+		return nil, err
+	}
+	switch vmerror.Code {
+	case 0:
+		err = json.NewDecoder(response).Decode(&vms)
+		if err != nil {
+			log.Error().Err(err).Msg("The response JSON is malformed.")
+			return nil, err
+		}
+	default:
+		log.Error().Msgf("We haven't handled this error Code: %d Message: %s", vmerror.Code, vmerror.Message)
+		return nil, errors.New(strconv.Itoa(vmerror.Code) + "," + vmerror.Message)
+	}
+	log.Debug().Msgf("List of VMs: %#v", vms)
+	for tempvm, value := range vms {
+		if value.Denomination == n {
+			vm = vms[tempvm]
+			break
 		}
 	}
 	log.Debug().Msgf("VM: %#v", vm)
