@@ -62,7 +62,8 @@ build: prepare ## Build the binary of the module
 
 publish: build ## Build and Publish a new TAG in GitHub
 	@git add .
-	@git commit -m "feat: We have created the new version ($(VERSION)) of the API Client"
+	@git commit -S -m "feat: We have released a new version ($(VERSION)) of the API Client:
+	$(MESSAGE)"
 	@git pull --rebase
 	@git push
 	@git push --tags
