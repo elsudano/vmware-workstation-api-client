@@ -54,7 +54,7 @@ func (c *Client) GetVM(i string) (*MyVm, error) {
 	return &vm, nil
 }
 
-// GetVMbyName Auxiliar function to get the data of the VM and don't repeat code
+// GetVMbyName Auxiliary function to get the data of the VM and don't repeat code
 // Input:
 // c: (pointer) pointer at the client of the API server,
 // n: (string) The name of the VM that we want to get.
@@ -107,7 +107,41 @@ func (c *Client) GetVMbyName(n string) (*MyVm, error) {
 	return &vm, nil
 }
 
-// GetBasicInfo Auxiliar function in charge of getting de Basic Information
+// GetAllExtraParameters Auxiliary function to get all the Extra parameters
+// we have created this function in order not repeat the same code in both
+// functions LoadVM and LoadVMbyName.
+// Inputs:
+// c: (pointer) pointer at the client of the API server,
+// vm: (pointer) That's will be the pointer at our vm that we want fill
+// Outputs:
+// err: (error) If we will have some error we can handle it here.
+func (c *Client) GetAllExtraParameters(vm *MyVm) error {
+	err := c.GetBasicInfo(vm)
+	if err != nil {
+		log.Error().Err(err).Msg("We couldn't show the Process and Memory.")
+		return err
+	}
+	err = c.GetDenominationDescription(vm)
+	if err != nil {
+		log.Error().Err(err).Msg("We couldn't show the Denomination and Description.")
+		return err
+	}
+	err = c.GetPowerStatus(vm)
+	if err != nil {
+		log.Error().Err(err).Msg("We couldn't show the Power Status.")
+		return err
+	}
+	if vm.PowerStatus == "on" {
+		err = c.GetNetwork(vm)
+		if err != nil {
+			log.Error().Err(err).Msg("We couldn't show the Network information.")
+			return err
+		}
+	}
+	return nil
+}
+
+// GetBasicInfo Auxiliary function in charge of getting de Basic Information
 // Inputs:
 // c: (pointer) Pointer at the client of the API server
 // vm: (MyVm) The VM that we want to know the Memory and CPU info
@@ -139,7 +173,7 @@ func (c *Client) GetBasicInfo(vm *MyVm) error {
 	return nil
 }
 
-// GetDenominationDescription Axiliar function in charge about the getting the
+// GetDenominationDescription Auxiliary function in charge about the getting the
 // description and Denomination of the VM and set in our structure.
 // Inputs:
 // c: (pointer) Pointer at the client of the API server
@@ -187,7 +221,7 @@ func (c *Client) GetDenominationDescription(vm *MyVm) error {
 	return nil
 }
 
-// GetPowerStatus Auxiliar function in charge to get the current Power Status
+// GetPowerStatus Auxiliary function in charge to get the current Power Status
 // Inputs:
 // c: (pointer) at the client of the API server
 // vm: (MyVm) The VM that we want to know the Power Status
@@ -253,7 +287,7 @@ func (c *Client) PowerSwitch(vm *MyVm, s string) error {
 
 // PowerStateConversor We have to create this method, because the API of th VMWare Workstation
 // change the values of the Power State of the instance, I mean, If I send "on" the API change
-// the value for powerOn, and obviusly that is a big problem
+// the value for powerOn, and obviously that is a big problem
 // Inputs:
 // ops: (string) The original Power State, the string that the API of VmWare Workstation give us
 // Outputs:

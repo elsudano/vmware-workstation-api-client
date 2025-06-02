@@ -289,7 +289,7 @@ func (c *Client) CreateVM(s string, n string, d string, p int, m int) (*MyVm, er
 	return &vm, err
 }
 
-// ReadVM method return the object MyVm with the ID indicate in i.
+// LoadVM method return the object MyVm with the ID indicate in i.
 // Inputs:
 // i: (string) String with the ID of the VM
 // Outputs:
@@ -301,29 +301,34 @@ func (c *Client) LoadVM(i string) (*MyVm, error) {
 		log.Error().Err(err).Msg("We couldn't show the ID and Path.")
 		return nil, err
 	}
-	err = c.GetBasicInfo(vm)
+	err = c.GetAllExtraParameters(vm)
 	if err != nil {
-		log.Error().Err(err).Msg("We couldn't show the Process and Memory.")
+		log.Error().Err(err).Msg("We couldn't get all the extra parameters.")
 		return nil, err
-	}
-	err = c.GetDenominationDescription(vm)
-	if err != nil {
-		log.Error().Err(err).Msg("We couldn't show the Denomination and Description.")
-		return nil, err
-	}
-	err = c.GetPowerStatus(vm)
-	if err != nil {
-		log.Error().Err(err).Msg("We couldn't show the Power Status.")
-		return nil, err
-	}
-	if vm.PowerStatus == "on" {
-		err = c.GetNetwork(vm)
-		if err != nil {
-			log.Error().Err(err).Msg("We couldn't show the Network information.")
-			return nil, err
-		}
 	}
 	log.Debug().Msgf("The ID that we are trying to load is: %#v", i)
+	log.Info().Msg("We have loaded the VM.")
+	return vm, err
+}
+
+// LoadVMbyName method return the object MyVm with the Name indicate in n.
+// Inputs:
+// n: (string) String with the Name of the VM
+// Outputs:
+// (pointer) Pointer at the MyVm object
+// (error) variable with the error if occurr
+func (c *Client) LoadVMbyName(n string) (*MyVm, error) {
+	vm, err := c.GetVMbyName(n)
+	if err != nil {
+		log.Error().Err(err).Msg("We couldn't show the ID and Path.")
+		return nil, err
+	}
+	err = c.GetAllExtraParameters(vm)
+	if err != nil {
+		log.Error().Err(err).Msg("We couldn't get all the extra parameters.")
+		return nil, err
+	}
+	log.Debug().Msgf("The ID that we are trying to load is: %#v", n)
 	log.Info().Msg("We have loaded the VM.")
 	return vm, err
 }
