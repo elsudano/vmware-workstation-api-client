@@ -24,7 +24,7 @@ const (
 	// because you can change the behavior in the future
 )
 
-// VmError that's rhe error that the API give us in different situations handling resources
+// VmError that's the error that the API give us in different situations handling resources
 type VmError struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
@@ -93,9 +93,14 @@ func New() (*HTTPClient, error) {
 }
 
 // ConfigCli method return a pointer of Client of API but now it's configure
-// Inputs: a: address of URL to server of API u: user for to authenticate
-// p: password of user, i: Insecure flag to http or https, d: debug mode
-func (c *HTTPClient) ConfigCli(a string, u string, p string, i bool, d string) {
+// Inputs:
+// c: (*HTTPClient) client with all the necessary data to make a call.
+// a: (string) address of URL to server of API.
+// u: (string) user for to authenticate.
+// p: (string) password of user.
+// i: (bool) Insecure flag to http or https.
+// d: (string) debug mode
+func (c *HTTPClient) ConfigClient(a string, u string, p string, i bool, d string) {
 	var err error
 	log.Debug().Msgf("Variables Values: %#v, %#v, %#v, %#v, %#v", a, u, p, i, d)
 	c.BaseURL, err = url.Parse(a)
@@ -121,12 +126,13 @@ func (c *HTTPClient) ConfigCli(a string, u string, p string, i bool, d string) {
 
 // httpRequest method return a body of the response the API REST server,
 // Input:
+// c: (*HTTPClient) client with all the necessary data to make a call.
 // p: (string) URL path of the API REST of the sever.
 // m: (string) Type of method GET, PUT, POST, DELETE.
 // pl: (bytes.Buffer) for read the Body of the request.
 // Output:
 // response: (io.ReadCloser) That will be the Response Body that the API give us.
-// VmError: (vmerror) Special struct with the specific informtion abour of the error.
+// VmError: (vmerror) Special struct with the specific information about of the error.
 // err: (error) Normal error answer that go-lang give us in a issue.
 func (c *HTTPClient) ApiCall(p string, m string, pl bytes.Buffer) (io.ReadCloser, VmError, error) {
 	var vmerror VmError

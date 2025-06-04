@@ -6,69 +6,35 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/elsudano/vmware-workstation-api-client/wsapiclient"
-	"github.com/elsudano/vmware-workstation-api-client/wsapinet"
+	"github.com/elsudano/vmware-workstation-api-client/httpclient"
 	"github.com/rs/zerolog/log"
 )
 
-type MyVm struct {
-	// Image        string `json:"image"`
-	IdVM         string `json:"id"`
-	Path         string `json:"path"`
-	Denomination string `json:"displayName"`
-	Description  string `json:"annotation"`
-	PowerStatus  string `json:"power_state"`
-	Memory       int32  `json:"memory"`
-	CPU          struct {
-		Processors int32 `json:"processors"`
-	}
-	NICS []struct {
-		Mac string   `json:"mac"`
-		Ip  []string `json:"ip"`
-	}
-	DNS struct {
-		Hostname   string   `json:"hostname"`
-		Domainname string   `json:"domainname"`
-		Servers    []string `json:"server"`
-	}
+type VMService interface {
+	GetAllVMs() ([]MyVm, error)
+	LoadVM(i string) (*MyVm, error)
+	LoadVMbyName(n string) (*MyVm, error)
+	CreateVM(pid string, n string, d string, p int, m int) (*MyVm, error)
+	UpdateVM(vm *MyVm, n string, d string, p int, m int, s string) error
+	RegisterVM(vm *MyVm) error
+	DeleteVM(vm *MyVm) error
 }
 
-// This struct is for create a VM, just for create because the API needs
-type CreatePayload struct {
-	Name     string `json:"name"`
-	ParentId string `json:"parentId"`
+type VMManager struct {
+	vmclient *httpclient.HTTPClient
 }
 
-// This struct is for get and put the definition of VM
-type SettingPayload struct {
-	Processors int `json:"processors"`
-	Memory     int `json:"memory"`
-}
-
-// I we want to register the VM in the GUI we will use this payload
-type RegisterPayload struct {
-	Name string `json:"name"`
-	Path string `json:"path"`
-}
-
-// This struct is for get and put information about of any parameters of the VM
-type ParamPayload struct {
-	Name  string `json:"name"`
-	Value string `json:"value"`
-}
-
-// This struct is for get and put information about of any Power State of the VM
-type PowerStatePayload struct {
-	Value string `json:"power_state"`
+func New(httpcaller *httpclient.HTTPClient) VMService {
+	return &VMManager{vmclient: httpcaller}
 }
 
 // GetAllVMs Method return array of MyVm and a error variable if occurr some problem
 // Outputs:
 // []MyVm list of all VMs that we have in VmWare Workstation
 // (error) variable with the error if occurr
-func GetAllVMs(c *wsapiclient.Client) ([]MyVm, error) {
+func (vmm *VMManager) GetAllVMs() ([]MyVm, error) {
 	var vms []MyVm
-	responseBody, vmerror, err := c.HttpRequest("vms", "GET", bytes.Buffer{})
+	responseBody, vmerror, err := vmm.vmclient.ApiCall("vms", "GET", bytes.Buffer{})
 	if err != nil {
 		log.Error().Err(err).Msg("We can't made the API call.")
 		return nil, err
@@ -86,61 +52,62 @@ func GetAllVMs(c *wsapiclient.Client) ([]MyVm, error) {
 	log.Info().Str("NumOfVMs", strconv.Itoa(len(vms))).Msg("You have this amount of VM in you Workstation")
 	for _, item := range vms {
 		// --------- This Block read the ID of the VM --------- {{{
-		vm, err := LoadVM(c, item.IdVM)
+		_, err := vmm.LoadVM(item.IdVM)
 		if err != nil {
 			log.Error().Err(err).Msg("We can't Load the VM.")
 			return nil, err
 		}
 		// }}}
-		// --------- This Block read the propierties of the VM in order to load --------- {{{
-		err = vm.GetBasicInfo(c)
-		if err != nil {
-			log.Error().Err(err).Msg("We can't read Basic Information")
-			return nil, err
-		}
-		// }}}
-		// --------- This Block read the status of power of the vm --------- {{{
-		err = vm.GetPowerStatus(c)
-		if err != nil {
-			log.Error().Err(err).Msg("We can't read Power Status.")
-			return nil, err
-		}
-		// }}}
-		// --------- This block read the denomination and description of the vm --------- {{{
-		err = vm.GetDenominationDescription(c)
-		if err != nil {
-			log.Error().Err(err).Msg("We can't read Description.")
-			return nil, err
-		}
-		// }}}
-		// --------- This Block read the IP information --------- {{{
-		if vm.PowerStatus == "on" {
-			err = wsapinet.GetInfoNics(c, vm.IdVM)
-			if err != nil {
-				log.Error().Err(err).Msg("We can't read Network Information.")
-				return nil, err
-			}
-		}
-		// }}}
+		// // --------- This Block read the propierties of the VM in order to load --------- {{{
+		// err = GetBasicInfo()
+		// if err != nil {
+		// 	log.Error().Err(err).Msg("We can't read Basic Information")
+		// 	return nil, err
+		// }
+		// // }}}
+		// // --------- This Block read the status of power of the vm --------- {{{
+		// err = GetPowerStatus()
+		// if err != nil {
+		// 	log.Error().Err(err).Msg("We can't read Power Status.")
+		// 	return nil, err
+		// }
+		// // }}}
+		// // --------- This block read the denomination and description of the vm --------- {{{
+		// err = GetDenominationDescription()
+		// if err != nil {
+		// 	log.Error().Err(err).Msg("We can't read Description.")
+		// 	return nil, err
+		// }
+		// // }}}
+		// // --------- This Block read the IP information --------- {{{
+		// if vm.PowerStatus == "on" {
+		// 	err = wsapinet.GetInfoNics(c, vm.IdVM)
+		// 	if err != nil {
+		// 		log.Error().Err(err).Msg("We can't read Network Information.")
+		// 		return nil, err
+		// 	}
+		// }
+		// // }}}
 	}
 	log.Info().Msg("We have listed all VMs")
 	return vms, nil
 }
 
-// CreateVM method to create a new VM in VmWare Worstation Input:
-// s: string with the ID of the origin VM,
+// CreateVM method to create a new VM in VmWare Worstation
+// Input:
+// pid: (string) with the ID of the Parent VM,
 // n: string with the denomination of the VM,
 // d: string with the description of VM
 // p: int with the number of processors in the VM
 // m: int with the number of memory in the VM
-func CreateVM(c *wsapiclient.Client, s string, n string, d string, p int, m int) (*MyVm, error) {
+func (vmm *VMManager) CreateVM(pid string, n string, d string, p int, m int) (*MyVm, error) {
 	// --------- Preparing the request --------- {{{
 	var vm MyVm
 	requestBody := new(bytes.Buffer)
 	responseBody := new(bytes.Buffer)
 	var tempDataVM CreatePayload
 	tempDataVM.Name = n
-	tempDataVM.ParentId = s
+	tempDataVM.ParentId = pid
 	var tempSettingVM SettingPayload
 	tempSettingVM.Processors = p
 	tempSettingVM.Memory = m
@@ -151,7 +118,7 @@ func CreateVM(c *wsapiclient.Client, s string, n string, d string, p int, m int)
 		log.Error().Err(err).Msg("The request JSON is malformed.")
 		return nil, err
 	}
-	response, vmerror, err := c.HttpRequest("vms", "POST", *requestBody)
+	response, vmerror, err := vmm.vmclient.ApiCall("vms", "POST", *requestBody)
 	if err != nil {
 		log.Error().Err(err).Msg("We can't made the API call.")
 		return nil, err
@@ -195,7 +162,7 @@ func CreateVM(c *wsapiclient.Client, s string, n string, d string, p int, m int)
 		return nil, err
 	}
 	log.Debug().Msgf("Request Human Readable: %#v", requestBody.String())
-	response, vmerror, err = c.HttpRequest("vms/"+vm.IdVM, "PUT", *requestBody)
+	response, vmerror, err = vmm.vmclient.ApiCall("vms/"+vm.IdVM, "PUT", *requestBody)
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't complete the API call.")
 		return nil, err
@@ -218,11 +185,11 @@ func CreateVM(c *wsapiclient.Client, s string, n string, d string, p int, m int)
 		log.Error().Err(err).Msg("The response JSON is malformed.")
 		return nil, err
 	}
-	err = wsapinet.RenewMAC(c, vm.IdVM)
-	if err != nil {
-		log.Error().Err(err).Msg("We couldn't show the MAC information.")
-		return nil, err
-	}
+	// err = wsapinet.RenewMAC(c, vm.IdVM)
+	// if err != nil {
+	// 	log.Error().Err(err).Msg("We couldn't show the MAC information.")
+	// 	return nil, err
+	// }
 	// ----- Now, we change the Denomination ----
 	// tempDataParam.Name = "displayName"
 	// tempDataParam.Value = n
@@ -297,13 +264,13 @@ func CreateVM(c *wsapiclient.Client, s string, n string, d string, p int, m int)
 // Outputs:
 // (pointer) Pointer at the MyVm object
 // (error) variable with the error if occurr
-func LoadVM(c *wsapiclient.Client, i string) (*MyVm, error) {
-	vm, err := GetVM(c, i)
+func (vmm *VMManager) LoadVM(i string) (*MyVm, error) {
+	vm, err := GetVM(vmm.vmclient, i)
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't show the ID and Path.")
 		return nil, err
 	}
-	err = vm.GetAllExtraParameters(c)
+	err = GetAllExtraParameters(vmm.vmclient, vm)
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't get all the extra parameters.")
 		return nil, err
@@ -319,13 +286,13 @@ func LoadVM(c *wsapiclient.Client, i string) (*MyVm, error) {
 // Outputs:
 // (pointer) Pointer at the MyVm object
 // (error) variable with the error if occurr
-func LoadVMbyName(c *wsapiclient.Client, n string) (*MyVm, error) {
-	vm, err := GetVMbyName(c, n)
+func (vmm *VMManager) LoadVMbyName(n string) (*MyVm, error) {
+	vm, err := GetVMbyName(vmm.vmclient, n)
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't show the ID and Path.")
 		return nil, err
 	}
-	err = vm.GetAllExtraParameters(c)
+	err = GetAllExtraParameters(vmm.vmclient, vm)
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't get all the extra parameters.")
 		return nil, err
@@ -337,13 +304,15 @@ func LoadVMbyName(c *wsapiclient.Client, n string) (*MyVm, error) {
 
 // UpdateVM method to update a VM in VmWare Worstation
 // Input:
+// vm (*MyVm) The VM that we want to update
 // n: string with the denomination of VM
 // d: string with the description of the VM, p: int with the number of processors
 // m: int with the size of memory
 // s: Power State desired, choose between on, off, reset, (nil no change)
-// Output: pointer at the MyVm object
+// Output:
+// pointer at the MyVm object
 // and error variable with the error if occurr
-func (vm *MyVm) UpdateVM(c *wsapiclient.Client, n string, d string, p int, m int, s string) error {
+func (vmm *VMManager) UpdateVM(vm *MyVm, n string, d string, p int, m int, s string) error {
 	var buffer bytes.Buffer
 	var memcpu SettingPayload
 	var currentPowerStatus string
@@ -358,7 +327,7 @@ func (vm *MyVm) UpdateVM(c *wsapiclient.Client, n string, d string, p int, m int
 		log.Debug().Msgf("We want to change the current Power Status at %#v", currentPowerStatus)
 	}
 	// Here we are preparing the update of the Processors and Memory in the VM {{{
-	err := vm.PowerSwitch(c, "off")
+	err := PowerSwitch(vmm.vmclient, vm, "off")
 	if err != nil {
 		log.Error().Err(err).Msgf("We can't shutdown the VM")
 		return err
@@ -370,7 +339,7 @@ func (vm *MyVm) UpdateVM(c *wsapiclient.Client, n string, d string, p int, m int
 	}
 	buffer.Write(request)
 	log.Debug().Msgf("Request Buffer: %#v", buffer.String())
-	_, vmerror, err := c.HttpRequest("vms/"+vm.IdVM, "PUT", buffer)
+	_, vmerror, err := vmm.vmclient.ApiCall("vms/"+vm.IdVM, "PUT", buffer)
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't complete the API call.")
 		return err
@@ -385,7 +354,7 @@ func (vm *MyVm) UpdateVM(c *wsapiclient.Client, n string, d string, p int, m int
 	default:
 		log.Error().Msgf("We haven't handled this error Code: %d Message: %s", vmerror.Code, vmerror.Message)
 	}
-	err = vm.PowerSwitch(c, currentPowerStatus)
+	err = PowerSwitch(vmm.vmclient, vm, currentPowerStatus)
 	if err != nil {
 		log.Error().Err(err).Msgf("We can't complete the Shutdown/PowerOn operation")
 		return err
@@ -393,12 +362,12 @@ func (vm *MyVm) UpdateVM(c *wsapiclient.Client, n string, d string, p int, m int
 	// ---- here we have to implement the code to update de description and denomination {{{
 	// here you will need to use the API to change the values of the Denomination and Description
 	// }}}
-	err = vm.GetBasicInfo(c)
+	err = GetBasicInfo(vmm.vmclient, vm)
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't get information.")
 		return err
 	}
-	err = vm.GetDenominationDescription(c)
+	err = GetDenominationDescription(vmm.vmclient, vm)
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't get information.")
 		return err
@@ -414,7 +383,7 @@ func (vm *MyVm) UpdateVM(c *wsapiclient.Client, n string, d string, p int, m int
 // vm: (*wsapivm.MyVM) The VM object that we want to delete.
 // Output:
 // error: (error) The possible error that you will have.
-func (vm *MyVm) RegisterVM(c wsapiclient.Client) error {
+func (vmm *VMManager) RegisterVM(vm *MyVm) error {
 	var regvm RegisterPayload
 	regvm.Name = vm.Denomination
 	regvm.Path = vm.Path
@@ -426,7 +395,7 @@ func (vm *MyVm) RegisterVM(c wsapiclient.Client) error {
 	}
 	requestBody.Write(request)
 	log.Debug().Msgf("Request Human Readable: %#v", requestBody.String())
-	response, vmerror, err := c.HttpRequest("vms/registration", "POST", *requestBody)
+	response, vmerror, err := vmm.vmclient.ApiCall("vms/registration", "POST", *requestBody)
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't complete the API call.")
 		return err
@@ -460,13 +429,13 @@ func (vm *MyVm) RegisterVM(c wsapiclient.Client) error {
 // vm: (*wsapivm.MyVM) The VM object that we want to delete.
 // Output:
 // error: (error) The possible error that you will have.
-func (vm *MyVm) DeleteVM(c *wsapiclient.Client) error {
-	err := vm.PowerSwitch(c, "off")
+func (vmm *VMManager) DeleteVM(vm *MyVm) error {
+	err := PowerSwitch(vmm.vmclient, vm, "off")
 	if err != nil {
 		log.Error().Err(err).Msgf("We can't shutdown the VM")
 		return err
 	}
-	response, vmerror, err := c.HttpRequest("vms/"+vm.IdVM, "DELETE", bytes.Buffer{})
+	response, vmerror, err := vmm.vmclient.ApiCall("vms/"+vm.IdVM, "DELETE", bytes.Buffer{})
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't complete the API call.")
 		return err

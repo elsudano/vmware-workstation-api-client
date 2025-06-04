@@ -6,8 +6,7 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/elsudano/vmware-workstation-api-client/wsapiclient"
-	"github.com/elsudano/vmware-workstation-api-client/wsapinet"
+	"github.com/elsudano/vmware-workstation-api-client/httpclient"
 	"github.com/rs/zerolog/log"
 )
 
@@ -18,14 +17,14 @@ import (
 // Outputs:
 // vm: (*wsapivm.MyVm) pointer to the VM that we are handeling.
 // err: (error) If we will have some error we can handle it here.
-func GetVM(c *wsapiclient.Client, i string) (*MyVm, error) {
+func GetVM(vmc *httpclient.HTTPClient, i string) (*MyVm, error) {
 	log.Info().Msgf("The VM Id value is: %#v", i)
 	var vms []MyVm
 	var vm MyVm
 	// If you want see the path of the VM it's necessary getting all VMs
 	// because the API of VmWare Workstation doesn't allow see this the another way
 	// --------- This Block read the path and the ID of the vm in order to load in the function --------- {{{
-	response, vmerror, err := c.HttpRequest("vms", "GET", bytes.Buffer{})
+	response, vmerror, err := vmc.ApiCall("vms", "GET", bytes.Buffer{})
 	if err != nil {
 		log.Error().Err(err).Msg("We can't made the API call.")
 		return nil, err
@@ -55,12 +54,12 @@ func GetVM(c *wsapiclient.Client, i string) (*MyVm, error) {
 
 // GetVMbyName Auxiliary function to get the data of the VM and don't repeat code
 // Input:
-// c: (*wsapiclient.Client) pointer at the client of the API server.
+// vmc: (*httpclient.HTTPClient) pointer at the client of the API server.
 // n: (string) The name of the VM that we want to get.
 // Outputs:
 // vm: (*wsapivm.MyVm) pointer to the VM that we are handeling.
 // err: (error) If we will have some error we can handle it here.
-func GetVMbyName(c *wsapiclient.Client, n string) (*MyVm, error) {
+func GetVMbyName(vmc *httpclient.HTTPClient, n string) (*MyVm, error) {
 	log.Info().Msgf("The VM name value is: %#v", n)
 	var vms []MyVm
 	var vm MyVm
@@ -68,7 +67,7 @@ func GetVMbyName(c *wsapiclient.Client, n string) (*MyVm, error) {
 	// If you want see the path of the VM it's necessary getting all VMs
 	// because the API of VmWare Workstation doesn't allow see this the another way
 	// --------- This Block read the path and the ID of the vm in order to load in the function --------- {{{
-	response, vmerror, err := c.HttpRequest("vms", "GET", bytes.Buffer{})
+	response, vmerror, err := vmc.ApiCall("vms", "GET", bytes.Buffer{})
 	if err != nil {
 		log.Error().Err(err).Msg("We can't made the API call.")
 		return nil, err
@@ -86,7 +85,7 @@ func GetVMbyName(c *wsapiclient.Client, n string) (*MyVm, error) {
 	}
 	log.Debug().Msgf("List of VMs: %#v", vms)
 	for tempvm, value := range vms {
-		response, _, err = c.HttpRequest("vms/"+value.IdVM+"/params/displayName", "GET", bytes.Buffer{})
+		response, _, err = vmc.ApiCall("vms/"+value.IdVM+"/params/displayName", "GET", bytes.Buffer{})
 		if err != nil {
 			log.Error().Err(err).Msg("We couldn't complete the API call.")
 			return nil, err
@@ -114,29 +113,29 @@ func GetVMbyName(c *wsapiclient.Client, n string) (*MyVm, error) {
 // c: (*wsapiclient.Client) pointer at the client of the API server.
 // Outputs:
 // err: (error) If we will have some error we can handle it here.
-func (vm *MyVm) GetAllExtraParameters(c *wsapiclient.Client) error {
-	err := vm.GetBasicInfo(c)
+func GetAllExtraParameters(vmc *httpclient.HTTPClient, vm *MyVm) error {
+	err := GetBasicInfo(vmc, vm)
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't show the Process and Memory.")
 		return err
 	}
-	err = vm.GetDenominationDescription(c)
+	err = GetDenominationDescription(vmc, vm)
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't show the Denomination and Description.")
 		return err
 	}
-	err = vm.GetPowerStatus(c)
+	err = GetPowerStatus(vmc, vm)
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't show the Power Status.")
 		return err
 	}
-	if vm.PowerStatus == "on" {
-		err = wsapinet.GetInfoNics(c, vm.IdVM)
-		if err != nil {
-			log.Error().Err(err).Msg("We couldn't show the Network information.")
-			return err
-		}
-	}
+	// if vm.PowerStatus == "on" {
+	// 	err = wsapinet.GetInfoNics(vmc, vm.IdVM)
+	// 	if err != nil {
+	// 		log.Error().Err(err).Msg("We couldn't show the Network information.")
+	// 		return err
+	// 	}
+	// }
 	return nil
 }
 
@@ -146,8 +145,8 @@ func (vm *MyVm) GetAllExtraParameters(c *wsapiclient.Client) error {
 // c: (*wsapiclient.Client) pointer at the client of the API server.
 // Outputs:
 // err: (error) If we will have some error we can handle it here.
-func (vm *MyVm) GetBasicInfo(c *wsapiclient.Client) error {
-	response, vmerror, err := c.HttpRequest("vms/"+vm.IdVM, "GET", bytes.Buffer{})
+func GetBasicInfo(vmc *httpclient.HTTPClient, vm *MyVm) error {
+	response, vmerror, err := vmc.ApiCall("vms/"+vm.IdVM, "GET", bytes.Buffer{})
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't complete the API call.")
 		return err
@@ -179,9 +178,9 @@ func (vm *MyVm) GetBasicInfo(c *wsapiclient.Client) error {
 // c: (*wsapiclient.Client) pointer at the client of the API server.
 // Outputs:
 // err: (error) If we will have some error we can handle it here.
-func (vm *MyVm) GetDenominationDescription(c *wsapiclient.Client) error {
+func GetDenominationDescription(vmc *httpclient.HTTPClient, vm *MyVm) error {
 	var param ParamPayload
-	response, vmerror, err := c.HttpRequest("vms/"+vm.IdVM+"/params/displayName", "GET", bytes.Buffer{})
+	response, vmerror, err := vmc.ApiCall("vms/"+vm.IdVM+"/params/displayName", "GET", bytes.Buffer{})
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't complete the API call.")
 		return err
@@ -198,7 +197,7 @@ func (vm *MyVm) GetDenominationDescription(c *wsapiclient.Client) error {
 		return errors.New(strconv.Itoa(vmerror.Code) + "," + vmerror.Message)
 	}
 	vm.Denomination = param.Value
-	response, vmerror, err = c.HttpRequest("vms/"+vm.IdVM+"/params/annotation", "GET", bytes.Buffer{})
+	response, vmerror, err = vmc.ApiCall("vms/"+vm.IdVM+"/params/annotation", "GET", bytes.Buffer{})
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't complete the API call.")
 		return err
@@ -226,9 +225,9 @@ func (vm *MyVm) GetDenominationDescription(c *wsapiclient.Client) error {
 // c: (*wsapiclient.Client) pointer at the client of the API server.
 // Outputs:
 // err: (error) If we will have some error we can handle it here.
-func (vm *MyVm) GetPowerStatus(c *wsapiclient.Client) error {
+func GetPowerStatus(vmc *httpclient.HTTPClient, vm *MyVm) error {
 	var power_state_payload PowerStatePayload
-	response, vmerror, err := c.HttpRequest("vms/"+vm.IdVM+"/power", "GET", bytes.Buffer{})
+	response, vmerror, err := vmc.ApiCall("vms/"+vm.IdVM+"/power", "GET", bytes.Buffer{})
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't complete the API call.")
 		return err
@@ -258,11 +257,11 @@ func (vm *MyVm) GetPowerStatus(c *wsapiclient.Client) error {
 // s: (string) String with the state that will want between on, off, reset
 // Outputs:
 // err: (error) If we will have some error we can handle it here.
-func (vm *MyVm) PowerSwitch(c *wsapiclient.Client, s string) error {
+func PowerSwitch(vmc *httpclient.HTTPClient, vm *MyVm, s string) error {
 	var power_state_payload PowerStatePayload
 	requestBody := bytes.NewBufferString(s)
 	log.Debug().Msgf("The state that we want is: %#v", s)
-	response, vmerror, err := c.HttpRequest("vms/"+vm.IdVM+"/power", "PUT", *requestBody)
+	response, vmerror, err := vmc.ApiCall("vms/"+vm.IdVM+"/power", "PUT", *requestBody)
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't complete the API call.")
 		return err
@@ -318,7 +317,7 @@ func PowerStateConversor(ops string) (s string) {
 // v: (string) String with the value of param err: variable with error if occur
 // Outputs:
 // err: (error) If we will have some error we can handle it here.
-func (vm *MyVm) SetParameter(c *wsapiclient.Client, p string, v string) error {
+func SetParameter(vmc *httpclient.HTTPClient, vm *MyVm, p string, v string) error {
 	var param ParamPayload
 	param.Name = p
 	param.Value = v
@@ -330,7 +329,7 @@ func (vm *MyVm) SetParameter(c *wsapiclient.Client, p string, v string) error {
 	requestBody := new(bytes.Buffer)
 	requestBody.Write(request)
 	log.Debug().Msgf("Request Human Readable: %#v", requestBody.String())
-	response, vmerror, err := c.HttpRequest("/vms/"+vm.IdVM+"/configparams", "PUT", *requestBody)
+	response, vmerror, err := vmc.ApiCall("/vms/"+vm.IdVM+"/configparams", "PUT", *requestBody)
 	if err != nil {
 		return err
 	}

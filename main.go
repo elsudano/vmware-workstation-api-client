@@ -98,11 +98,13 @@ func main() {
 	// }}}
 
 	// Second option we will setting the values in the creation moment {{{
-	client, err := wsapiclient.NewClient(varurl, varuser, varpass, varinsecure, vardebug)
+	client, err := wsapiclient.New()
+	// client, err := wsapiclient.NewClient(varurl, varuser, varpass, varinsecure, vardebug)
 	if err != nil {
 		log.Error().Err(err).Msgf("Creating client error %#v", err)
-		os.Exit(10)
+		os.Exit(9)
 	}
+	client.Caller.ConfigClient(varurl, varuser, varpass, varinsecure, vardebug)
 	fmt.Println(color.Ize(paragraph_color, "We can see here the value of the ParentID VM:"))
 	fmt.Println(color.Ize(title_line_color, "Parent ID:"), color.Ize(value_color, varparentid))
 	// }}}
@@ -112,31 +114,32 @@ func main() {
 
 	// We get all the instances that we have in our VmWare Workstation
 	fmt.Println(color.Ize(paragraph_color, "Now we going to list all the VMs that we have in the VMWare Workstation:"))
-	AllVMs, err := client.GetAllVMs()
+	AllVMs, err := client.VMService.GetAllVMs()
 	if err != nil {
+		fmt.Println(color.Ize(value_color, "Problem HERE!!!"), err)
 		log.Error().Err(err).Msg("We can't show this VM by")
-		// os.Exit(11)
+		os.Exit(10)
 	}
 	for _, item := range AllVMs {
 		if item.IdVM != "II82IG14IV0UHB7QHAI3J0G44RJBGNR5" { // is just because this VM is encripted
-			VM, err := client.LoadVM(item.IdVM)
+			VM, err := client.VMService.LoadVM(item.IdVM)
 			if err != nil {
 				log.Error().Err(err).Msgf("First time Reading VM Error %#v", err)
-				os.Exit(13)
+				os.Exit(11)
 			}
 			PrintVM(VM)
 		}
 	}
 	// After to read all the instances that we have in the list, we can create a new one to test it
 	fmt.Println(color.Ize(paragraph_color, "We are using the CreateVM method to create the VM test."))
-	VM, err := client.CreateVM(varparentid, "clone-test-copy", "Test to INSERT description", 2, 1024)
+	VM, err := client.VMService.CreateVM(varparentid, "clone-test-copy", "Test to INSERT description", 2, 1024)
 	if err != nil {
 		log.Error().Err(err).Msgf("Creating VMs Error %#v", err)
 		os.Exit(12)
 	}
 	// Now we have one new instance, we can read which is the status
 	fmt.Println(color.Ize(paragraph_color, "Now we going to review the state of the VM that we have created:"))
-	VM, err = client.LoadVM(VM.IdVM)
+	VM, err = client.VMService.LoadVM(VM.IdVM)
 	if err != nil {
 		log.Error().Err(err).Msgf("First time Reading VM Error %#v", err)
 		os.Exit(13)
@@ -152,7 +155,7 @@ func main() {
 	// time.Sleep(10 * time.Second)
 	// After to register the instance, we will update the values of the instance with new onece
 	fmt.Println(color.Ize(paragraph_color, "Now, we going to Energize the VM with the UpdateVM method."))
-	VM, err = client.UpdateVM(VM.IdVM, "clone-test-copy-change", "esta es una prueba de llenadao de datos", 2, 1024, "on")
+	err = client.VMService.UpdateVM(VM, "clone-test-copy-change", "esta es una prueba de llenadao de datos", 2, 1024, "on")
 	if err != nil {
 		log.Error().Err(err).Msgf("Updating VM Error %#v", err)
 		os.Exit(15)
@@ -167,7 +170,7 @@ func main() {
 	PrintVM(VM)
 	// We want to shutdown the instance in order to test the UpdateVM method
 	fmt.Println(color.Ize(paragraph_color, "Now, we going to shutdown and change the propierties of the VM with the UpdateVM method"))
-	VM, err = client.UpdateVM(VM.IdVM, "clone-test-copy-change", "esta es una prueba de llenadao de datos", 1, 512, "off")
+	err = client.VMService.UpdateVM(VM, "clone-test-copy-change", "esta es una prueba de llenadao de datos", 1, 512, "off")
 	if err != nil {
 		log.Error().Err(err).Msgf("Updating VM Error %#v", err)
 		os.Exit(17)
@@ -182,7 +185,7 @@ func main() {
 	PrintVM(VM)
 	// And finally we will delete the instance that we was created
 	fmt.Println(color.Ize(paragraph_color, "And finally we have deleted the VM"))
-	err = client.DeleteVM(VM.IdVM)
+	err = client.VMService.DeleteVM(VM)
 	if err != nil {
 		log.Error().Err(err).Msgf("DeleteVM Error %#v", err)
 		os.Exit(19)
