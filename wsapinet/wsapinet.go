@@ -1,4 +1,4 @@
-package wsapiclient
+package wsapinet
 
 import (
 	"bytes"
@@ -6,6 +6,7 @@ import (
 	"errors"
 	"strconv"
 
+	"github.com/elsudano/vmware-workstation-api-client/wsapiclient"
 	"github.com/rs/zerolog/log"
 )
 
@@ -29,18 +30,19 @@ type nicPayload struct {
 // GetNetwork Method to get all the Network information of the instance
 // Inputs:
 // c: (Pointer) The client that we use to made the API calls.
-// vm: (MyVM) That's the VM that we want to check the Network.
+// vmid: (string) That's the VM ID that we want to check the NICs information.
 // Outputs:
 // error (error) If we have some error we can handle it here.
-func (c *Client) GetNetwork(vm *MyVm) error {
-	response, vmerror, err := c.httpRequest("vms/"+vm.IdVM+"/nicips", "GET", bytes.Buffer{})
+func GetInfoNics(c *wsapiclient.Client, vmid string) error {
+	var currentNIC InfoNICS
+	response, vmerror, err := c.HttpRequest("vms/"+vmid+"/nicips", "GET", bytes.Buffer{})
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't complete the API call.")
 		return err
 	}
 	switch vmerror.Code {
 	case 0:
-		err = json.NewDecoder(response).Decode(&vm)
+		err = json.NewDecoder(response).Decode(&currentNIC)
 		if err != nil {
 			log.Error().Err(err).Msg("The response JSON is malformed.")
 			return err
@@ -52,7 +54,7 @@ func (c *Client) GetNetwork(vm *MyVm) error {
 		log.Error().Msgf("We haven't handled this error Code: %d Message: %s", vmerror.Code, vmerror.Message)
 		return errors.New("Code:" + strconv.Itoa(vmerror.Code) + " Msg:" + vmerror.Message)
 	}
-	log.Debug().Msgf("VM: %#v", vm)
+	log.Debug().Msgf("VM: %#v", currentNIC)
 	log.Info().Msg("We have read the Network Information.")
 	return err
 }
@@ -62,10 +64,10 @@ func (c *Client) GetNetwork(vm *MyVm) error {
 // to delete, and recreate the NIC with the same parameters.
 // Inputs:
 // c: (Pointer) The client that we use to made the API calls.
-// vm: (MyVm) The VM that we want to change.
+// vmid: (string) The VM that we want to renew the MAC address.
 // Outputs:
 // error: (error) We can handle the errors here.
-func (c *Client) RenewMAC(vm *MyVm) error {
+func RenewMAC(c *wsapiclient.Client, vmid string) error {
 	var currentNIC InfoNICS
 	var newNIC nicPayload
 	requestBody := new(bytes.Buffer)
@@ -74,7 +76,7 @@ func (c *Client) RenewMAC(vm *MyVm) error {
 	// 	log.Printf("[ERROR][WSAPICLI] Fi: wsapivm.go Fu: RenewMAC Obj: We can't shutdown the VM %#v\n", err)
 	// 	return err
 	// }
-	response, vmerror, err := c.httpRequest("vms/"+vm.IdVM+"/nic", "GET", bytes.Buffer{})
+	response, vmerror, err := c.HttpRequest("vms/"+vmid+"/nic", "GET", bytes.Buffer{})
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't complete the API call.")
 		return err
@@ -90,7 +92,7 @@ func (c *Client) RenewMAC(vm *MyVm) error {
 		log.Error().Msgf("We haven't handled this error Code: %d Message: %s", vmerror.Code, vmerror.Message)
 		return errors.New("Code:" + strconv.Itoa(vmerror.Code) + " Msg:" + vmerror.Message)
 	}
-	_, vmerror, err = c.httpRequest("vms/"+vm.IdVM+"/nic/"+strconv.Itoa(currentNIC.NICS[0].Index), "DELETE", bytes.Buffer{})
+	_, vmerror, err = c.HttpRequest("vms/"+vmid+"/nic/"+strconv.Itoa(currentNIC.NICS[0].Index), "DELETE", bytes.Buffer{})
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't complete the API call to delete the NIC.")
 		return err
@@ -114,7 +116,7 @@ func (c *Client) RenewMAC(vm *MyVm) error {
 		return err
 	}
 	log.Debug().Msgf("Request RAW: %#v", requestBody.String())
-	_, vmerror, err = c.httpRequest("vms/"+vm.IdVM+"/nic", "POST", *requestBody)
+	_, vmerror, err = c.HttpRequest("vms/"+vmid+"/nic", "POST", *requestBody)
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't complete the API call to create the NIC.")
 		return err
@@ -128,7 +130,7 @@ func (c *Client) RenewMAC(vm *MyVm) error {
 		log.Error().Msgf("We haven't handled this error Code: %d Message: %s", vmerror.Code, vmerror.Message)
 		return errors.New("Code:" + strconv.Itoa(vmerror.Code) + " Msg:" + vmerror.Message)
 	}
-	log.Debug().Msgf("VM: %#v", vm)
+	log.Debug().Msgf("VM: %#v", currentNIC)
 	log.Info().Msg("We have changed the MAC address.")
 	return err
 }

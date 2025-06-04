@@ -1,4 +1,4 @@
-package wsapiclient
+package wsapiutils
 
 import (
 	"log"

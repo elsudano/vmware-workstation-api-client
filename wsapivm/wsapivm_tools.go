@@ -1,32 +1,31 @@
-package wsapiclient
+package wsapivm
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/json"
 	"errors"
-	"os"
 	"strconv"
-	"strings"
 
+	"github.com/elsudano/vmware-workstation-api-client/wsapiclient"
+	"github.com/elsudano/vmware-workstation-api-client/wsapinet"
 	"github.com/rs/zerolog/log"
 )
 
 // GetVM Auxiliar function to get the data of the VM and don't repeat code
 // Input:
-// c: (pointer) pointer at the client of the API server
+// c: (*wsapiclient.Client) pointer at the client of the API server.
 // i: (string) string with the ID yo VM
 // Outputs:
-// vm: (pointer) pointer to the VM that we are handeling
+// vm: (*wsapivm.MyVm) pointer to the VM that we are handeling.
 // err: (error) If we will have some error we can handle it here.
-func (c *Client) GetVM(i string) (*MyVm, error) {
+func GetVM(c *wsapiclient.Client, i string) (*MyVm, error) {
 	log.Info().Msgf("The VM Id value is: %#v", i)
 	var vms []MyVm
 	var vm MyVm
 	// If you want see the path of the VM it's necessary getting all VMs
 	// because the API of VmWare Workstation doesn't allow see this the another way
 	// --------- This Block read the path and the ID of the vm in order to load in the function --------- {{{
-	response, vmerror, err := c.httpRequest("vms", "GET", bytes.Buffer{})
+	response, vmerror, err := c.HttpRequest("vms", "GET", bytes.Buffer{})
 	if err != nil {
 		log.Error().Err(err).Msg("We can't made the API call.")
 		return nil, err
@@ -56,12 +55,12 @@ func (c *Client) GetVM(i string) (*MyVm, error) {
 
 // GetVMbyName Auxiliary function to get the data of the VM and don't repeat code
 // Input:
-// c: (pointer) pointer at the client of the API server,
+// c: (*wsapiclient.Client) pointer at the client of the API server.
 // n: (string) The name of the VM that we want to get.
 // Outputs:
-// vm: (pointer) pointer to the VM that we are handling
+// vm: (*wsapivm.MyVm) pointer to the VM that we are handeling.
 // err: (error) If we will have some error we can handle it here.
-func (c *Client) GetVMbyName(n string) (*MyVm, error) {
+func GetVMbyName(c *wsapiclient.Client, n string) (*MyVm, error) {
 	log.Info().Msgf("The VM name value is: %#v", n)
 	var vms []MyVm
 	var vm MyVm
@@ -69,7 +68,7 @@ func (c *Client) GetVMbyName(n string) (*MyVm, error) {
 	// If you want see the path of the VM it's necessary getting all VMs
 	// because the API of VmWare Workstation doesn't allow see this the another way
 	// --------- This Block read the path and the ID of the vm in order to load in the function --------- {{{
-	response, vmerror, err := c.httpRequest("vms", "GET", bytes.Buffer{})
+	response, vmerror, err := c.HttpRequest("vms", "GET", bytes.Buffer{})
 	if err != nil {
 		log.Error().Err(err).Msg("We can't made the API call.")
 		return nil, err
@@ -87,7 +86,7 @@ func (c *Client) GetVMbyName(n string) (*MyVm, error) {
 	}
 	log.Debug().Msgf("List of VMs: %#v", vms)
 	for tempvm, value := range vms {
-		response, _, err = c.httpRequest("vms/"+value.IdVM+"/params/displayName", "GET", bytes.Buffer{})
+		response, _, err = c.HttpRequest("vms/"+value.IdVM+"/params/displayName", "GET", bytes.Buffer{})
 		if err != nil {
 			log.Error().Err(err).Msg("We couldn't complete the API call.")
 			return nil, err
@@ -111,28 +110,28 @@ func (c *Client) GetVMbyName(n string) (*MyVm, error) {
 // we have created this function in order not repeat the same code in both
 // functions LoadVM and LoadVMbyName.
 // Inputs:
-// c: (pointer) pointer at the client of the API server,
-// vm: (pointer) That's will be the pointer at our vm that we want fill
+// vm: (*wsapivm.MyVm) That's will be the pointer at our vm that we want fill.
+// c: (*wsapiclient.Client) pointer at the client of the API server.
 // Outputs:
 // err: (error) If we will have some error we can handle it here.
-func (c *Client) GetAllExtraParameters(vm *MyVm) error {
-	err := c.GetBasicInfo(vm)
+func (vm *MyVm) GetAllExtraParameters(c *wsapiclient.Client) error {
+	err := vm.GetBasicInfo(c)
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't show the Process and Memory.")
 		return err
 	}
-	err = c.GetDenominationDescription(vm)
+	err = vm.GetDenominationDescription(c)
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't show the Denomination and Description.")
 		return err
 	}
-	err = c.GetPowerStatus(vm)
+	err = vm.GetPowerStatus(c)
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't show the Power Status.")
 		return err
 	}
 	if vm.PowerStatus == "on" {
-		err = c.GetNetwork(vm)
+		err = wsapinet.GetInfoNics(c, vm.IdVM)
 		if err != nil {
 			log.Error().Err(err).Msg("We couldn't show the Network information.")
 			return err
@@ -143,12 +142,12 @@ func (c *Client) GetAllExtraParameters(vm *MyVm) error {
 
 // GetBasicInfo Auxiliary function in charge of getting de Basic Information
 // Inputs:
-// c: (pointer) Pointer at the client of the API server
-// vm: (MyVm) The VM that we want to know the Memory and CPU info
+// vm: (*wsapivm.MyVm) The VM that we want to know the Memory and CPU info.
+// c: (*wsapiclient.Client) pointer at the client of the API server.
 // Outputs:
 // err: (error) If we will have some error we can handle it here.
-func (c *Client) GetBasicInfo(vm *MyVm) error {
-	response, vmerror, err := c.httpRequest("vms/"+vm.IdVM, "GET", bytes.Buffer{})
+func (vm *MyVm) GetBasicInfo(c *wsapiclient.Client) error {
+	response, vmerror, err := c.HttpRequest("vms/"+vm.IdVM, "GET", bytes.Buffer{})
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't complete the API call.")
 		return err
@@ -176,13 +175,13 @@ func (c *Client) GetBasicInfo(vm *MyVm) error {
 // GetDenominationDescription Auxiliary function in charge about the getting the
 // description and Denomination of the VM and set in our structure.
 // Inputs:
-// c: (pointer) Pointer at the client of the API server
-// vm: (MyVm) that's the VM where we want use the information.
+// vm: (*wsapivm.MyVm) The VM that we want to know the Denomination and Description info.
+// c: (*wsapiclient.Client) pointer at the client of the API server.
 // Outputs:
 // err: (error) If we will have some error we can handle it here.
-func (c *Client) GetDenominationDescription(vm *MyVm) error {
+func (vm *MyVm) GetDenominationDescription(c *wsapiclient.Client) error {
 	var param ParamPayload
-	response, vmerror, err := c.httpRequest("vms/"+vm.IdVM+"/params/displayName", "GET", bytes.Buffer{})
+	response, vmerror, err := c.HttpRequest("vms/"+vm.IdVM+"/params/displayName", "GET", bytes.Buffer{})
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't complete the API call.")
 		return err
@@ -199,7 +198,7 @@ func (c *Client) GetDenominationDescription(vm *MyVm) error {
 		return errors.New(strconv.Itoa(vmerror.Code) + "," + vmerror.Message)
 	}
 	vm.Denomination = param.Value
-	response, vmerror, err = c.httpRequest("vms/"+vm.IdVM+"/params/annotation", "GET", bytes.Buffer{})
+	response, vmerror, err = c.HttpRequest("vms/"+vm.IdVM+"/params/annotation", "GET", bytes.Buffer{})
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't complete the API call.")
 		return err
@@ -223,13 +222,13 @@ func (c *Client) GetDenominationDescription(vm *MyVm) error {
 
 // GetPowerStatus Auxiliary function in charge to get the current Power Status
 // Inputs:
-// c: (pointer) at the client of the API server
-// vm: (MyVm) The VM that we want to know the Power Status
+// vm: (*wsapivm.MyVm) The VM that we want to know the Power Status info.
+// c: (*wsapiclient.Client) pointer at the client of the API server.
 // Outputs:
 // err: (error) If we will have some error we can handle it here.
-func (c *Client) GetPowerStatus(vm *MyVm) error {
+func (vm *MyVm) GetPowerStatus(c *wsapiclient.Client) error {
 	var power_state_payload PowerStatePayload
-	response, vmerror, err := c.httpRequest("vms/"+vm.IdVM+"/power", "GET", bytes.Buffer{})
+	response, vmerror, err := c.HttpRequest("vms/"+vm.IdVM+"/power", "GET", bytes.Buffer{})
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't complete the API call.")
 		return err
@@ -254,16 +253,16 @@ func (c *Client) GetPowerStatus(vm *MyVm) error {
 // PowerSwitch method that permit you change the state of the instance, so you will change
 // from power-off to power-on the state of the instance.
 // Inputs:
-// c: (pointer) Pointer at the client of the API server
-// vm: (MyVm) the VM object that we want to change the Power Status,
+// vm: (*wsapivm.MyVm) The VM that we want to know the Denomination and Description info.
+// c: (*wsapiclient.Client) pointer at the client of the API server.
 // s: (string) String with the state that will want between on, off, reset
 // Outputs:
 // err: (error) If we will have some error we can handle it here.
-func (c *Client) PowerSwitch(vm *MyVm, s string) error {
+func (vm *MyVm) PowerSwitch(c *wsapiclient.Client, s string) error {
 	var power_state_payload PowerStatePayload
 	requestBody := bytes.NewBufferString(s)
 	log.Debug().Msgf("The state that we want is: %#v", s)
-	response, vmerror, err := c.httpRequest("vms/"+vm.IdVM+"/power", "PUT", *requestBody)
+	response, vmerror, err := c.HttpRequest("vms/"+vm.IdVM+"/power", "PUT", *requestBody)
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't complete the API call.")
 		return err
@@ -312,14 +311,14 @@ func PowerStateConversor(ops string) (s string) {
 // SetParameter With this function you can set the value of the parameter.
 // this information is in the vmx file of the machine for that you need know
 // which is the file of the vm.
-// Input:
-// c: (pointer) Pointer at the client of the API server
-// vm: (MyVm) is the VM object that we will changes,
+// Inputs:
+// vm: (*wsapivm.MyVm) The VM that we want to know the Denomination and Description info.
+// c: (*wsapiclient.Client) pointer at the client of the API server.
 // p: (string) String with the name or param to set,
 // v: (string) String with the value of param err: variable with error if occur
 // Outputs:
 // err: (error) If we will have some error we can handle it here.
-func (c *Client) SetParameter(vm *MyVm, p string, v string) error {
+func (vm *MyVm) SetParameter(c *wsapiclient.Client, p string, v string) error {
 	var param ParamPayload
 	param.Name = p
 	param.Value = v
@@ -331,7 +330,7 @@ func (c *Client) SetParameter(vm *MyVm, p string, v string) error {
 	requestBody := new(bytes.Buffer)
 	requestBody.Write(request)
 	log.Debug().Msgf("Request Human Readable: %#v", requestBody.String())
-	response, vmerror, err := c.httpRequest("/vms/"+vm.IdVM+"/configparams", "PUT", *requestBody)
+	response, vmerror, err := c.HttpRequest("/vms/"+vm.IdVM+"/configparams", "PUT", *requestBody)
 	if err != nil {
 		return err
 	}
@@ -351,64 +350,4 @@ func (c *Client) SetParameter(vm *MyVm, p string, v string) error {
 	log.Debug().Msgf("VM: %#v", vm)
 	log.Info().Msgf("We have defined new value in parameter: %#v", p)
 	return nil
-}
-
-// InitialData is a extra function to fill the fields that we need to use
-// to make the tests in our API.
-// Inputs:
-// f: (string) is the file where we have the configuration.
-// Outputs:
-// url: (string) That will be the URL of our API endpoint
-// user: (string) That will be the User of our API
-// pass: (string) That will be the Password of our API
-// parentid: (string) That will be the Parent ID of our VM
-// insecure: (bool) If our API works with HTTP we will set true here
-// debug: (bool) If we need troubleshot our API we will set true here
-// error: (error) When the function catch some error print it here
-func InitialData(f string) (string, string, string, string, bool, string, error) {
-	var user, pass, url, debug, parentid string
-	var insecure = false
-	fileInfo, err := os.Stat(f)
-	if err != nil {
-		log.Error().Err(err).Msg("While we trying to check the file.")
-		return "", "", "", "", false, "", err
-	}
-	if fileInfo.Mode().IsDir() {
-		log.Error().Err(err).Msg("It is a directory, please select a config file.")
-		return "", "", "", "", false, "", nil
-	} else if fileInfo.Mode().IsRegular() {
-		file, err := os.Open(f)
-		if err != nil {
-			log.Error().Err(err).Msg("Failed opening file, please make sure the config file exists.")
-			return "", "", "", "", false, "", err
-		}
-		scanner := bufio.NewScanner(file)
-		scanner.Split(bufio.ScanLines)
-		for scanner.Scan() {
-			temp := strings.SplitN(scanner.Text(), ":", 2)
-			key := strings.ToLower(temp[0])
-			if key == "user" {
-				user = strings.TrimSpace(temp[1])
-			}
-			if key == "password" {
-				pass = strings.TrimSpace(temp[1])
-			}
-			if key == "baseurl" {
-				url = strings.TrimSpace(temp[1])
-			}
-			if key == "parentid" {
-				parentid = strings.TrimSpace(temp[1])
-			}
-			if key == "insecure" && strings.TrimSpace(temp[1]) == "true" {
-				insecure = true
-			}
-			if key == "debug" {
-				debug = strings.TrimSpace(temp[1])
-			}
-		}
-	} else {
-		log.Error().Msgf("We haven't handled this error, something was wrong, please try again")
-		return "", "", "", "", false, "", nil
-	}
-	return url, user, pass, parentid, insecure, debug, nil
 }

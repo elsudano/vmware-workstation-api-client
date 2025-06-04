@@ -9,6 +9,7 @@ import (
 
 	"github.com/TwiN/go-color"
 	"github.com/elsudano/vmware-workstation-api-client/wsapiclient"
+	"github.com/elsudano/vmware-workstation-api-client/wsapivm"
 	"github.com/rs/zerolog/log"
 )
 
@@ -16,7 +17,7 @@ var paragraph_color = color.Blue
 var title_line_color = color.White
 var value_color = color.Yellow
 
-func PrintVM(VM *wsapiclient.MyVm) {
+func PrintVM(VM *wsapivm.MyVm) {
 	fmt.Println(
 		color.Ize(title_line_color, " ID:"), color.Ize(value_color, VM.IdVM), "\n",
 		color.Ize(title_line_color, "Path:"), color.Ize(value_color, VM.Path), "\n",

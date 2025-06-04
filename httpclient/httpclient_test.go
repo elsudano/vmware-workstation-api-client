@@ -1,4 +1,4 @@
-package wsapiclient
+package httpclient
 
 import (
 	"strings"
@@ -24,5 +24,13 @@ func TestNewClient(t *testing.T) {
 }
 
 func TestNew(t *testing.T) {
+
+}
+
+func TestApiCall(t *testing.T) {
+
+}
+
+func TestConfigCli(t *testing.T) {
 
 }

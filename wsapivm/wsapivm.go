@@ -1,4 +1,4 @@
-package wsapiclient
+package wsapivm
 
 import (
 	"bytes"
@@ -6,6 +6,8 @@ import (
 	"errors"
 	"strconv"
 
+	"github.com/elsudano/vmware-workstation-api-client/wsapiclient"
+	"github.com/elsudano/vmware-workstation-api-client/wsapinet"
 	"github.com/rs/zerolog/log"
 )
 
@@ -64,9 +66,9 @@ type PowerStatePayload struct {
 // Outputs:
 // []MyVm list of all VMs that we have in VmWare Workstation
 // (error) variable with the error if occurr
-func (c *Client) GetAllVMs() ([]MyVm, error) {
+func GetAllVMs(c *wsapiclient.Client) ([]MyVm, error) {
 	var vms []MyVm
-	responseBody, vmerror, err := c.httpRequest("vms", "GET", bytes.Buffer{})
+	responseBody, vmerror, err := c.HttpRequest("vms", "GET", bytes.Buffer{})
 	if err != nil {
 		log.Error().Err(err).Msg("We can't made the API call.")
 		return nil, err
@@ -84,28 +86,28 @@ func (c *Client) GetAllVMs() ([]MyVm, error) {
 	log.Info().Str("NumOfVMs", strconv.Itoa(len(vms))).Msg("You have this amount of VM in you Workstation")
 	for _, item := range vms {
 		// --------- This Block read the ID of the VM --------- {{{
-		vm, err := c.LoadVM(item.IdVM)
+		vm, err := LoadVM(c, item.IdVM)
 		if err != nil {
 			log.Error().Err(err).Msg("We can't Load the VM.")
 			return nil, err
 		}
 		// }}}
 		// --------- This Block read the propierties of the VM in order to load --------- {{{
-		err = c.GetBasicInfo(vm)
+		err = vm.GetBasicInfo(c)
 		if err != nil {
 			log.Error().Err(err).Msg("We can't read Basic Information")
 			return nil, err
 		}
 		// }}}
 		// --------- This Block read the status of power of the vm --------- {{{
-		err = c.GetPowerStatus(vm)
+		err = vm.GetPowerStatus(c)
 		if err != nil {
 			log.Error().Err(err).Msg("We can't read Power Status.")
 			return nil, err
 		}
 		// }}}
 		// --------- This block read the denomination and description of the vm --------- {{{
-		err = c.GetDenominationDescription(vm)
+		err = vm.GetDenominationDescription(c)
 		if err != nil {
 			log.Error().Err(err).Msg("We can't read Description.")
 			return nil, err
@@ -113,7 +115,7 @@ func (c *Client) GetAllVMs() ([]MyVm, error) {
 		// }}}
 		// --------- This Block read the IP information --------- {{{
 		if vm.PowerStatus == "on" {
-			err = c.GetNetwork(vm)
+			err = wsapinet.GetInfoNics(c, vm.IdVM)
 			if err != nil {
 				log.Error().Err(err).Msg("We can't read Network Information.")
 				return nil, err
@@ -131,7 +133,7 @@ func (c *Client) GetAllVMs() ([]MyVm, error) {
 // d: string with the description of VM
 // p: int with the number of processors in the VM
 // m: int with the number of memory in the VM
-func (c *Client) CreateVM(s string, n string, d string, p int, m int) (*MyVm, error) {
+func CreateVM(c *wsapiclient.Client, s string, n string, d string, p int, m int) (*MyVm, error) {
 	// --------- Preparing the request --------- {{{
 	var vm MyVm
 	requestBody := new(bytes.Buffer)
@@ -149,7 +151,7 @@ func (c *Client) CreateVM(s string, n string, d string, p int, m int) (*MyVm, er
 		log.Error().Err(err).Msg("The request JSON is malformed.")
 		return nil, err
 	}
-	response, vmerror, err := c.httpRequest("vms", "POST", *requestBody)
+	response, vmerror, err := c.HttpRequest("vms", "POST", *requestBody)
 	if err != nil {
 		log.Error().Err(err).Msg("We can't made the API call.")
 		return nil, err
@@ -193,7 +195,7 @@ func (c *Client) CreateVM(s string, n string, d string, p int, m int) (*MyVm, er
 		return nil, err
 	}
 	log.Debug().Msgf("Request Human Readable: %#v", requestBody.String())
-	response, vmerror, err = c.httpRequest("vms/"+vm.IdVM, "PUT", *requestBody)
+	response, vmerror, err = c.HttpRequest("vms/"+vm.IdVM, "PUT", *requestBody)
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't complete the API call.")
 		return nil, err
@@ -216,7 +218,7 @@ func (c *Client) CreateVM(s string, n string, d string, p int, m int) (*MyVm, er
 		log.Error().Err(err).Msg("The response JSON is malformed.")
 		return nil, err
 	}
-	err = c.RenewMAC(&vm)
+	err = wsapinet.RenewMAC(c, vm.IdVM)
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't show the MAC information.")
 		return nil, err
@@ -295,13 +297,13 @@ func (c *Client) CreateVM(s string, n string, d string, p int, m int) (*MyVm, er
 // Outputs:
 // (pointer) Pointer at the MyVm object
 // (error) variable with the error if occurr
-func (c *Client) LoadVM(i string) (*MyVm, error) {
-	vm, err := c.GetVM(i)
+func LoadVM(c *wsapiclient.Client, i string) (*MyVm, error) {
+	vm, err := GetVM(c, i)
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't show the ID and Path.")
 		return nil, err
 	}
-	err = c.GetAllExtraParameters(vm)
+	err = vm.GetAllExtraParameters(c)
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't get all the extra parameters.")
 		return nil, err
@@ -317,13 +319,13 @@ func (c *Client) LoadVM(i string) (*MyVm, error) {
 // Outputs:
 // (pointer) Pointer at the MyVm object
 // (error) variable with the error if occurr
-func (c *Client) LoadVMbyName(n string) (*MyVm, error) {
-	vm, err := c.GetVMbyName(n)
+func LoadVMbyName(c *wsapiclient.Client, n string) (*MyVm, error) {
+	vm, err := GetVMbyName(c, n)
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't show the ID and Path.")
 		return nil, err
 	}
-	err = c.GetAllExtraParameters(vm)
+	err = vm.GetAllExtraParameters(c)
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't get all the extra parameters.")
 		return nil, err
@@ -333,25 +335,20 @@ func (c *Client) LoadVMbyName(n string) (*MyVm, error) {
 	return vm, err
 }
 
-// UpdateVM method to update a VM in VmWare Worstation Input:
-// i: string with the ID of the VM to update, n: string with the denomination of VM
+// UpdateVM method to update a VM in VmWare Worstation
+// Input:
+// n: string with the denomination of VM
 // d: string with the description of the VM, p: int with the number of processors
 // m: int with the size of memory
 // s: Power State desired, choose between on, off, reset, (nil no change)
 // Output: pointer at the MyVm object
 // and error variable with the error if occurr
-func (c *Client) UpdateVM(i string, n string, d string, p int, m int, s string) (*MyVm, error) {
+func (vm *MyVm) UpdateVM(c *wsapiclient.Client, n string, d string, p int, m int, s string) error {
 	var buffer bytes.Buffer
 	var memcpu SettingPayload
 	var currentPowerStatus string
 	memcpu.Processors = p
 	memcpu.Memory = m
-	vm, err := c.LoadVM(i)
-	// We want to know which is the current status of teh VM
-	if err != nil {
-		log.Error().Err(err).Msgf("We couldn't read the state of VM")
-		return nil, err
-	}
 	log.Debug().Msgf("State of VM before to update: %#v", vm)
 	if s == "" {
 		currentPowerStatus = vm.PowerStatus
@@ -361,22 +358,22 @@ func (c *Client) UpdateVM(i string, n string, d string, p int, m int, s string) 
 		log.Debug().Msgf("We want to change the current Power Status at %#v", currentPowerStatus)
 	}
 	// Here we are preparing the update of the Processors and Memory in the VM {{{
-	err = c.PowerSwitch(vm, "off")
+	err := vm.PowerSwitch(c, "off")
 	if err != nil {
 		log.Error().Err(err).Msgf("We can't shutdown the VM")
-		return nil, err
+		return err
 	}
 	request, err := json.Marshal(memcpu)
 	if err != nil {
 		log.Error().Err(err).Msgf("Trying to encode this request: %#v", memcpu)
-		return nil, err
+		return err
 	}
 	buffer.Write(request)
 	log.Debug().Msgf("Request Buffer: %#v", buffer.String())
-	_, vmerror, err := c.httpRequest("vms/"+i, "PUT", buffer)
+	_, vmerror, err := c.HttpRequest("vms/"+vm.IdVM, "PUT", buffer)
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't complete the API call.")
-		return nil, err
+		return err
 	}
 	switch vmerror.Code {
 	// here we have to wait for unlock the SourceVM and then create the next one
@@ -384,90 +381,92 @@ func (c *Client) UpdateVM(i string, n string, d string, p int, m int, s string) 
 	case 0:
 	case 147:
 		log.Error().Msgf("Code: %d Message: %s", vmerror.Code, vmerror.Message)
-		return nil, errors.New(strconv.Itoa(vmerror.Code) + "," + vmerror.Message)
+		return errors.New(strconv.Itoa(vmerror.Code) + "," + vmerror.Message)
 	default:
 		log.Error().Msgf("We haven't handled this error Code: %d Message: %s", vmerror.Code, vmerror.Message)
 	}
-	err = c.PowerSwitch(vm, currentPowerStatus)
+	err = vm.PowerSwitch(c, currentPowerStatus)
 	if err != nil {
 		log.Error().Err(err).Msgf("We can't complete the Shutdown/PowerOn operation")
-		return nil, err
+		return err
 	}
 	// ---- here we have to implement the code to update de description and denomination {{{
 	// here you will need to use the API to change the values of the Denomination and Description
 	// }}}
-	err = c.GetBasicInfo(vm)
+	err = vm.GetBasicInfo(c)
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't get information.")
-		return nil, err
+		return err
 	}
-	err = c.GetDenominationDescription(vm)
+	err = vm.GetDenominationDescription(c)
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't get information.")
-		return nil, err
+		return err
 	}
 	log.Debug().Msgf("State of VM after to update: %#v", vm)
 	log.Info().Msg("We have updated the VM.")
-	return vm, err
+	return err
 }
 
 // RegisterVM method to register a new VM in VmWare Worstation GUI:
-// n: string with the VM NAME, p: string with the path of the VM
-func (c *Client) RegisterVM(n string, p string) (*MyVm, error) {
-	var vm MyVm
+// Input:
+// c: (*wsapiclient.Client) The client to make the call.
+// vm: (*wsapivm.MyVM) The VM object that we want to delete.
+// Output:
+// error: (error) The possible error that you will have.
+func (vm *MyVm) RegisterVM(c wsapiclient.Client) error {
 	var regvm RegisterPayload
-	regvm.Name = n
-	regvm.Path = p
+	regvm.Name = vm.Denomination
+	regvm.Path = vm.Path
 	requestBody := new(bytes.Buffer)
 	request, err := json.Marshal(regvm)
 	if err != nil {
 		log.Error().Err(err).Msgf("Trying to encode this request: %#v", regvm)
-		return nil, err
+		return err
 	}
 	requestBody.Write(request)
 	log.Debug().Msgf("Request Human Readable: %#v", requestBody.String())
-	response, vmerror, err := c.httpRequest("vms/registration", "POST", *requestBody)
+	response, vmerror, err := c.HttpRequest("vms/registration", "POST", *requestBody)
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't complete the API call.")
-		return nil, err
+		return err
 	}
 	switch vmerror.Code {
 	case 0:
 	default:
 		log.Error().Msgf("We haven't handled this error Code: %d Message: %s", vmerror.Code, vmerror.Message)
-		return nil, errors.New(strconv.Itoa(vmerror.Code) + "," + vmerror.Message)
+		return errors.New(strconv.Itoa(vmerror.Code) + "," + vmerror.Message)
 	}
 	log.Debug().Msgf("Response: %#v", response)
 	responseBody := new(bytes.Buffer)
 	_, err = responseBody.ReadFrom(response)
 	if err != nil {
 		log.Error().Err(err).Msg("The response JSON is malformed.")
-		return nil, err
+		return err
 	}
 	log.Debug().Msgf("Response Human Readable: %#v", responseBody.String())
 	err = json.NewDecoder(responseBody).Decode(&vm)
 	if err != nil {
 		log.Error().Err(err).Msg("The response JSON is malformed.")
-		return nil, err
-	}
-	log.Info().Msg("We have registered the VM in GUI.")
-	return &vm, err
-}
-
-// DeleteVM method to delete a VM in VmWare Worstation Input:
-// i: string with the ID of the VM to update
-func (c *Client) DeleteVM(i string) error {
-	vm, err := c.LoadVM(i)
-	if err != nil {
-		log.Error().Err(err).Msgf("We couldn't read the state of VM")
 		return err
 	}
-	err = c.PowerSwitch(vm, "off")
+	log.Info().Msg("We have registered the VM in GUI.")
+	return err
+}
+
+// DeleteVM method to delete a VM in VmWare Worstation
+// Input:
+// c: (*wsapiclient.Client) The client to make the call.
+// vm: (*wsapivm.MyVM) The VM object that we want to delete.
+// Output:
+// error: (error) The possible error that you will have.
+func (vm *MyVm) DeleteVM(c *wsapiclient.Client) error {
+	err := vm.PowerSwitch(c, "off")
 	if err != nil {
 		log.Error().Err(err).Msgf("We can't shutdown the VM")
 		return err
 	}
-	response, vmerror, err := c.httpRequest("vms/"+i, "DELETE", bytes.Buffer{})
+	response, vmerror, err := c.HttpRequest("vms/"+vm.IdVM, "DELETE", bytes.Buffer{})
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't complete the API call.")
 		return err
