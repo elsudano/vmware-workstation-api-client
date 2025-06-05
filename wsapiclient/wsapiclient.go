@@ -7,20 +7,27 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+const (
+	libraryVersion string = "2.7.45"
+)
+
 type WSAPIClient struct {
-	Caller     httpclient.HTTPClient
 	VMService  wsapivm.VMService
 	NETService wsapinet.NETService
 }
 
-func New() (*WSAPIClient, error) {
+func New() *WSAPIClient {
 	Caller, err := httpclient.New()
 	if err != nil {
 		log.Error().Err(err).Msg("We can't make the Client.")
-		return nil, err
+		return nil
 	}
 	return &WSAPIClient{
 		VMService:  wsapivm.New(Caller),
 		NETService: wsapinet.New(Caller),
-	}, nil
+	}
 }
+
+// func ConfigApiClient(a string, u string, p string, i bool, d string) error {
+// 	return &WSAPIClient.VMService.ConfigClient(a, u, p, i, d)
+// }

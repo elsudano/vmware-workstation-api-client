@@ -13,7 +13,6 @@ import (
 )
 
 const (
-	libraryVersion    = "1.2.20"
 	defaultUser       = "Admin"
 	defaultPassword   = "Adm1n#00"
 	defaultBaseURL    = "http://localhost:8697/api"
@@ -66,7 +65,6 @@ func NewClient(a string, u string, p string, i bool, d string) (*HTTPClient, err
 	c.Password = p
 	c.InsecureFlag = i
 	c.DebugLevel = (strings.ToUpper(d))
-	ConfigLog(c.DebugLevel, "HR")
 	log.Debug().Msgf("Input values %#v, %#v, %#v, %#v, %#v", a, u, p, i, d)
 	c.Client = &http.Client{
 		Transport: &http.Transport{
@@ -100,11 +98,14 @@ func New() (*HTTPClient, error) {
 // p: (string) password of user.
 // i: (bool) Insecure flag to http or https.
 // d: (string) debug mode
-func (c *HTTPClient) ConfigClient(a string, u string, p string, i bool, d string) {
+func (c *HTTPClient) ConfigClient(a string, u string, p string, i bool, d string) error {
 	var err error
 	log.Debug().Msgf("Variables Values: %#v, %#v, %#v, %#v, %#v", a, u, p, i, d)
 	c.BaseURL, err = url.Parse(a)
-	log.Error().Err(err).Msg("The URL is malformed")
+	if err != nil {
+		log.Error().Err(err).Msg("The URL is malformed")
+		return err
+	}
 	log.Debug().Msgf("Client BaseURL: %#v", c.BaseURL)
 	c.User = u
 	log.Debug().Msgf("Client User: %#v", c.User)
@@ -122,6 +123,7 @@ func (c *HTTPClient) ConfigClient(a string, u string, p string, i bool, d string
 		},
 	}
 	log.Info().Msgf("We have configured the client.")
+	return nil
 }
 
 // httpRequest method return a body of the response the API REST server,
@@ -160,6 +162,11 @@ func (c *HTTPClient) ApiCall(p string, m string, pl bytes.Buffer) (io.ReadCloser
 	// in this line we will need to create a management of queue
 	responseBody := new(bytes.Buffer)
 	response, err := c.Client.Do(req)
+	log.Debug().Msgf("Response RAW %#v", response)
+	if err != nil {
+		log.Error().Err(err).Msg("Response error")
+		return nil, vmerror, err
+	}
 	switch response.StatusCode {
 	case http.StatusOK, http.StatusCreated, http.StatusNoContent:
 		log.Debug().Msgf("The result of API call was: %#v", response.StatusCode)
@@ -190,11 +197,6 @@ func (c *HTTPClient) ApiCall(p string, m string, pl bytes.Buffer) (io.ReadCloser
 			log.Error().Err(err).Msg("The Response isn't a JSON format.")
 			return nil, vmerror, err
 		}
-		return nil, vmerror, err
-	}
-	log.Debug().Msgf("Response RAW %#v", response)
-	if err != nil {
-		log.Error().Err(err).Msg("Response error")
 		return nil, vmerror, err
 	}
 	log.Debug().Msg("The API call was completed successfully.")

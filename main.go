@@ -17,6 +17,10 @@ var paragraph_color = color.Blue
 var title_line_color = color.White
 var value_color = color.Yellow
 
+func Version() {
+	// fmt.Printf("Version of Client: %s", wsapiclient.libraryVersion)
+}
+
 func PrintVM(VM *wsapivm.MyVm) {
 	fmt.Println(
 		color.Ize(title_line_color, " ID:"), color.Ize(value_color, VM.IdVM), "\n",
@@ -98,13 +102,17 @@ func main() {
 	// }}}
 
 	// Second option we will setting the values in the creation moment {{{
-	client, err := wsapiclient.New()
+	client := wsapiclient.New()
 	// client, err := wsapiclient.NewClient(varurl, varuser, varpass, varinsecure, vardebug)
+	if err != nil {
+		log.Error().Err(err).Msgf("Creating client error %#v", err)
+		os.Exit(8)
+	}
+	err = client.VMService.ConfigClient(varurl, varuser, varpass, varinsecure, vardebug)
 	if err != nil {
 		log.Error().Err(err).Msgf("Creating client error %#v", err)
 		os.Exit(9)
 	}
-	client.Caller.ConfigClient(varurl, varuser, varpass, varinsecure, vardebug)
 	fmt.Println(color.Ize(paragraph_color, "We can see here the value of the ParentID VM:"))
 	fmt.Println(color.Ize(title_line_color, "Parent ID:"), color.Ize(value_color, varparentid))
 	// }}}
@@ -116,19 +124,11 @@ func main() {
 	fmt.Println(color.Ize(paragraph_color, "Now we going to list all the VMs that we have in the VMWare Workstation:"))
 	AllVMs, err := client.VMService.GetAllVMs()
 	if err != nil {
-		fmt.Println(color.Ize(value_color, "Problem HERE!!!"), err)
 		log.Error().Err(err).Msg("We can't show this VM by")
 		os.Exit(10)
 	}
-	for _, item := range AllVMs {
-		if item.IdVM != "II82IG14IV0UHB7QHAI3J0G44RJBGNR5" { // is just because this VM is encripted
-			VM, err := client.VMService.LoadVM(item.IdVM)
-			if err != nil {
-				log.Error().Err(err).Msgf("First time Reading VM Error %#v", err)
-				os.Exit(11)
-			}
-			PrintVM(VM)
-		}
+	for _, VM := range AllVMs {
+		PrintVM(&VM)
 	}
 	// After to read all the instances that we have in the list, we can create a new one to test it
 	fmt.Println(color.Ize(paragraph_color, "We are using the CreateVM method to create the VM test."))

@@ -1,7 +1,7 @@
 SHELL = /bin/bash
 
 NAME = vmware-workstation-api-client
-VERSION = $(shell cat wsapiclient/wsapiclient.go | grep libraryVersion | awk '{print $$3}' | tr -d \")
+VERSION = $(shell cat wsapiclient/wsapiclient.go | grep libraryVersion | awk '{print $$4}' | tr -d \")
 DIRELEASES = releases/
 BINARY = $(NAME)_v$(VERSION)
 PRIVATEKEYFILE = workstationapi-key.pem
@@ -58,6 +58,7 @@ prepare: ## We can prepare the code locally in order to create a new version of 
 
 build: prepare ## Build the binary of the module
 	@go get -u
+	@go mod tidy
 	@go build -o $(DIRELEASES)$(BINARY)
 
 publish: build ## Build and Publish a new TAG in GitHub
