@@ -11,6 +11,7 @@ import (
 )
 
 type VMService interface {
+	ConfigClient(a string, u string, p string, i bool, d string) error
 	GetAllVMs() ([]MyVm, error)
 	LoadVM(i string) (*MyVm, error)
 	LoadVMbyName(n string) (*MyVm, error)
@@ -26,6 +27,18 @@ type VMManager struct {
 
 func New(httpcaller *httpclient.HTTPClient) VMService {
 	return &VMManager{vmclient: httpcaller}
+}
+
+// ConfigCli method return a pointer of Client of API but now it's configure
+// Inputs:
+// c: (*HTTPClient) client with all the necessary data to make a call.
+// a: (string) address of URL to server of API.
+// u: (string) user for to authenticate.
+// p: (string) password of user.
+// i: (bool) Insecure flag to http or https.
+// d: (string) debug mode
+func (vmm *VMManager) ConfigClient(a string, u string, p string, i bool, d string) error {
+	return vmm.vmclient.ConfigClient(a, u, p, i, d)
 }
 
 // GetAllVMs Method return array of MyVm and a error variable if occurr some problem
@@ -50,44 +63,17 @@ func (vmm *VMManager) GetAllVMs() ([]MyVm, error) {
 		return nil, err
 	}
 	log.Info().Str("NumOfVMs", strconv.Itoa(len(vms))).Msg("You have this amount of VM in you Workstation")
-	for _, item := range vms {
+	for pos, item := range vms {
 		// --------- This Block read the ID of the VM --------- {{{
-		_, err := vmm.LoadVM(item.IdVM)
-		if err != nil {
-			log.Error().Err(err).Msg("We can't Load the VM.")
-			return nil, err
+		if item.IdVM != "II82IG14IV0UHB7QHAI3J0G44RJBGNR5" { // is just because this VM is encripted
+			err = GetAllExtraParameters(vmm.vmclient, &item)
+			if err != nil {
+				log.Error().Err(err).Msg("We couldn't get all the extra parameters.")
+				return nil, err
+			}
+			vms[pos] = item
+			log.Debug().Msgf("The VM loaded is:: %#v", item)
 		}
-		// }}}
-		// // --------- This Block read the propierties of the VM in order to load --------- {{{
-		// err = GetBasicInfo()
-		// if err != nil {
-		// 	log.Error().Err(err).Msg("We can't read Basic Information")
-		// 	return nil, err
-		// }
-		// // }}}
-		// // --------- This Block read the status of power of the vm --------- {{{
-		// err = GetPowerStatus()
-		// if err != nil {
-		// 	log.Error().Err(err).Msg("We can't read Power Status.")
-		// 	return nil, err
-		// }
-		// // }}}
-		// // --------- This block read the denomination and description of the vm --------- {{{
-		// err = GetDenominationDescription()
-		// if err != nil {
-		// 	log.Error().Err(err).Msg("We can't read Description.")
-		// 	return nil, err
-		// }
-		// // }}}
-		// // --------- This Block read the IP information --------- {{{
-		// if vm.PowerStatus == "on" {
-		// 	err = wsapinet.GetInfoNics(c, vm.IdVM)
-		// 	if err != nil {
-		// 		log.Error().Err(err).Msg("We can't read Network Information.")
-		// 		return nil, err
-		// 	}
-		// }
-		// // }}}
 	}
 	log.Info().Msg("We have listed all VMs")
 	return vms, nil
