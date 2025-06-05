@@ -10,11 +10,11 @@ type NETService interface {
 }
 
 type NETManager struct {
-	httpclient *httpclient.HTTPClient
+	netclient *httpclient.HTTPClient
 }
 
-func New(httpclient *httpclient.HTTPClient) NETService {
-	return &NETManager{httpclient: httpclient}
+func New(httpcaller *httpclient.HTTPClient) NETService {
+	return &NETManager{netclient: httpcaller}
 }
 
 func (netm *NETManager) CreateNIC(t string, vnet string) (*InfoNICS, error) { return nil, nil }
