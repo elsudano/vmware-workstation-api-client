@@ -85,7 +85,10 @@ func NewClient(a string, u string, p string, i bool, d string) (*HTTPClient, err
 func New() (*HTTPClient, error) {
 	c, err := NewClient(defaultBaseURL, defaultUser, defaultPassword, defaultInsecure, defaultDebugLevel)
 	log.Debug().Msgf("Client Object %#v", c)
-	log.Error().Err(err).Msg("We can't create the client")
+	if err != nil {
+		log.Error().Err(err).Msg("We can't create the client")
+		return nil, err
+	}
 	log.Info().Msg("We have created the client.")
 	return c, err
 }
