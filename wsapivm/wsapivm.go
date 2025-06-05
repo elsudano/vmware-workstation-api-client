@@ -11,7 +11,6 @@ import (
 )
 
 type VMService interface {
-	ConfigClient(a string, u string, p string, i bool, d string) error
 	GetAllVMs() ([]MyVm, error)
 	LoadVM(i string) (*MyVm, error)
 	LoadVMbyName(n string) (*MyVm, error)
@@ -27,18 +26,6 @@ type VMManager struct {
 
 func New(httpcaller *httpclient.HTTPClient) VMService {
 	return &VMManager{vmclient: httpcaller}
-}
-
-// ConfigCli method return a pointer of Client of API but now it's configure
-// Inputs:
-// c: (*HTTPClient) client with all the necessary data to make a call.
-// a: (string) address of URL to server of API.
-// u: (string) user for to authenticate.
-// p: (string) password of user.
-// i: (bool) Insecure flag to http or https.
-// d: (string) debug mode
-func (vmm *VMManager) ConfigClient(a string, u string, p string, i bool, d string) error {
-	return vmm.vmclient.ConfigClient(a, u, p, i, d)
 }
 
 // GetAllVMs Method return array of MyVm and a error variable if occurr some problem
