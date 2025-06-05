@@ -1,7 +1,7 @@
 SHELL = /bin/bash
 
 NAME = vmware-workstation-api-client
-VERSION = $(shell cat wsapiclient/wsapiclient.go | grep libraryVersion | awk '{print $$4}' | tr -d \")
+VERSION = $(shell cat wsapiclient/wsapiclient.go | grep LibraryVersion | awk '{print $$4}' | tr -d \")
 DIRELEASES = releases/
 BINARY = $(NAME)_v$(VERSION)
 PRIVATEKEYFILE = workstationapi-key.pem

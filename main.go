@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"os"
 	"strings"
@@ -18,7 +19,7 @@ var title_line_color = color.White
 var value_color = color.Yellow
 
 func Version() {
-	// fmt.Printf("Version of Client: %s", wsapiclient.libraryVersion)
+	fmt.Printf("v%s\n", wsapiclient.LibraryVersion)
 }
 
 func PrintVM(VM *wsapivm.MyVm) {
@@ -45,6 +46,14 @@ func PrintVM(VM *wsapivm.MyVm) {
 }
 
 func main() {
+	var version bool
+	flag.BoolVar(&version, "version", false, "Show the version and exit")
+	flag.Parse()
+	if version {
+		Version()
+		os.Exit(0)
+	}
+
 	file, err := os.Open("config.ini")
 	if err != nil {
 		log.Error().Err(err).Msgf("Failed opening file %s, please make sure the config file exists", err)
@@ -94,28 +103,18 @@ func main() {
 	)
 	fmt.Println()
 	file.Close()
-
-	// First option we will can create a client with the default values {{{
-	// client, _ := wsapiclient.New()
-	// client.ConfigCli(varurl, varuser, varpass, varinsecure, vardebug)
-	// fmt.Printf("Parent ID: %s", varparentid)
-	// }}}
-
-	// Second option we will setting the values in the creation moment {{{
 	client := wsapiclient.New()
-	// client, err := wsapiclient.NewClient(varurl, varuser, varpass, varinsecure, vardebug)
 	if err != nil {
 		log.Error().Err(err).Msgf("Creating client error %#v", err)
 		os.Exit(8)
 	}
-	err = client.VMService.ConfigClient(varurl, varuser, varpass, varinsecure, vardebug)
+	err = client.Caller.ConfigClient(varurl, varuser, varpass, varinsecure, vardebug)
 	if err != nil {
 		log.Error().Err(err).Msgf("Creating client error %#v", err)
 		os.Exit(9)
 	}
 	fmt.Println(color.Ize(paragraph_color, "We can see here the value of the ParentID VM:"))
 	fmt.Println(color.Ize(title_line_color, "Parent ID:"), color.Ize(value_color, varparentid))
-	// }}}
 
 	// To changing the config of debug you use this method
 	// client.SwitchDebugLevel("NONE")
