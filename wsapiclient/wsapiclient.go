@@ -18,7 +18,7 @@ type WSAPIClient struct {
 }
 
 func New() *WSAPIClient {
-	ConfigLog("NONE", "FILE")
+	ConfigLog("NONE", "HR")
 	var err error
 	myclient := new(WSAPIClient)
 	myclient.Caller, err = httpclient.New()
