@@ -8,26 +8,24 @@ import (
 )
 
 const (
-	libraryVersion string = "2.7.45"
+	LibraryVersion string = "2.7.45"
 )
 
 type WSAPIClient struct {
+	Caller     *httpclient.HTTPClient
 	VMService  wsapivm.VMService
 	NETService wsapinet.NETService
 }
 
 func New() *WSAPIClient {
-	Caller, err := httpclient.New()
+	var err error
+	myclient := new(WSAPIClient)
+	myclient.Caller, err = httpclient.New()
 	if err != nil {
 		log.Error().Err(err).Msg("We can't make the Client.")
 		return nil
 	}
-	return &WSAPIClient{
-		VMService:  wsapivm.New(Caller),
-		NETService: wsapinet.New(Caller),
-	}
+	myclient.VMService = wsapivm.New(myclient.Caller)
+	myclient.NETService = wsapinet.New(myclient.Caller)
+	return myclient
 }
-
-// func ConfigApiClient(a string, u string, p string, i bool, d string) error {
-// 	return &WSAPIClient.VMService.ConfigClient(a, u, p, i, d)
-// }
