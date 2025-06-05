@@ -46,11 +46,16 @@ func PrintVM(VM *wsapivm.MyVm) {
 }
 
 func main() {
-	var version bool
+	var version, tests, debug bool
 	flag.BoolVar(&version, "version", false, "Show the version and exit")
+	flag.BoolVar(&tests, "tests", false, "Run the tests of the API client and exit")
+	flag.BoolVar(&debug, "debug", false, "Enable the debug mode by command line")
 	flag.Parse()
 	if version {
 		Version()
+		os.Exit(0)
+	}
+	if !tests {
 		os.Exit(0)
 	}
 
@@ -91,6 +96,9 @@ func main() {
 				vardebug = strings.TrimSpace(value)
 			}
 		}
+	}
+	if debug {
+		vardebug = "DEBUG"
 	}
 	fmt.Println(color.Ize(paragraph_color, "First of all we want to see which are the Input Values:"))
 	fmt.Println(

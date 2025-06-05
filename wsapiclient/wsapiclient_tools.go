@@ -15,7 +15,12 @@ import (
 // ConfigLog method change the behavior that how to handle the logging on our API
 // Inputs:
 // l: (strings) Which will be the level bu default that we want in console
-// f: (string) Which will be the format that we want in the console, JSON or HR (Human Readable)
+// f: (string) The format we want:
+// (defaut) JSON: in stderr,
+// FILE json format in debug.log file,
+// CONSOLE stdout with color in json format,
+// ERROR stderr in json format
+// HR (Human Readable) in stdout
 func ConfigLog(l string, f string) {
 	l = strings.ToUpper(l)
 	switch l {
@@ -44,6 +49,27 @@ func ConfigLog(l string, f string) {
 
 	// Formatting https://github.com/rs/zerolog?tab=readme-ov-file#pretty-logging
 	switch strings.ToUpper(f) {
+	case "FILE":
+		file, err := os.OpenFile(
+			"debug.log",
+			os.O_APPEND|os.O_CREATE|os.O_WRONLY,
+			0664,
+		)
+		if err != nil {
+			panic(err)
+		}
+		defer file.Close()
+		ConsoleWriter := zerolog.ConsoleWriter{Out: file, NoColor: false}
+		ConsoleWriter.FormatLevel = func(i interface{}) string {
+			return strings.ToUpper(fmt.Sprintf("| %-6s|", i))
+		}
+		ConsoleWriter.FormatMessage = func(i interface{}) string {
+			return fmt.Sprintf("%s", i)
+		}
+		ConsoleWriter.FormatFieldName = func(i interface{}) string {
+			return fmt.Sprintf("%s:", i)
+		}
+		log.Logger = log.With().Logger().Output(ConsoleWriter)
 	case "CONSOLE":
 		ConsoleWriter := zerolog.ConsoleWriter{Out: os.Stdout, NoColor: true}
 		ConsoleWriter.FormatLevel = func(i interface{}) string {
@@ -58,14 +84,29 @@ func ConfigLog(l string, f string) {
 		ConsoleWriter.FormatFieldValue = func(i interface{}) string {
 			return strings.ToUpper(fmt.Sprintf("%s", i))
 		}
+		ConsoleWriter.PartsExclude = []string{
+			zerolog.TimestampFieldName,
+		}
 		log.Logger = log.With().Logger().Output(ConsoleWriter)
-	case "HR":
+	case "ERROR":
 		ConsoleWriter := zerolog.ConsoleWriter{Out: os.Stderr, NoColor: true}
 		ConsoleWriter.FormatLevel = func(i interface{}) string {
 			return strings.ToUpper(fmt.Sprintf("[%-6s][WSAPICLI]", i))
 		}
 		ConsoleWriter.FormatMessage = func(i interface{}) string {
 			return fmt.Sprintf("%s", i)
+		}
+		log.Logger = log.With().Logger().Output(ConsoleWriter)
+	case "HR":
+		ConsoleWriter := zerolog.ConsoleWriter{Out: os.Stdout, NoColor: true}
+		ConsoleWriter.FormatLevel = func(i interface{}) string {
+			return strings.ToUpper(fmt.Sprintf("[%-6s][WSAPICLI]", i))
+		}
+		ConsoleWriter.FormatMessage = func(i interface{}) string {
+			return fmt.Sprintf("%s", i)
+		}
+		ConsoleWriter.PartsExclude = []string{
+			zerolog.TimestampFieldName,
 		}
 		log.Logger = log.With().Logger().Output(ConsoleWriter)
 	default:
