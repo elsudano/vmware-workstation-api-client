@@ -4,7 +4,7 @@ import "github.com/elsudano/vmware-workstation-api-client/httpclient"
 
 type NETService interface {
 	CreateNIC(t string, vnet string) (*InfoNICS, error)
-	ReadNIC(vnet string) (*InfoNICS, error)
+	LoadNIC(vnet string) (*InfoNICS, error)
 	UpdateNIC(nic *InfoNICS, t string, vnet string) error
 	DeleteNIC(nic *InfoNICS) error
 }
@@ -19,7 +19,7 @@ func New(httpcaller *httpclient.HTTPClient) NETService {
 
 func (netm *NETManager) CreateNIC(t string, vnet string) (*InfoNICS, error) { return nil, nil }
 
-func (netm *NETManager) ReadNIC(vnet string) (*InfoNICS, error) { return nil, nil }
+func (netm *NETManager) LoadNIC(vnet string) (*InfoNICS, error) { return nil, nil }
 
 func (netm *NETManager) UpdateNIC(nic *InfoNICS, t string, vnet string) error { return nil }
 
