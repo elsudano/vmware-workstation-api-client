@@ -3,7 +3,6 @@ package wsapivm
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"strconv"
 
 	"github.com/elsudano/vmware-workstation-api-client/httpclient"
@@ -34,14 +33,10 @@ func New(httpcaller *httpclient.HTTPClient) VMService {
 // (error) variable with the error if occurr
 func (vmm *VMManager) GetAllVMs() ([]MyVm, error) {
 	var vms []MyVm
-	responseBody, vmerror, err := vmm.vmclient.ApiCall("vms", "GET", bytes.Buffer{})
+	responseBody, err := vmm.vmclient.ApiCall("vms", "GET", bytes.Buffer{})
 	if err != nil {
 		log.Error().Err(err).Msg("We can't made the API call.")
 		return nil, err
-	}
-	if vmerror.Code != 0 {
-		log.Error().Msgf("Code: %d Message: %s", vmerror.Code, vmerror.Message)
-		return nil, errors.New("Code: " + strconv.Itoa(vmerror.Code) + ", Message: " + vmerror.Message)
 	}
 	log.Debug().Msgf("Response Body RAW: %#v", responseBody)
 	err = json.NewDecoder(responseBody).Decode(&vms)
@@ -52,15 +47,13 @@ func (vmm *VMManager) GetAllVMs() ([]MyVm, error) {
 	log.Info().Str("NumOfVMs", strconv.Itoa(len(vms))).Msg("You have this amount of VM in you Workstation")
 	for pos, item := range vms {
 		// --------- This Block read the ID of the VM --------- {{{
-		if item.IdVM != "II82IG14IV0UHB7QHAI3J0G44RJBGNR5" { // is just because this VM is encripted
-			err = GetAllExtraParameters(vmm.vmclient, &item)
-			if err != nil {
-				log.Error().Err(err).Msg("We couldn't get all the extra parameters.")
-				return nil, err
-			}
-			vms[pos] = item
-			log.Debug().Msgf("The VM loaded is:: %#v", item)
+		err = GetAllExtraParameters(vmm.vmclient, &item)
+		if err != nil {
+			log.Error().Err(err).Msg("We couldn't get all the extra parameters.")
+			return nil, err
 		}
+		vms[pos] = item
+		log.Debug().Msgf("The VM loaded is:: %#v", item)
 	}
 	log.Info().Msg("We have listed all VMs")
 	return vms, nil
@@ -91,29 +84,10 @@ func (vmm *VMManager) CreateVM(pid string, n string, d string, p int, m int) (*M
 		log.Error().Err(err).Msg("The request JSON is malformed.")
 		return nil, err
 	}
-	response, vmerror, err := vmm.vmclient.ApiCall("vms", "POST", *requestBody)
+	response, err := vmm.vmclient.ApiCall("vms", "POST", *requestBody)
 	if err != nil {
 		log.Error().Err(err).Msg("We can't made the API call.")
 		return nil, err
-	}
-	switch vmerror.Code {
-	// here we have to wait for unlock the SourceVM and then create the next one
-	// keep in mind that maybe is better do that in the provider side
-	case 0:
-	case 147:
-		log.Error().Msgf("Code: %d Message: %s", vmerror.Code, vmerror.Message)
-		return nil, errors.New(strconv.Itoa(vmerror.Code) + "," + vmerror.Message)
-	case 107:
-		log.Error().Msgf("Code: %d Message: %s", vmerror.Code, vmerror.Message)
-		return nil, errors.New(strconv.Itoa(vmerror.Code) + "," + vmerror.Message)
-	case 108:
-		log.Error().Msgf("Code: %d Message: %s", vmerror.Code, vmerror.Message)
-		return nil, errors.New(strconv.Itoa(vmerror.Code) + "," + vmerror.Message)
-	case 109:
-		log.Error().Msgf("Code: %d Message: %s", vmerror.Code, vmerror.Message)
-		return nil, errors.New(strconv.Itoa(vmerror.Code) + "," + vmerror.Message)
-	default:
-		log.Error().Msgf("We haven't handled this error Code: %d Message: %s", vmerror.Code, vmerror.Message)
 	}
 	log.Debug().Msgf("Response RAW: %#v", response)
 	responseBody.Reset()
@@ -135,15 +109,10 @@ func (vmm *VMManager) CreateVM(pid string, n string, d string, p int, m int) (*M
 		return nil, err
 	}
 	log.Debug().Msgf("Request Human Readable: %#v", requestBody.String())
-	response, vmerror, err = vmm.vmclient.ApiCall("vms/"+vm.IdVM, "PUT", *requestBody)
+	response, err = vmm.vmclient.ApiCall("vms/"+vm.IdVM, "PUT", *requestBody)
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't complete the API call.")
 		return nil, err
-	}
-	switch vmerror.Code {
-	case 0:
-	default:
-		log.Error().Msgf("We haven't handled this error Code: %d Message: %s", vmerror.Code, vmerror.Message)
 	}
 	log.Debug().Msgf("Response RAW: %#v", response)
 	responseBody.Reset()
@@ -312,20 +281,10 @@ func (vmm *VMManager) UpdateVM(vm *MyVm, n string, d string, p int, m int, s str
 	}
 	buffer.Write(request)
 	log.Debug().Msgf("Request Buffer: %#v", buffer.String())
-	_, vmerror, err := vmm.vmclient.ApiCall("vms/"+vm.IdVM, "PUT", buffer)
+	_, err = vmm.vmclient.ApiCall("vms/"+vm.IdVM, "PUT", buffer)
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't complete the API call.")
 		return err
-	}
-	switch vmerror.Code {
-	// here we have to wait for unlock the SourceVM and then create the next one
-	// keep in mind that maybe is better do that in the provider side
-	case 0:
-	case 147:
-		log.Error().Msgf("Code: %d Message: %s", vmerror.Code, vmerror.Message)
-		return errors.New(strconv.Itoa(vmerror.Code) + "," + vmerror.Message)
-	default:
-		log.Error().Msgf("We haven't handled this error Code: %d Message: %s", vmerror.Code, vmerror.Message)
 	}
 	err = PowerSwitch(vmm.vmclient, vm, currentPowerStatus)
 	if err != nil {
@@ -368,16 +327,10 @@ func (vmm *VMManager) RegisterVM(vm *MyVm) error {
 	}
 	requestBody.Write(request)
 	log.Debug().Msgf("Request Human Readable: %#v", requestBody.String())
-	response, vmerror, err := vmm.vmclient.ApiCall("vms/registration", "POST", *requestBody)
+	response, err := vmm.vmclient.ApiCall("vms/registration", "POST", *requestBody)
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't complete the API call.")
 		return err
-	}
-	switch vmerror.Code {
-	case 0:
-	default:
-		log.Error().Msgf("We haven't handled this error Code: %d Message: %s", vmerror.Code, vmerror.Message)
-		return errors.New(strconv.Itoa(vmerror.Code) + "," + vmerror.Message)
 	}
 	log.Debug().Msgf("Response: %#v", response)
 	responseBody := new(bytes.Buffer)
@@ -408,26 +361,18 @@ func (vmm *VMManager) DeleteVM(vm *MyVm) error {
 		log.Error().Err(err).Msgf("We can't shutdown the VM")
 		return err
 	}
-	response, vmerror, err := vmm.vmclient.ApiCall("vms/"+vm.IdVM, "DELETE", bytes.Buffer{})
+	response, err := vmm.vmclient.ApiCall("vms/"+vm.IdVM, "DELETE", bytes.Buffer{})
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't complete the API call.")
 		return err
 	}
-	switch vmerror.Code {
-	case 0:
-		responseBody := new(bytes.Buffer)
-		_, err = responseBody.ReadFrom(response)
-		if err != nil {
-			log.Error().Err(err).Msg("The response JSON is malformed.")
-			return err
-		}
-		log.Debug().Msgf("Response Human Readable: %#v", responseBody.String())
-	case 107:
-		log.Error().Msgf("Code: %d Message: %s", vmerror.Code, vmerror.Message)
-		return errors.New(strconv.Itoa(vmerror.Code) + "," + vmerror.Message)
-	default:
-		log.Error().Msgf("We haven't handled this error Code: %d Message: %s", vmerror.Code, vmerror.Message)
+	responseBody := new(bytes.Buffer)
+	_, err = responseBody.ReadFrom(response)
+	if err != nil {
+		log.Error().Err(err).Msg("The response JSON is malformed.")
+		return err
 	}
+	log.Debug().Msgf("Response Human Readable: %#v", responseBody.String())
 	log.Info().Msg("We have deleted the VM.")
 	return nil
 }

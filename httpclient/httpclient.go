@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 
 	"github.com/rs/zerolog/log"
@@ -137,14 +139,13 @@ func (c *HTTPClient) ConfigClient(a string, u string, p string, i bool, d string
 // pl: (bytes.Buffer) for read the Body of the request.
 // Output:
 // response: (io.ReadCloser) That will be the Response Body that the API give us.
-// VmError: (vmerror) Special struct with the specific information about of the error.
 // err: (error) Normal error answer that go-lang give us in a issue.
-func (c *HTTPClient) ApiCall(p string, m string, pl bytes.Buffer) (io.ReadCloser, VmError, error) {
+func (c *HTTPClient) ApiCall(p string, m string, pl bytes.Buffer) (io.ReadCloser, error) {
 	var vmerror VmError
 	req, err := http.NewRequest(m, c.RequestPath(p), &pl)
 	if err != nil {
 		log.Error().Err(err).Msgf("Calling to API: %#v", err)
-		return nil, vmerror, err
+		return nil, err
 	}
 	if pl.Len() > 0 {
 		log.Debug().Msgf("Request Buffer: %#v", pl.String())
@@ -166,42 +167,42 @@ func (c *HTTPClient) ApiCall(p string, m string, pl bytes.Buffer) (io.ReadCloser
 	responseBody := new(bytes.Buffer)
 	response, err := c.Client.Do(req)
 	log.Debug().Msgf("Response RAW %#v", response)
-	if err != nil {
-		log.Error().Err(err).Msg("Response error")
-		return nil, vmerror, err
-	}
 	switch response.StatusCode {
 	case http.StatusOK, http.StatusCreated, http.StatusNoContent:
 		log.Debug().Msgf("The result of API call was: %#v", response.StatusCode)
 	case http.StatusConflict:
 		err = json.NewDecoder(response.Body).Decode(&vmerror)
 		if err != nil {
-			log.Error().Err(err).Msg("Trying decode the answer.")
-			return nil, vmerror, err
+			log.Error().Err(err).Msg("Trying to decode the VmError.")
+			return nil, err
 		}
 		log.Debug().Msgf("Response StatusCode %#v Code Error %#v Message: %#v", response.StatusCode, vmerror.Code, vmerror.Message)
-		return nil, vmerror, err
+		return nil, errors.New("StatusCode:" + strconv.Itoa(response.StatusCode) + ", Code Error:" + strconv.Itoa(vmerror.Code) + ", Message:" + vmerror.Message)
 	case http.StatusInternalServerError:
 		err = json.NewDecoder(response.Body).Decode(&vmerror)
 		if err != nil {
-			log.Error().Err(err).Msg("Trying decode the Response.")
-			return nil, vmerror, err
+			log.Error().Err(err).Msg("Trying to decode the VmError.")
+			return nil, err
 		}
 		log.Debug().Msgf("Response StatusCode %#v Code Error %#v Message: %#v", response.StatusCode, vmerror.Code, vmerror.Message)
-		return nil, vmerror, err
+		return nil, errors.New("StatusCode:" + strconv.Itoa(response.StatusCode) + ", Code Error:" + strconv.Itoa(vmerror.Code) + ", Message:" + vmerror.Message)
 	default:
 		_, err = responseBody.ReadFrom(response.Body)
 		if err != nil {
 			log.Error().Err(err).Msgf("ResponseBody RAW %#v", responseBody)
-			return nil, vmerror, err
+			return nil, err
 		}
 		err = json.NewDecoder(responseBody).Decode(&vmerror)
 		if err != nil {
 			log.Error().Err(err).Msg("The Response isn't a JSON format.")
-			return nil, vmerror, err
+			return nil, err
 		}
-		return nil, vmerror, err
+		return nil, errors.New("StatusCode:" + strconv.Itoa(response.StatusCode) + ", Code Error:" + strconv.Itoa(vmerror.Code) + ", Message:" + vmerror.Message)
 	}
-	log.Debug().Msg("The API call was completed successfully.")
-	return response.Body, vmerror, err
+	if err != nil {
+		log.Error().Err(err).Msg("Error making a call")
+		return nil, err
+	}
+	log.Debug().Msg("The API call was completed.")
+	return response.Body, nil
 }

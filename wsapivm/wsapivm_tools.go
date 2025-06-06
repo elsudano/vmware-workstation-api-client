@@ -3,10 +3,9 @@ package wsapivm
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
-	"strconv"
 
 	"github.com/elsudano/vmware-workstation-api-client/httpclient"
+	"github.com/elsudano/vmware-workstation-api-client/wsapinet"
 	"github.com/rs/zerolog/log"
 )
 
@@ -24,21 +23,15 @@ func GetVM(vmc *httpclient.HTTPClient, i string) (*MyVm, error) {
 	// If you want see the path of the VM it's necessary getting all VMs
 	// because the API of VmWare Workstation doesn't allow see this the another way
 	// --------- This Block read the path and the ID of the vm in order to load in the function --------- {{{
-	response, vmerror, err := vmc.ApiCall("vms", "GET", bytes.Buffer{})
+	response, err := vmc.ApiCall("vms", "GET", bytes.Buffer{})
 	if err != nil {
 		log.Error().Err(err).Msg("We can't made the API call.")
 		return nil, err
 	}
-	switch vmerror.Code {
-	case 0:
-		err = json.NewDecoder(response).Decode(&vms)
-		if err != nil {
-			log.Error().Err(err).Msg("The response JSON is malformed.")
-			return nil, err
-		}
-	default:
-		log.Error().Msgf("We haven't handled this error Code: %d Message: %s", vmerror.Code, vmerror.Message)
-		return nil, errors.New(strconv.Itoa(vmerror.Code) + "," + vmerror.Message)
+	err = json.NewDecoder(response).Decode(&vms)
+	if err != nil {
+		log.Error().Err(err).Msg("The response JSON is malformed.")
+		return nil, err
 	}
 	log.Debug().Msgf("List of VMs: %#v", vms)
 	for tempvm, value := range vms {
@@ -67,25 +60,19 @@ func GetVMbyName(vmc *httpclient.HTTPClient, n string) (*MyVm, error) {
 	// If you want see the path of the VM it's necessary getting all VMs
 	// because the API of VmWare Workstation doesn't allow see this the another way
 	// --------- This Block read the path and the ID of the vm in order to load in the function --------- {{{
-	response, vmerror, err := vmc.ApiCall("vms", "GET", bytes.Buffer{})
+	response, err := vmc.ApiCall("vms", "GET", bytes.Buffer{})
 	if err != nil {
 		log.Error().Err(err).Msg("We can't made the API call.")
 		return nil, err
 	}
-	switch vmerror.Code {
-	case 0:
-		err = json.NewDecoder(response).Decode(&vms)
-		if err != nil {
-			log.Error().Err(err).Msg("The response JSON is malformed.")
-			return nil, err
-		}
-	default:
-		log.Error().Msgf("We haven't handled this error Code: %d Message: %s", vmerror.Code, vmerror.Message)
-		return nil, errors.New(strconv.Itoa(vmerror.Code) + "," + vmerror.Message)
+	err = json.NewDecoder(response).Decode(&vms)
+	if err != nil {
+		log.Error().Err(err).Msg("The response JSON is malformed.")
+		return nil, err
 	}
 	log.Debug().Msgf("List of VMs: %#v", vms)
 	for tempvm, value := range vms {
-		response, _, err = vmc.ApiCall("vms/"+value.IdVM+"/params/displayName", "GET", bytes.Buffer{})
+		response, err = vmc.ApiCall("vms/"+value.IdVM+"/params/displayName", "GET", bytes.Buffer{})
 		if err != nil {
 			log.Error().Err(err).Msg("We couldn't complete the API call.")
 			return nil, err
@@ -129,13 +116,13 @@ func GetAllExtraParameters(vmc *httpclient.HTTPClient, vm *MyVm) error {
 		log.Error().Err(err).Msg("We couldn't show the Power Status.")
 		return err
 	}
-	// if vm.PowerStatus == "on" {
-	// 	err = wsapinet.GetInfoNics(vmc, vm.IdVM)
-	// 	if err != nil {
-	// 		log.Error().Err(err).Msg("We couldn't show the Network information.")
-	// 		return err
-	// 	}
-	// }
+	if vm.PowerStatus == "on" {
+		err = wsapinet.GetInfoNics(vmc, vm.IdVM)
+		if err != nil {
+			log.Error().Err(err).Msg("We couldn't show the Network information.")
+			return err
+		}
+	}
 	return nil
 }
 
@@ -146,25 +133,15 @@ func GetAllExtraParameters(vmc *httpclient.HTTPClient, vm *MyVm) error {
 // Outputs:
 // err: (error) If we will have some error we can handle it here.
 func GetBasicInfo(vmc *httpclient.HTTPClient, vm *MyVm) error {
-	response, vmerror, err := vmc.ApiCall("vms/"+vm.IdVM, "GET", bytes.Buffer{})
+	response, err := vmc.ApiCall("vms/"+vm.IdVM, "GET", bytes.Buffer{})
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't complete the API call.")
 		return err
 	}
-	switch vmerror.Code {
-	case 0:
-		err = json.NewDecoder(response).Decode(&vm)
-		if err != nil {
-			log.Error().Err(err).Msg("The response JSON is malformed.")
-			return err
-		}
-	case 110:
-		err = errors.New("Code:" + strconv.Itoa(vmerror.Code) + " Msg:" + vmerror.Message)
-		log.Error().Msgf("Code: %d Message: %s", vmerror.Code, vmerror.Message)
+	err = json.NewDecoder(response).Decode(&vm)
+	if err != nil {
+		log.Error().Err(err).Msg("The response JSON is malformed.")
 		return err
-	default:
-		log.Error().Msgf("We haven't handled this error Code: %d Message: %s", vmerror.Code, vmerror.Message)
-		return errors.New(strconv.Itoa(vmerror.Code) + "," + vmerror.Message)
 	}
 	log.Debug().Msgf("VM: %#v", vm)
 	log.Info().Msg("We have loaded the Processor and Memory values.")
@@ -180,38 +157,26 @@ func GetBasicInfo(vmc *httpclient.HTTPClient, vm *MyVm) error {
 // err: (error) If we will have some error we can handle it here.
 func GetDenominationDescription(vmc *httpclient.HTTPClient, vm *MyVm) error {
 	var param ParamPayload
-	response, vmerror, err := vmc.ApiCall("vms/"+vm.IdVM+"/params/displayName", "GET", bytes.Buffer{})
+	response, err := vmc.ApiCall("vms/"+vm.IdVM+"/params/displayName", "GET", bytes.Buffer{})
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't complete the API call.")
 		return err
 	}
-	switch vmerror.Code {
-	case 0:
-		err = json.NewDecoder(response).Decode(&param)
-		if err != nil {
-			log.Error().Err(err).Msg("The response JSON is malformed.")
-			return err
-		}
-	default:
-		log.Error().Msgf("We haven't handled this error Code: %d Message: %s", vmerror.Code, vmerror.Message)
-		return errors.New(strconv.Itoa(vmerror.Code) + "," + vmerror.Message)
+	err = json.NewDecoder(response).Decode(&param)
+	if err != nil {
+		log.Error().Err(err).Msg("The response JSON is malformed.")
+		return err
 	}
 	vm.Denomination = param.Value
-	response, vmerror, err = vmc.ApiCall("vms/"+vm.IdVM+"/params/annotation", "GET", bytes.Buffer{})
+	response, err = vmc.ApiCall("vms/"+vm.IdVM+"/params/annotation", "GET", bytes.Buffer{})
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't complete the API call.")
 		return err
 	}
-	switch vmerror.Code {
-	case 0:
-		err = json.NewDecoder(response).Decode(&param)
-		if err != nil {
-			log.Error().Err(err).Msg("The response JSON is malformed.")
-			return err
-		}
-	default:
-		log.Error().Msgf("We haven't handled this error Code: %d Message: %s", vmerror.Code, vmerror.Message)
-		return errors.New(strconv.Itoa(vmerror.Code) + "," + vmerror.Message)
+	err = json.NewDecoder(response).Decode(&param)
+	if err != nil {
+		log.Error().Err(err).Msg("The response JSON is malformed.")
+		return err
 	}
 	vm.Description = param.Value
 	log.Debug().Msgf("VM: %#v", vm)
@@ -227,22 +192,16 @@ func GetDenominationDescription(vmc *httpclient.HTTPClient, vm *MyVm) error {
 // err: (error) If we will have some error we can handle it here.
 func GetPowerStatus(vmc *httpclient.HTTPClient, vm *MyVm) error {
 	var power_state_payload PowerStatePayload
-	response, vmerror, err := vmc.ApiCall("vms/"+vm.IdVM+"/power", "GET", bytes.Buffer{})
+	response, err := vmc.ApiCall("vms/"+vm.IdVM+"/power", "GET", bytes.Buffer{})
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't complete the API call.")
 		return err
 	}
-	switch vmerror.Code {
-	case 0:
-		err = json.NewDecoder(response).Decode(&power_state_payload)
-		vm.PowerStatus = PowerStateConversor(power_state_payload.Value)
-		if err != nil {
-			log.Error().Err(err).Msg("The response JSON is malformed.")
-			return err
-		}
-	default:
-		log.Error().Msgf("We haven't handled this error Code: %d Message: %s", vmerror.Code, vmerror.Message)
-		return errors.New(strconv.Itoa(vmerror.Code) + "," + vmerror.Message)
+	err = json.NewDecoder(response).Decode(&power_state_payload)
+	vm.PowerStatus = PowerStateConversor(power_state_payload.Value)
+	if err != nil {
+		log.Error().Err(err).Msg("The response JSON is malformed.")
+		return err
 	}
 	log.Debug().Msgf("VM: %#v", vm)
 	log.Info().Msg("We have loaded the Power State value.")
@@ -261,22 +220,16 @@ func PowerSwitch(vmc *httpclient.HTTPClient, vm *MyVm, s string) error {
 	var power_state_payload PowerStatePayload
 	requestBody := bytes.NewBufferString(s)
 	log.Debug().Msgf("The state that we want is: %#v", s)
-	response, vmerror, err := vmc.ApiCall("vms/"+vm.IdVM+"/power", "PUT", *requestBody)
+	response, err := vmc.ApiCall("vms/"+vm.IdVM+"/power", "PUT", *requestBody)
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't complete the API call.")
 		return err
 	}
-	switch vmerror.Code {
-	case 0:
-		err = json.NewDecoder(response).Decode(&power_state_payload)
-		vm.PowerStatus = PowerStateConversor(power_state_payload.Value)
-		if err != nil {
-			log.Error().Err(err).Msg("The response JSON is malformed.")
-			return err
-		}
-	default:
-		log.Error().Msgf("We haven't handled this error Code: %d Message: %s", vmerror.Code, vmerror.Message)
-		return errors.New(strconv.Itoa(vmerror.Code) + "," + vmerror.Message)
+	err = json.NewDecoder(response).Decode(&power_state_payload)
+	vm.PowerStatus = PowerStateConversor(power_state_payload.Value)
+	if err != nil {
+		log.Error().Err(err).Msg("The response JSON is malformed.")
+		return err
 	}
 	log.Debug().Msgf("VM: %#v", vm)
 	log.Info().Msg("We have changed the Power State.")
@@ -329,23 +282,17 @@ func SetParameter(vmc *httpclient.HTTPClient, vm *MyVm, p string, v string) erro
 	requestBody := new(bytes.Buffer)
 	requestBody.Write(request)
 	log.Debug().Msgf("Request Human Readable: %#v", requestBody.String())
-	response, vmerror, err := vmc.ApiCall("/vms/"+vm.IdVM+"/configparams", "PUT", *requestBody)
+	response, err := vmc.ApiCall("/vms/"+vm.IdVM+"/configparams", "PUT", *requestBody)
 	if err != nil {
 		return err
 	}
-	switch vmerror.Code {
-	case 0:
-		responseBody := new(bytes.Buffer)
-		_, err = responseBody.ReadFrom(response)
-		if err != nil {
-			log.Error().Err(err).Msg("The response JSON is malformed.")
-			return err
-		}
-		log.Debug().Msgf("Response Human Readable: %#v", responseBody.String())
-	default:
-		log.Error().Msgf("We haven't handled this error Code: %d Message: %s", vmerror.Code, vmerror.Message)
-		return errors.New(strconv.Itoa(vmerror.Code) + "," + vmerror.Message)
+	responseBody := new(bytes.Buffer)
+	_, err = responseBody.ReadFrom(response)
+	if err != nil {
+		log.Error().Err(err).Msg("The response JSON is malformed.")
+		return err
 	}
+	log.Debug().Msgf("Response Human Readable: %#v", responseBody.String())
 	log.Debug().Msgf("VM: %#v", vm)
 	log.Info().Msgf("We have defined new value in parameter: %#v", p)
 	return nil
