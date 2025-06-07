@@ -19,24 +19,7 @@ const (
 	LibraryVersion string = "2.7.45"
 )
 
-type WSAPIService interface {
-	ConfigLog(lvl string, mode string)
-	ConfigApiClient(a string, u string, p string, i bool, d string) error
-	GetAllVMs() ([]wsapivm.MyVm, error)
-	LoadVM(i string) (*wsapivm.MyVm, error)
-	LoadVMbyName(n string) (*wsapivm.MyVm, error)
-	CreateVM(pid string, n string, d string, p int, m int) (*wsapivm.MyVm, error)
-	UpdateVM(vm *wsapivm.MyVm, n string, d string, p int, m int, s string) error
-	RegisterVM(vm *wsapivm.MyVm) error
-	DeleteVM(vm *wsapivm.MyVm) error
-}
-
-type WSAPIClient struct {
-	Caller     *httpclient.HTTPClient
-	VMService  wsapivm.VMService
-	NETService wsapinet.NETService
-}
-
+// New functon is just to create a new object APIClient to make the different calls at VmWare Workstation Pro
 func New() WSAPIService {
 	myclient, err := httpclient.New()
 	if err != nil {
@@ -180,7 +163,7 @@ func (wsapi *WSAPIClient) GetAllVMs() ([]wsapivm.MyVm, error) {
 // p: int with the number of processors in the VM
 // m: int with the number of memory in the VM
 func (wsapi *WSAPIClient) CreateVM(pid string, n string, d string, p int, m int) (*wsapivm.MyVm, error) {
-	return nil, nil
+	return wsapi.VMService.CreateVM(pid, n, d, p, m)
 }
 
 // LoadVM method return the object MyVm with the ID indicate in i.
@@ -189,7 +172,9 @@ func (wsapi *WSAPIClient) CreateVM(pid string, n string, d string, p int, m int)
 // Outputs:
 // (pointer) Pointer at the MyVm object
 // (error) variable with the error if occurr
-func (wsapi *WSAPIClient) LoadVM(i string) (*wsapivm.MyVm, error) { return nil, nil }
+func (wsapi *WSAPIClient) LoadVM(i string) (*wsapivm.MyVm, error) {
+	return wsapi.VMService.LoadVM(i)
+}
 
 // LoadVMbyName method return the object MyVm with the Name indicate in n.
 // Inputs:
@@ -197,7 +182,9 @@ func (wsapi *WSAPIClient) LoadVM(i string) (*wsapivm.MyVm, error) { return nil, 
 // Outputs:
 // (pointer) Pointer at the MyVm object
 // (error) variable with the error if occurr
-func (wsapi *WSAPIClient) LoadVMbyName(n string) (*wsapivm.MyVm, error) { return nil, nil }
+func (wsapi *WSAPIClient) LoadVMbyName(n string) (*wsapivm.MyVm, error) {
+	return wsapi.VMService.LoadVMbyName(n)
+}
 
 // UpdateVM method to update a VM in VmWare Worstation
 // Input:
@@ -210,7 +197,7 @@ func (wsapi *WSAPIClient) LoadVMbyName(n string) (*wsapivm.MyVm, error) { return
 // pointer at the MyVm object
 // and error variable with the error if occurr
 func (wsapi *WSAPIClient) UpdateVM(vm *wsapivm.MyVm, n string, d string, p int, m int, s string) error {
-	return nil
+	return wsapi.VMService.UpdateVM(vm, n, d, p, m, s)
 }
 
 // RegisterVM method to register a new VM in VmWare Worstation GUI:
@@ -220,7 +207,7 @@ func (wsapi *WSAPIClient) UpdateVM(vm *wsapivm.MyVm, n string, d string, p int, 
 // Output:
 // error: (error) The possible error that you will have.
 func (wsapi *WSAPIClient) RegisterVM(vm *wsapivm.MyVm) error {
-	return nil
+	return wsapi.VMService.RegisterVM(vm)
 }
 
 // DeleteVM method to delete a VM in VmWare Worstation
@@ -230,5 +217,5 @@ func (wsapi *WSAPIClient) RegisterVM(vm *wsapivm.MyVm) error {
 // Output:
 // error: (error) The possible error that you will have.
 func (wsapi *WSAPIClient) DeleteVM(vm *wsapivm.MyVm) error {
-	return nil
+	return wsapi.VMService.DeleteVM(vm)
 }

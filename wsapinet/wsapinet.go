@@ -2,17 +2,7 @@ package wsapinet
 
 import "github.com/elsudano/vmware-workstation-api-client/httpclient"
 
-type NETService interface {
-	CreateNIC(t string, vnet string) (*InfoNICS, error)
-	LoadNICS(vnet string) (*InfoNICS, error)
-	UpdateNIC(nic *InfoNICS, t string, vnet string) error
-	DeleteNIC(nic *InfoNICS) error
-}
-
-type NETManager struct {
-	netclient *httpclient.HTTPClient
-}
-
+// New functon is just to create a new object NETClient to make the different calls at VmWare Workstation Pro
 func New(httpcaller *httpclient.HTTPClient) NETService {
 	return &NETManager{netclient: httpcaller}
 }

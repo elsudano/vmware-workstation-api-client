@@ -9,20 +9,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type VMService interface {
-	GetAllVMs() ([]MyVm, error)
-	LoadVM(i string) (*MyVm, error)
-	LoadVMbyName(n string) (*MyVm, error)
-	CreateVM(pid string, n string, d string, p int, m int) (*MyVm, error)
-	UpdateVM(vm *MyVm, n string, d string, p int, m int, s string) error
-	RegisterVM(vm *MyVm) error
-	DeleteVM(vm *MyVm) error
-}
-
-type VMManager struct {
-	vmclient *httpclient.HTTPClient
-}
-
+// New functon is just to create a new object HTTP Client to make the different calls at VmWare Workstation Pro
 func New(httpcaller *httpclient.HTTPClient) VMService {
 	return &VMManager{vmclient: httpcaller}
 }

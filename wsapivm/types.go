@@ -1,5 +1,24 @@
 package wsapivm
 
+import "github.com/elsudano/vmware-workstation-api-client/httpclient"
+
+// Interface with all the methods that we can use to talk with the API of VmWare Workstation Pro
+type VMService interface {
+	GetAllVMs() ([]MyVm, error)
+	LoadVM(i string) (*MyVm, error)
+	LoadVMbyName(n string) (*MyVm, error)
+	CreateVM(pid string, n string, d string, p int, m int) (*MyVm, error)
+	UpdateVM(vm *MyVm, n string, d string, p int, m int, s string) error
+	RegisterVM(vm *MyVm) error
+	DeleteVM(vm *MyVm) error
+}
+
+// That's the Manager to make the calls
+type VMManager struct {
+	vmclient *httpclient.HTTPClient
+}
+
+// That's the abstract object that how we see our VM's
 type MyVm struct {
 	// Image        string `json:"image"`
 	IdVM         string `json:"id"`
