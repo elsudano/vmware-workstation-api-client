@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	LibraryVersion string = "2.7.45"
+	LibraryVersion string = "1.10.45"
 )
 
 // New functon is just to create a new object APIClient to make the different calls at VmWare Workstation Pro
