@@ -86,12 +86,10 @@ func NewClient(a string, u string, p string, i bool, d string) (*HTTPClient, err
 // error: when the client generate some error is storage in this var.
 func New() (*HTTPClient, error) {
 	c, err := NewClient(defaultBaseURL, defaultUser, defaultPassword, defaultInsecure, defaultDebugLevel)
-	log.Debug().Msgf("Client Object %#v", c)
 	if err != nil {
 		log.Error().Err(err).Msg("We can't create the client")
 		return nil, err
 	}
-	log.Info().Msg("We have created the client.")
 	return c, err
 }
 
@@ -163,9 +161,12 @@ func (c *HTTPClient) ApiCall(p string, m string, pl bytes.Buffer) (io.ReadCloser
 		req.Header.Add("Content-Type", "application/json")
 	}
 	log.Debug().Msgf("We are doing the API call")
-	// in this line we will need to create a management of queue
 	responseBody := new(bytes.Buffer)
 	response, err := c.Client.Do(req)
+	if response == nil && err != nil {
+		log.Error().Err(err).Msg("The server response with timeout.")
+		return nil, err
+	}
 	log.Debug().Msgf("Response RAW %#v", response)
 	switch response.StatusCode {
 	case http.StatusOK, http.StatusCreated, http.StatusNoContent:
@@ -185,6 +186,7 @@ func (c *HTTPClient) ApiCall(p string, m string, pl bytes.Buffer) (io.ReadCloser
 			return nil, err
 		}
 		log.Debug().Msgf("Response StatusCode %#v Code Error %#v Message: %#v", response.StatusCode, vmerror.Code, vmerror.Message)
+		// We need to create a new functionality to handle the different errors that the VmWare Workstation API give us when we have an error
 		return nil, errors.New("StatusCode:" + strconv.Itoa(response.StatusCode) + ", Code Error:" + strconv.Itoa(vmerror.Code) + ", Message:" + vmerror.Message)
 	default:
 		_, err = responseBody.ReadFrom(response.Body)
