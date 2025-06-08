@@ -53,85 +53,105 @@ func (vmm *VMManager) GetAllVMs() ([]MyVm, error) {
 // d: string with the description of VM
 // p: int with the number of processors in the VM
 // m: int with the number of memory in the VM
-func (vmm *VMManager) CreateVM(pid string, n string, d string, p int, m int) (*MyVm, error) {
+func (vmm *VMManager) CreateVM(pid string, n string, d string, p int32, m int32) (*MyVm, error) {
+	vm, err := CloneVM(vmm.vmclient, pid, n)
+	if err != nil {
+		log.Error().Err(err).Msg("We can't Clone the VM.")
+		return nil, err
+	}
+	log.Debug().Msgf("The Clone VM is: %#v", vm)
+	err = SetBasicInfo(vmm.vmclient, vm, p, m)
+	if err != nil {
+		log.Error().Err(err).Msg("We can't change the settings of VM.")
+		return nil, err
+	}
+	log.Debug().Msgf("We have put %#v processors and %#v memory in %#v VM", p, m, vm.Denomination)
+	err = SetParameter(vmm.vmclient, vm, "denomination", n)
+	if err != nil {
+		log.Error().Err(err).Msg("We can't change the Denomination of VM.")
+		return nil, err
+	}
+	log.Debug().Msgf("We have put %#v as name of %#v VM", n, vm.Denomination)
+	err = SetParameter(vmm.vmclient, vm, "description", d)
+	if err != nil {
+		log.Error().Err(err).Msg("We can't change the Description of VM.")
+		return nil, err
+	}
+	log.Debug().Msgf("We have put %#v as description of %#v VM", d, vm.Denomination)
 	// --------- Preparing the request --------- {{{
-	var vm MyVm
-	requestBody := new(bytes.Buffer)
-	responseBody := new(bytes.Buffer)
-	var tempDataVM CreatePayload
-	tempDataVM.Name = n
-	tempDataVM.ParentId = pid
-	var tempSettingVM SettingPayload
-	tempSettingVM.Processors = p
-	tempSettingVM.Memory = m
-	// var tempDataParam ParamPayload
-	err := json.NewEncoder(requestBody).Encode(&tempDataVM)
-	log.Debug().Msgf("Request Body RAW: %#v", requestBody.String())
-	if err != nil {
-		log.Error().Err(err).Msg("The request JSON is malformed.")
-		return nil, err
-	}
-	response, err := vmm.vmclient.ApiCall("vms", "POST", *requestBody)
-	if err != nil {
-		log.Error().Err(err).Msg("We can't made the API call.")
-		return nil, err
-	}
-	log.Debug().Msgf("Response RAW: %#v", response)
-	responseBody.Reset()
-	_, err = responseBody.ReadFrom(response)
-	if err != nil {
-		log.Error().Err(err).Msg("The response JSON is malformed.")
-		return nil, err
-	}
-	log.Debug().Msgf("Response Human Readable: %#v", responseBody.String())
-	err = json.NewDecoder(responseBody).Decode(&vm)
-	if err != nil {
-		log.Error().Err(err).Msg("The response JSON is malformed.")
-		return nil, err
-	}
-	requestBody.Reset()
-	err = json.NewEncoder(requestBody).Encode(&tempSettingVM)
-	if err != nil {
-		log.Error().Err(err).Msg("The Settings JSON is malformed.")
-		return nil, err
-	}
-	log.Debug().Msgf("Request Human Readable: %#v", requestBody.String())
-	response, err = vmm.vmclient.ApiCall("vms/"+vm.IdVM, "PUT", *requestBody)
-	if err != nil {
-		log.Error().Err(err).Msg("We couldn't complete the API call.")
-		return nil, err
-	}
-	log.Debug().Msgf("Response RAW: %#v", response)
-	responseBody.Reset()
-	_, err = responseBody.ReadFrom(response)
-	if err != nil {
-		log.Error().Err(err).Msg("We couldn't read the data from the Request.")
-		return nil, err
-	}
-	log.Debug().Msgf("Response Human Readable: %#v", responseBody.String())
-	err = json.NewDecoder(responseBody).Decode(&vm)
-	if err != nil {
-		log.Error().Err(err).Msg("The response JSON is malformed.")
-		return nil, err
-	}
-	// err = wsapinet.RenewMAC(c, vm.IdVM)
+	// var vm MyVm
+	// requestBody := new(bytes.Buffer)
+	// responseBody := new(bytes.Buffer)
+	// var tempDataVM CreatePayload
+	// tempDataVM.Name = n
+	// tempDataVM.ParentId = pid
+	// var tempSettingVM SettingPayload
+	// tempSettingVM.Processors = p
+	// tempSettingVM.Memory = m
+	// var tempParam ParamPayload
+	// err := json.NewEncoder(requestBody).Encode(&tempDataVM)
+	// log.Debug().Msgf("Request Body RAW: %#v", requestBody.String())
 	// if err != nil {
-	// 	log.Error().Err(err).Msg("We couldn't show the MAC information.")
+	// 	log.Error().Err(err).Msg("The request JSON is malformed.")
 	// 	return nil, err
 	// }
-	// ----- Now, we change the Denomination ----
-	// tempDataParam.Name = "displayName"
-	// tempDataParam.Value = n
-	// requestBody.Reset()
-	// err = json.NewEncoder(requestBody).Encode(&tempDataParam)
+	// response, err := vmm.vmclient.ApiCall("vms", "POST", *requestBody)
 	// if err != nil {
-	//	log.Error().Err(err).Msg("The Denomination JSON is malformed.")
+	// 	log.Error().Err(err).Msg("We can't made the API call.")
+	// 	return nil, err
+	// }
+	// log.Debug().Msgf("Response RAW: %#v", response)
+	// responseBody.Reset()
+	// _, err = responseBody.ReadFrom(response)
+	// if err != nil {
+	// 	log.Error().Err(err).Msg("The response JSON is malformed.")
+	// 	return nil, err
+	// }
+	// log.Debug().Msgf("Response Human Readable: %#v", responseBody.String())
+	// err = json.NewDecoder(responseBody).Decode(&vm)
+	// if err != nil {
+	// 	log.Error().Err(err).Msg("The response JSON is malformed.")
+	// 	return nil, err
+	// }
+	// ----^^^^^^--- Clone VM -----^^^^^^-----
+	// requestBody.Reset()
+	// err = json.NewEncoder(requestBody).Encode(&tempSettingVM)
+	// if err != nil {
+	// 	log.Error().Err(err).Msg("The Settings JSON is malformed.")
 	// 	return nil, err
 	// }
 	// log.Debug().Msgf("Request Human Readable: %#v", requestBody.String())
-	// response, vmerror, err = c.httpRequest("vms/"+vm.IdVM+"/configparams", "PUT", *requestBody)
+	// response, err = vmm.vmclient.ApiCall("vms/"+vm.IdVM, "PUT", *requestBody)
 	// if err != nil {
-	//	log.Error().Err(err).Msg("We couldn't read the data from the Request.")
+	// 	log.Error().Err(err).Msg("We couldn't complete the API call.")
+	// 	return nil, err
+	// }
+	// log.Debug().Msgf("Response RAW: %#v", response)
+	// responseBody.Reset()
+	// _, err = responseBody.ReadFrom(response)
+	// if err != nil {
+	// 	log.Error().Err(err).Msg("We couldn't read the data from the Request.")
+	// 	return nil, err
+	// }
+	// log.Debug().Msgf("Response Human Readable: %#v", responseBody.String())
+	// err = json.NewDecoder(responseBody).Decode(&vm)
+	// if err != nil {
+	// 	log.Error().Err(err).Msg("The response JSON is malformed.")
+	// 	return nil, err
+	// }
+	// ----^^^^^^--- Processor and Memory -----^^^^^^-----
+	// tempParam.Name = "displayName"
+	// tempParam.Value = n
+	// requestBody.Reset()
+	// err = json.NewEncoder(requestBody).Encode(tempParam)
+	// if err != nil {
+	// 	log.Error().Err(err).Msg("The Denomination JSON is malformed.")
+	// 	return nil, err
+	// }
+	// log.Debug().Msgf("Request Human Readable: %#v", requestBody.String())
+	// response, err = vmm.vmclient.ApiCall("vms/"+vm.IdVM+"/configparams", "PUT", *requestBody)
+	// if err != nil {
+	// 	log.Error().Err(err).Msg("We couldn't read the data from the Request.")
 	// 	return nil, err
 	// }
 	// switch vmerror.Code {
@@ -151,7 +171,7 @@ func (vmm *VMManager) CreateVM(pid string, n string, d string, p int, m int) (*M
 	//	log.Error().Err(err).Msg("The response JSON is malformed.")
 	// 	return nil, err
 	// }
-	// ----- Now, we change the Description ----
+	// ----^^^^^^--- Denomination -----^^^^^^-----
 	// tempDataParam.Name = "annotation"
 	// tempDataParam.Value = d
 	// requestBody.Reset()
@@ -183,8 +203,9 @@ func (vmm *VMManager) CreateVM(pid string, n string, d string, p int, m int) (*M
 	//	log.Error().Err(err).Msg("The response JSON is malformed.")
 	// 	return nil, err
 	// }
+	// ----^^^^^^--- Description -----^^^^^^-----
 	log.Info().Msg("We have created the VM.")
-	return &vm, err
+	return vm, nil
 }
 
 // LoadVM method return the object MyVm with the ID indicate in i.
@@ -241,7 +262,7 @@ func (vmm *VMManager) LoadVMbyName(n string) (*MyVm, error) {
 // Output:
 // pointer at the MyVm object
 // and error variable with the error if occurr
-func (vmm *VMManager) UpdateVM(vm *MyVm, n string, d string, p int, m int, s string) error {
+func (vmm *VMManager) UpdateVM(vm *MyVm, n string, d string, p int32, m int32, s string) error {
 	var buffer bytes.Buffer
 	var memcpu SettingPayload
 	var currentPowerStatus string
