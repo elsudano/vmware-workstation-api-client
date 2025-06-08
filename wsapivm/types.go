@@ -7,8 +7,8 @@ type VMService interface {
 	GetAllVMs() ([]MyVm, error)
 	LoadVM(i string) (*MyVm, error)
 	LoadVMbyName(n string) (*MyVm, error)
-	CreateVM(pid string, n string, d string, p int, m int) (*MyVm, error)
-	UpdateVM(vm *MyVm, n string, d string, p int, m int, s string) error
+	CreateVM(pid string, n string, d string, p int32, m int32) (*MyVm, error)
+	UpdateVM(vm *MyVm, n string, d string, p int32, m int32, s string) error
 	RegisterVM(vm *MyVm) error
 	DeleteVM(vm *MyVm) error
 }
@@ -49,8 +49,8 @@ type CreatePayload struct {
 
 // This struct is for get and put the definition of VM
 type SettingPayload struct {
-	Processors int `json:"processors"`
-	Memory     int `json:"memory"`
+	Processors int32 `json:"processors"`
+	Memory     int32 `json:"memory"`
 }
 
 // I we want to register the VM in the GUI we will use this payload

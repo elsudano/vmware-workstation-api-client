@@ -13,8 +13,8 @@ type WSAPIService interface {
 	GetAllVMs() ([]wsapivm.MyVm, error)
 	LoadVM(i string) (*wsapivm.MyVm, error)
 	LoadVMbyName(n string) (*wsapivm.MyVm, error)
-	CreateVM(pid string, n string, d string, p int, m int) (*wsapivm.MyVm, error)
-	UpdateVM(vm *wsapivm.MyVm, n string, d string, p int, m int, s string) error
+	CreateVM(pid string, n string, d string, p int32, m int32) (*wsapivm.MyVm, error)
+	UpdateVM(vm *wsapivm.MyVm, n string, d string, p int32, m int32, s string) error
 	RegisterVM(vm *wsapivm.MyVm) error
 	DeleteVM(vm *wsapivm.MyVm) error
 }
