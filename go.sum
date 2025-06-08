@@ -1,6 +1,8 @@
 github.com/TwiN/go-color v1.4.1 h1:mqG0P/KBgHKVqmtL5ye7K0/Gr4l6hTksPgTgMk3mUzc=
 github.com/TwiN/go-color v1.4.1/go.mod h1:WcPf/jtiW95WBIsEeY1Lc/b8aaWoiqQpu5cf8WFxu+s=
 github.com/coreos/go-systemd/v22 v22.5.0/go.mod h1:Y58oyj3AT4RCenI/lSvhwexgC+NSVTIJ3seZv2GcEnc=
+github.com/elsudano/govmx v1.0.0 h1:G1FTDKQAWo1W2JyP/MW4W4X5o/tmERJJfJONWsaPkX8=
+github.com/elsudano/govmx v1.0.0/go.mod h1:FFOuFWQfbA4PmI0ZCSPB96Tn48HcJ+ahe0GpIc5OhNw=
 github.com/godbus/dbus/v5 v5.0.4/go.mod h1:xhWf0FNVPg57R7Z0UbKHbJfkEywrmjJnf7w5xrFpKfA=
 github.com/johlandabee/govmx v0.0.0-20200622120338-15e2c507b193 h1:3MFz7OtfkQKrRQGE2KsSPlMq/aaL1vsX5ro0PCq3BQM=
 github.com/johlandabee/govmx v0.0.0-20200622120338-15e2c507b193/go.mod h1:kPjKCUSgS2uFZkh1qEllyx+iT7Th0glXzWZbuko6iqI=
@@ -11,6 +13,8 @@ github.com/mattn/go-isatty v0.0.16/go.mod h1:kYGgaQfpe5nmfYZH+SKPsOc2e4SrIfOl2e/
 github.com/mattn/go-isatty v0.0.19/go.mod h1:W+V8PltTTMOvKvAeJH7IuucS94S2C6jfK/D7dTCTo3Y=
 github.com/mattn/go-isatty v0.0.20 h1:xfD0iDuEKnDkl03q4limB+vH+GxLEtL/jb4xVJSWWEY=
 github.com/mattn/go-isatty v0.0.20/go.mod h1:W+V8PltTTMOvKvAeJH7IuucS94S2C6jfK/D7dTCTo3Y=
+github.com/openvm-http/govmx v1.0.0 h1:okcDQGKsU7GMwzbiL3fQYGgZ4MyKgDAmh9pBifAcyNM=
+github.com/openvm-http/govmx v1.0.0/go.mod h1:2Wo4y/DNuJv5onT0Wt6xOZESe+lBnN4lG92P9McknRk=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/rs/xid v1.6.0/go.mod h1:7XoLgs4eV+QndskICGsho+ADou8ySMSjJKDIan90Nz0=
 github.com/rs/zerolog v1.34.0 h1:k43nTLIwcTVQAncfCw4KZ2VY6ukYoZaBPNOE8txlOeY=

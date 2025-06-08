@@ -3,11 +3,11 @@ package wsapiutils
 import (
 	"os"
 
-	vmx "github.com/johlandabee/govmx"
+	"github.com/elsudano/govmx"
 	"github.com/rs/zerolog/log"
 )
 
-func New(vmx *vmx.VirtualMachine) VMFile {
+func New(vmx *govmx.VirtualMachine) VMFile {
 	return &VMStructure{myvm: vmx}
 }
 
@@ -25,7 +25,7 @@ func (vmf *VMStructure) GetVMFromFile(f string) error {
 		return err
 	}
 	log.Debug().Msgf("After read the file: %#v", data)
-	err = vmx.Unmarshal(data, vmf.myvm)
+	err = govmx.Unmarshal(data, vmf.myvm)
 	if err != nil {
 		log.Error().Err(err).Msg("Error trying to Unmarshal the data.")
 		return err
@@ -45,7 +45,7 @@ func (vmf *VMStructure) GetVMFromFile(f string) error {
 // error if you obtain some error in the function
 func (vmf *VMStructure) SetVMToFile(f string) error {
 	log.Info().Msgf("We will write in this file: %#v.", f)
-	data, err := vmx.Marshal(vmf.myvm)
+	data, err := govmx.Marshal(vmf.myvm)
 	if err != nil {
 		log.Error().Err(err).Msg("Error trying to Unmarshal the data.")
 		return err

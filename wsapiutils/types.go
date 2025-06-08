@@ -1,6 +1,6 @@
 package wsapiutils
 
-import vmx "github.com/johlandabee/govmx"
+import "github.com/elsudano/govmx"
 
 // Interface with all the methods that we can use to talk with the API of VmWare Workstation Pro
 type VMFile interface {
@@ -15,5 +15,5 @@ type VMFile interface {
 
 // That's the abstract object that how we see our VM's
 type VMStructure struct {
-	myvm *vmx.VirtualMachine
+	myvm *govmx.VirtualMachine
 }
