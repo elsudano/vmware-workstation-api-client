@@ -59,7 +59,6 @@ format: ## We can check if the format of our code is correct or not.
 prepare: format ## We can prepare the code locally in order to create a new version of provider
 	@go get -u
 	@go mod tidy	
-	@git tag v$(VERSION)
 
 .ONESHELL:
 test: prepare ## We can run the test of provider directly.
@@ -67,6 +66,7 @@ test: prepare ## We can run the test of provider directly.
 	@go test -v -cover -timeout=120s -parallel=10 ./...
 
 build: test ## Build the binary of the module
+	@git tag v$(VERSION)
 	@go build -o $(DIRELEASES)$(BINARY)
 
 publish: build ## Build and Publish a new TAG in GitHub
