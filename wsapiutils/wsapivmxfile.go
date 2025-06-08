@@ -1,157 +1,150 @@
 package wsapiutils
 
 import (
-	"log"
 	"os"
 
 	vmx "github.com/johlandabee/govmx"
+	"github.com/rs/zerolog/log"
 )
+
+func New(vmx *vmx.VirtualMachine) VMFile {
+	return &VMStructure{myvm: vmx}
+}
 
 // GetVMFromFile - With this function we can obtain a vmx.VirtualMachine structure
 // with all the possible values that we have in the file.
 // Inputs:
-// p: string, the complete path of the vxm file that we want to read
+// f: string, the complete path of the vxm file that we want to read
 // Outputs:
 // string, vmx.VirtualMachine structure, and error if you obtain some error in the function
-func GetVMFromFile(p string) (vmx.VirtualMachine, error) {
-	vm := new(vmx.VirtualMachine)
-	data, err := os.ReadFile(p)
+func (vmf *VMStructure) GetVMFromFile(f string) error {
+	log.Info().Msgf("We are trying to read the file: %#v", f)
+	data, err := os.ReadFile(f)
 	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetVMFromFile Message: Failed %s, please make sure the config file exists", err)
-		return *vm, err
+		log.Error().Err(err).Msg("Please make sure the config file exists.")
+		return err
 	}
-
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: GetVMFromFile Obj: Data File %#v\n", string(data))
-	err = vmx.Unmarshal(data, vm)
+	log.Debug().Msgf("After read the file: %#v", data)
+	err = vmx.Unmarshal(data, vmf.myvm)
 	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetVMFromFile Obj: %#v", err)
-		return *vm, err
+		log.Error().Err(err).Msg("Error trying to Unmarshal the data.")
+		return err
 	}
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: GetVMFromFile Obj: VM  %#v\n", vm)
-	return *vm, nil
+	log.Debug().Msgf("After Unmarshal the data: %#v", vmf.myvm)
+	log.Info().Msg("We have read the VM file and load the data in the vmx object.")
+	return nil
 }
 
 // SetVMToFile - With this function we can save a vmx.VirtualMachine structure
 // with all the possible values that we have in the file.
 // Inputs:
-// p: string, with the parameter we want to change
+// f: (string), File where we want to save the VM
+// p: (string), Chain with the parameter we want to change
+// v: (string), Chain with the value of the parameter that we want change
 // Output:
 // error if you obtain some error in the function
-func SetVMToFile(vm vmx.VirtualMachine, p string) error {
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: SetVMToFile Message: parameters %#v, %#v", vm, p)
-	data, err := vmx.Marshal(vm)
+func (vmf *VMStructure) SetVMToFile(f string) error {
+	log.Info().Msgf("We will write in this file: %#v.", f)
+	data, err := vmx.Marshal(vmf.myvm)
 	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: SetVMToFile Message: Failed to save the VMX structure in memory %s", err)
+		log.Error().Err(err).Msg("Error trying to Unmarshal the data.")
 		return err
 	}
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: SetVMToFile Obj: Data after read vm %#v\n", string(data))
-	err = os.WriteFile(p, data, 0644)
+	log.Debug().Msgf("After Marshaling the data VM is: %#v", vmf.myvm)
+	err = os.WriteFile(f, data, 0644)
 	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: SetVMToFile Message: Failed writing in file %s, please make sure the config file exists", err)
+		log.Error().Err(err).Msgf("Error writing in file %#v, please make sure the file exists.", f)
 		return err
 	}
+	log.Debug().Msgf("We have saved the VM %#v in the file: %#v", vmf.myvm, f)
+	log.Info().Msg("We have saved the VM in a file.")
 	return err
 }
 
 // GetAnnotation - With this function we can obtain the value of the description of VM
 // Input:
-// p: string, the complete path of the vxm file that we want to read
+// f: string, the complete path of the vxm file that we want to read
 // Output:
-// string, Value of the Annotation field of the VM, error if you obtain some error in the fuction
-func GetAnnotation(p string) (string, error) {
-	vm, err := GetVMFromFile(p)
+// string, Value of the Annotation field of the VM.
+// error if you obtain some error in the function.
+func (vmf *VMStructure) GetAnnotation(f string) (string, error) {
+	err := vmf.GetVMFromFile(f)
 	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetAnnotation Message: Failure to obtain the value of the Description %s", err)
+		log.Error().Err(err).Msg("Failure to obtain the value of the Description.")
 		return "", err
 	}
-	return vm.Annotation, nil
+	return vmf.myvm.Annotation, nil
 }
 
 // SetAnnotation - With this function we can set the value of the description of VM
-// Input: p: string, the complete path of the vxm file that we want to read
-// v: string with the value of Annotation field
-// Output: error if you obtain some error in the fuction
-func SetAnnotation(p string, v string) error {
-	vm, err := GetVMFromFile(p)
+// Input:
+// f: (string) The complete path of the vxm file that we want to write
+// v: (string) The value of Annotation field
+// Output:
+// error if you obtain some error in the function
+func (vmf *VMStructure) SetAnnotation(f string, v string) error {
+	vmf.myvm.Annotation = v
+	err := vmf.SetVMToFile(f)
 	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: SetAnnotation Message: We can't obtain the vmx object %s", err)
-		return err
-	}
-	vm.Annotation = v
-	err = SetVMToFile(vm, p)
-	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: SetAnnotation Message: We haven't be able to save the structure in the file %s", err)
+		log.Error().Err(err).Msgf("We haven't be able to save the vmx data in the file %#v", f)
 		return err
 	}
 	return nil
 }
 
-// GetDisplayName - With this function we can obtain the value of the name of VM
-// Input: p: string, the complete path of the vxm file that we want to read
-// Output: string, Value of the Denomination field of the VM, error if you obtain some error in the fuction
-func GetDisplayName(p string) (string, error) {
-	vm, err := GetVMFromFile(p)
+// GetDisplayName - With this function we can obtain the name of VM
+// Input:
+// f: string, the complete path of the vxm file that we want to read
+// Output:
+// string, Value of the Denomination field of the VM.
+// error if you obtain some error in the function.
+func (vmf *VMStructure) GetDisplayName(f string) (string, error) {
+	err := vmf.GetVMFromFile(f)
 	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: GetDisplayName Message: Failure to obtain the value of the Denomination %s", err)
+		log.Error().Err(err).Msg("Failure to obtain the value of the Denomination.")
 		return "", err
 	}
-	return vm.DisplayName, nil
+	return vmf.myvm.DisplayName, nil
 }
 
 // SetDisplayName - With this function we can set the value of the denomination of VM
-// Input: p: string, the complete path of the vxm file that we want to read
-// v: string with the value of Denomination field, WARNING this function don't change teh PATH
-// Output: error if you obtain some error in the fuction
-func SetDisplayName(p string, v string) error {
-	vm, err := GetVMFromFile(p)
+// Input:
+// f: string, the complete path of the vxm file that we want to write.
+// v: string with the value of Denomination field, WARNING this function don't change the PATH
+// Output:
+// error if you obtain some error in the function.
+func (vmf *VMStructure) SetDisplayName(f string, v string) error {
+	vmf.myvm.DisplayName = v
+	// Here you will need to change the folder and the file name
+	// when we changed the displayName
+	err := vmf.SetVMToFile(f)
 	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: SetAnnotation Message: We can't obtain the vmx object %s", err)
-		return err
-	}
-	vm.DisplayName = v
-	err = SetVMToFile(vm, p)
-	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: SetAnnotation Message: We haven't be able to save the structure in the file %s", err)
+		log.Error().Err(err).Msgf("We haven't be able to save the vmx data in the file %#v", f)
 		return err
 	}
 	return nil
 }
 
-// SetNameDescription With this function you can setting the Denomination and Description of the VM.
+// SetDenominationDescription With this function you can setting the Denomination and Description of the VM.
 // this information is in the vmx file of the machine for that you need know
-// which is the file of the vm. Input: p: string with the complete path of the file,
-// n: string with the denomination, d: string with the description err: variable with error if occur
-func SetNameDescription(p string, n string, d string) error {
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: SetNameDescription Message: parameters %#v, %#v, %#v", p, n, d)
-	data, err := os.ReadFile(p)
+// which is the file of the vm.
+// Input:
+// f: (string) The complete path of the vxm file that we want to modify.
+// n: (string) The value of denomination.
+// d: (string) The value of description.
+// Output:
+// err: variable with error if occur
+func (vmf *VMStructure) SetDenominationDescription(f string, n string, d string) error {
+	log.Info().Msgf("The new values for Denomination %#v, and Description. %#v", n, d)
+	err := vmf.SetDisplayName(f, n)
 	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: SetNameDescription Message: Failed opening file %s, please make sure the config file exists", err)
+		log.Error().Err(err).Msg("We can't change the Denomination.")
 		return err
 	}
-
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: SetNameDescription Obj: File object %#v\n", string(data))
-
-	vm := new(vmx.VirtualMachine)
-	err = vmx.Unmarshal(data, vm)
+	err = vmf.SetAnnotation(f, d)
 	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: SetNameDescription Obj: %#v", err)
+		log.Error().Err(err).Msg("We can't change the Description.")
 		return err
 	}
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: SetNameDescription Obj: VM %#v\n", vm)
-
-	vm.DisplayName = n
-	vm.Annotation = d
-	data, err = vmx.Marshal(vm)
-	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: SetNameDescription Message: Failed to save the VMX structure in memory %s", err)
-		return err
-	}
-	log.Printf("[DEBUG][WSAPICLI] Fi: wsapitools.go Fu: SetNameDescription Obj: Data File %#v\n", string(data))
-	err = os.WriteFile(p, data, 0644)
-	if err != nil {
-		log.Printf("[ERROR][WSAPICLI] Fi: wsapitools.go Fu: SetNameDescription Message: Failed writing in file %s, please make sure the config file exists", err)
-		return err
-	}
-	// en este punto tambien tienes que cambiar el nombre del fihero cuando se cambia la denominacion
-	return err
+	return nil
 }
