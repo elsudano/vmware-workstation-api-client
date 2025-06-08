@@ -53,12 +53,20 @@ api_test: ## Test API client and list all virtual machine of VmWare Workstation
 	@go run . 2> debug.log
 	@echo -e "in order to review the Debug or errors run: 'less debug.log'"
 
-prepare: ## We can prepare the code locally in order to create a new version of provider
+format: ## We can check if the format of our code is correct or not.
+	@gofmt -s -w -e .
+
+prepare: format ## We can prepare the code locally in order to create a new version of provider
+	@go get -u
+	@go mod tidy	
 	@git tag v$(VERSION)
 
-build: prepare ## Build the binary of the module
-	@go get -u
-	@go mod tidy
+.ONESHELL:
+test: prepare ## We can run the test of provider directly.
+	@export TF_ACC=1
+	@go test -v -cover -timeout=120s -parallel=10 ./...
+
+build: test ## Build the binary of the module
 	@go build -o $(DIRELEASES)$(BINARY)
 
 publish: build ## Build and Publish a new TAG in GitHub
