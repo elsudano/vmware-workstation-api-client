@@ -66,144 +66,20 @@ func (vmm *VMManager) CreateVM(pid string, n string, d string, p int32, m int32)
 		return nil, err
 	}
 	log.Debug().Msgf("We have put %#v processors and %#v memory in %#v VM", p, m, vm.Denomination)
-	err = SetParameter(vmm.vmclient, vm, "denomination", n)
-	if err != nil {
-		log.Error().Err(err).Msg("We can't change the Denomination of VM.")
-		return nil, err
-	}
-	log.Debug().Msgf("We have put %#v as name of %#v VM", n, vm.Denomination)
-	err = SetParameter(vmm.vmclient, vm, "description", d)
-	if err != nil {
-		log.Error().Err(err).Msg("We can't change the Description of VM.")
-		return nil, err
-	}
-	log.Debug().Msgf("We have put %#v as description of %#v VM", d, vm.Denomination)
-	// --------- Preparing the request --------- {{{
-	// var vm MyVm
-	// requestBody := new(bytes.Buffer)
-	// responseBody := new(bytes.Buffer)
-	// var tempDataVM CreatePayload
-	// tempDataVM.Name = n
-	// tempDataVM.ParentId = pid
-	// var tempSettingVM SettingPayload
-	// tempSettingVM.Processors = p
-	// tempSettingVM.Memory = m
-	// var tempParam ParamPayload
-	// err := json.NewEncoder(requestBody).Encode(&tempDataVM)
-	// log.Debug().Msgf("Request Body RAW: %#v", requestBody.String())
+	// We need to wait after the VmWare Workstation Team fix the API {{{
+	// err = SetParameter(vmm.vmclient, vm, "denomination", n)
 	// if err != nil {
-	// 	log.Error().Err(err).Msg("The request JSON is malformed.")
+	// 	log.Error().Err(err).Msg("We can't change the Denomination of VM.")
 	// 	return nil, err
 	// }
-	// response, err := vmm.vmclient.ApiCall("vms", "POST", *requestBody)
+	// log.Debug().Msgf("We have put %#v as name of %#v VM", n, vm.Denomination)
+	// err = SetParameter(vmm.vmclient, vm, "description", d)
 	// if err != nil {
-	// 	log.Error().Err(err).Msg("We can't made the API call.")
+	// 	log.Error().Err(err).Msg("We can't change the Description of VM.")
 	// 	return nil, err
 	// }
-	// log.Debug().Msgf("Response RAW: %#v", response)
-	// responseBody.Reset()
-	// _, err = responseBody.ReadFrom(response)
-	// if err != nil {
-	// 	log.Error().Err(err).Msg("The response JSON is malformed.")
-	// 	return nil, err
-	// }
-	// log.Debug().Msgf("Response Human Readable: %#v", responseBody.String())
-	// err = json.NewDecoder(responseBody).Decode(&vm)
-	// if err != nil {
-	// 	log.Error().Err(err).Msg("The response JSON is malformed.")
-	// 	return nil, err
-	// }
-	// ----^^^^^^--- Clone VM -----^^^^^^-----
-	// requestBody.Reset()
-	// err = json.NewEncoder(requestBody).Encode(&tempSettingVM)
-	// if err != nil {
-	// 	log.Error().Err(err).Msg("The Settings JSON is malformed.")
-	// 	return nil, err
-	// }
-	// log.Debug().Msgf("Request Human Readable: %#v", requestBody.String())
-	// response, err = vmm.vmclient.ApiCall("vms/"+vm.IdVM, "PUT", *requestBody)
-	// if err != nil {
-	// 	log.Error().Err(err).Msg("We couldn't complete the API call.")
-	// 	return nil, err
-	// }
-	// log.Debug().Msgf("Response RAW: %#v", response)
-	// responseBody.Reset()
-	// _, err = responseBody.ReadFrom(response)
-	// if err != nil {
-	// 	log.Error().Err(err).Msg("We couldn't read the data from the Request.")
-	// 	return nil, err
-	// }
-	// log.Debug().Msgf("Response Human Readable: %#v", responseBody.String())
-	// err = json.NewDecoder(responseBody).Decode(&vm)
-	// if err != nil {
-	// 	log.Error().Err(err).Msg("The response JSON is malformed.")
-	// 	return nil, err
-	// }
-	// ----^^^^^^--- Processor and Memory -----^^^^^^-----
-	// tempParam.Name = "displayName"
-	// tempParam.Value = n
-	// requestBody.Reset()
-	// err = json.NewEncoder(requestBody).Encode(tempParam)
-	// if err != nil {
-	// 	log.Error().Err(err).Msg("The Denomination JSON is malformed.")
-	// 	return nil, err
-	// }
-	// log.Debug().Msgf("Request Human Readable: %#v", requestBody.String())
-	// response, err = vmm.vmclient.ApiCall("vms/"+vm.IdVM+"/configparams", "PUT", *requestBody)
-	// if err != nil {
-	// 	log.Error().Err(err).Msg("We couldn't read the data from the Request.")
-	// 	return nil, err
-	// }
-	// switch vmerror.Code {
-	// default:
-	//	log.Error().Msgf("We haven't handled this error Code: %d Message: %s", vmerror.Code, vmerror.Message)
-	// }
-	// log.Debug().Msgf("Response RAW: %#v", response)
-	// responseBody.Reset()
-	// _, err = responseBody.ReadFrom(response)
-	// if err != nil {
-	// 	log.Error().Err(err).Msg("We couldn't read the data from the Response.")
-	// 	return nil, err
-	// }
-	// log.Debug().Msgf("Response Human Readable: %#v", responseBody.String())
-	// err = json.NewDecoder(responseBody).Decode(&vm)
-	// if err != nil {
-	//	log.Error().Err(err).Msg("The response JSON is malformed.")
-	// 	return nil, err
-	// }
-	// ----^^^^^^--- Denomination -----^^^^^^-----
-	// tempDataParam.Name = "annotation"
-	// tempDataParam.Value = d
-	// requestBody.Reset()
-	// err = json.NewEncoder(requestBody).Encode(&tempDataParam)
-	// if err != nil {
-	//	log.Error().Err(err).Msg("The Description JSON is malformed.")
-	// 	return nil, err
-	// }
-	// log.Debug().Msgf("Request Human Readable: %#v", requestBody.String())
-	// response, vmerror, err = c.httpRequest("vms/"+vm.IdVM+"/configparams", "PUT", *requestBody)
-	// if err != nil {
-	//	log.Error().Err(err).Msg("We couldn't read the data from the Request.")
-	// 	return nil, err
-	// }
-	// switch vmerror.Code {
-	// default:
-	//	log.Error().Msgf("We haven't handled this error Code: %d Message: %s", vmerror.Code, vmerror.Message)
-	// }
-	// log.Debug().Msgf("Response RAW: %#v", response)
-	// responseBody.Reset()
-	// _, err = responseBody.ReadFrom(response)
-	// if err != nil {
-	// 	log.Error().Err(err).Msg("We couldn't read the data from the Response.")
-	// 	return nil, err
-	// }
-	// log.Debug().Msgf("Response Human Readable: %#v", responseBody.String())
-	// err = json.NewDecoder(responseBody).Decode(&vm)
-	// if err != nil {
-	//	log.Error().Err(err).Msg("The response JSON is malformed.")
-	// 	return nil, err
-	// }
-	// ----^^^^^^--- Description -----^^^^^^-----
+	// log.Debug().Msgf("We have put %#v as description of %#v VM", d, vm.Denomination)
+	// }}}
 	log.Info().Msg("We have created the VM.")
 	return vm, nil
 }
