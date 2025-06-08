@@ -2,9 +2,6 @@ package wsapiutils
 
 import "testing"
 
-func TestNewClient(t *testing.T) {
-
-}
 func TestGetVMFromFile(t *testing.T) {
 
 }
