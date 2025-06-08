@@ -3,7 +3,7 @@ package wsapinet
 import (
 	"bytes"
 	"encoding/json"
-	"strconv"
+	"fmt"
 
 	"github.com/elsudano/vmware-workstation-api-client/httpclient"
 	"github.com/rs/zerolog/log"
@@ -42,7 +42,7 @@ func GetInfoNics(vmc *httpclient.HTTPClient, vmid string) error {
 // error: (error) We can handle the errors here.
 func RenewMAC(vmc *httpclient.HTTPClient, vmid string) error {
 	var currentNIC InfoNICS
-	var newNIC nicPayload
+	var newNIC NicPayload
 	requestBody := new(bytes.Buffer)
 	// err := c.PowerSwitch(vm, "off")
 	// if err != nil {
@@ -59,7 +59,7 @@ func RenewMAC(vmc *httpclient.HTTPClient, vmid string) error {
 		log.Error().Err(err).Msg("The response JSON is malformed.")
 		return err
 	}
-	_, err = vmc.ApiCall("vms/"+vmid+"/nic/"+strconv.Itoa(currentNIC.NICS[0].Index), "DELETE", bytes.Buffer{})
+	_, err = vmc.ApiCall("vms/"+vmid+"/nic/"+fmt.Sprint(currentNIC.NICS[0].Index), "DELETE", bytes.Buffer{})
 	if err != nil {
 		log.Error().Err(err).Msg("We couldn't complete the API call to delete the NIC.")
 		return err
