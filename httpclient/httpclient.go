@@ -178,7 +178,12 @@ func (c *HTTPClient) ApiCall(p string, m string, pl bytes.Buffer) (io.ReadCloser
 			return nil, err
 		}
 		log.Debug().Msgf("Response StatusCode %#v Code Error %#v Message: %#v", response.StatusCode, vmerror.Code, vmerror.Message)
+		// We need to create a new functionality to handle the different errors that the VmWare Workstation API give us when we have an error
 		return nil, errors.New("StatusCode:" + strconv.Itoa(response.StatusCode) + ", Code Error:" + strconv.Itoa(vmerror.Code) + ", Message:" + vmerror.Message)
+	case http.StatusNotFound:
+		log.Debug().Msgf("Response StatusCode %#v Resource Not Found, the VmWare API isn't working properly", response.StatusCode)
+		// We need to create a new functionality to handle the different errors that the VmWare Workstation API give us when we have an error
+		return nil, errors.New("StatusCode:" + strconv.Itoa(response.StatusCode) + " Resource Not Found, the VmWare API isn't working properly")
 	case http.StatusInternalServerError:
 		err = json.NewDecoder(response.Body).Decode(&vmerror)
 		if err != nil {
@@ -199,6 +204,7 @@ func (c *HTTPClient) ApiCall(p string, m string, pl bytes.Buffer) (io.ReadCloser
 			log.Error().Err(err).Msg("The Response isn't a JSON format.")
 			return nil, err
 		}
+		// We need to create a new functionality to handle the different errors that the VmWare Workstation API give us when we have an error
 		return nil, errors.New("StatusCode:" + strconv.Itoa(response.StatusCode) + ", Code Error:" + strconv.Itoa(vmerror.Code) + ", Message:" + vmerror.Message)
 	}
 	if err != nil {
