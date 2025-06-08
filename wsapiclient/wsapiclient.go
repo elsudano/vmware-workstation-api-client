@@ -162,8 +162,33 @@ func (wsapi *WSAPIClient) GetAllVMs() ([]wsapivm.MyVm, error) {
 // d: string with the description of VM
 // p: int with the number of processors in the VM
 // m: int with the number of memory in the VM
-func (wsapi *WSAPIClient) CreateVM(pid string, n string, d string, p int, m int) (*wsapivm.MyVm, error) {
-	return wsapi.VMService.CreateVM(pid, n, d, p, m)
+func (wsapi *WSAPIClient) CreateVM(pid string, n string, d string, p int32, m int32) (*wsapivm.MyVm, error) {
+	vm, err := wsapi.VMService.CreateVM(pid, n, d, p, m)
+	if err != nil {
+		log.Error().Err(err).Msg("We can't create the VM.")
+		return nil, err
+	}
+	log.Debug().Msgf("That's the basic information of VM: %#v", vm)
+	net, err := wsapi.NETService.LoadNICS(vm)
+	if err != nil {
+		log.Error().Err(err).Msg("We can't Load the Network of VM.")
+		return nil, err
+	}
+	log.Debug().Msgf("The network information of VM: %#v", net)
+	err = wsapi.NETService.DeleteNIC(vm, net.NICS[0].Index)
+	if err != nil {
+		log.Error().Err(err).Msg("We can't Delete the Network of VM.")
+		return nil, err
+	}
+	log.Debug().Msgf("We have deleted the Network %#v the VM: %#v", net.NICS[0].Index, vm.Denomination)
+	net, err = wsapi.NETService.CreateNIC(vm, net.NICS[0].Type, net.NICS[0].Vmnet)
+	if err != nil {
+		log.Error().Err(err).Msg("We can't Create the Network of VM.")
+		return nil, err
+	}
+	log.Debug().Msgf("We have created the Network %#v the VM: %#v", net.NICS[0].Index, vm.Denomination)
+	log.Info().Msg("We have created the VM.")
+	return vm, err
 }
 
 // LoadVM method return the object MyVm with the ID indicate in i.
@@ -196,7 +221,7 @@ func (wsapi *WSAPIClient) LoadVMbyName(n string) (*wsapivm.MyVm, error) {
 // Output:
 // pointer at the MyVm object
 // and error variable with the error if occurr
-func (wsapi *WSAPIClient) UpdateVM(vm *wsapivm.MyVm, n string, d string, p int, m int, s string) error {
+func (wsapi *WSAPIClient) UpdateVM(vm *wsapivm.MyVm, n string, d string, p int32, m int32, s string) error {
 	return wsapi.VMService.UpdateVM(vm, n, d, p, m, s)
 }
 
