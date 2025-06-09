@@ -42,14 +42,9 @@ func CloneVM(vmc *httpclient.HTTPClient, pid string, n string) (*MyVm, error) {
 		return nil, err
 	}
 	log.Debug().Msgf("Response Human Readable: %#v", responseBody.String())
-	err = json.NewDecoder(responseBody).Decode(vm)
+	err = json.NewDecoder(responseBody).Decode(&vm)
 	if err != nil {
 		log.Error().Err(err).Msg("The response JSON is malformed.")
-		return nil, err
-	}
-	vm, err = GetVM(vmc, vm.IdVM)
-	if err != nil {
-		log.Error().Err(err).Msg("We can't read the VM to load the ID and Path.")
 		return nil, err
 	}
 	log.Debug().Msgf("VM is: %#v", vm)

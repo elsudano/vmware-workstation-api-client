@@ -169,12 +169,14 @@ func (wsapi *WSAPIClient) CreateVM(pid string, n string, d string, p int32, m in
 		return nil, err
 	}
 	log.Debug().Msgf("That's the basic information of VM: %#v", vm)
-	err = wsapi.Utils.SetDenominationDescription(vm.Path, n, d)
-	if err != nil {
-		log.Error().Err(err).Msg("We have a error when we have tried to set the Denomination and Description of VM.")
-		return nil, err
-	}
-	log.Debug().Msgf("After change the Denomination and the Description: %#v", vm)
+	// These lines are just useful if the Terraform Code and the
+	// VmWare Workstation API Rest are in the same server
+	// err = wsapi.Utils.SetDenominationDescription(vm.Path, n, d)
+	// if err != nil {
+	// 	log.Error().Err(err).Msg("We have a error when we have tried to set the Denomination and Description of VM.")
+	// 	return nil, err
+	// }
+	// log.Debug().Msgf("After change the Denomination and the Description: %#v", vm)
 	net, err := wsapi.NETService.LoadNICS(vm)
 	if err != nil {
 		log.Error().Err(err).Msg("We can't Load the Network of VM.")

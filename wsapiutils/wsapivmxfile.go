@@ -7,7 +7,8 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func New(vmx *govmx.VirtualMachine) VMFile {
+func New() VMFile {
+	var vmx *govmx.VirtualMachine
 	return &VMStructure{myvm: vmx}
 }
 
@@ -136,7 +137,12 @@ func (vmf *VMStructure) SetDisplayName(f string, v string) error {
 // err: variable with error if occur
 func (vmf *VMStructure) SetDenominationDescription(f string, n string, d string) error {
 	log.Info().Msgf("The new values for Denomination %#v, and Description. %#v", n, d)
-	err := vmf.SetDisplayName(f, n)
+	err := vmf.GetVMFromFile(f)
+	if err != nil {
+		log.Error().Err(err).Msg("We can't Load the VM.")
+		return err
+	}
+	err = vmf.SetDisplayName(f, n)
 	if err != nil {
 		log.Error().Err(err).Msg("We can't change the Denomination.")
 		return err

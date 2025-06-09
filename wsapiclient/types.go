@@ -3,7 +3,6 @@ package wsapiclient
 import (
 	"github.com/elsudano/vmware-workstation-api-client/httpclient"
 	"github.com/elsudano/vmware-workstation-api-client/wsapinet"
-	"github.com/elsudano/vmware-workstation-api-client/wsapiutils"
 	"github.com/elsudano/vmware-workstation-api-client/wsapivm"
 )
 
@@ -23,7 +22,6 @@ type WSAPIService interface {
 // That's the abstract object that we will use to interact with API of VmWare Workstation Pro
 type WSAPIClient struct {
 	Caller     *httpclient.HTTPClient
-	Utils      wsapiutils.VMFile
 	VMService  wsapivm.VMService
 	NETService wsapinet.NETService
 }
