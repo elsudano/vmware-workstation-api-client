@@ -39,16 +39,18 @@ func GetNics(netc *httpclient.HTTPClient, vmid string) (NICS *InfoNICS, err erro
 // NICS: (*InfoNICS) The structure with all the information about of the NICs that the VM has
 // err: (error) If we have some error we can handle it here.
 func CreateNic(netc *httpclient.HTTPClient, vmid string, t string, vnet string) (NIC *InfoNICS, err error) {
-	var newNIC NicPayload
+	var DataNIC NicPayload
+	var newNIC NewNIC
+	NIC = new(InfoNICS)
 	requestBody := new(bytes.Buffer)
 	if t == "bridged" {
-		newNIC.Type = t
-		newNIC.Vmnet = ""
+		DataNIC.Type = t
+		DataNIC.Vmnet = ""
 	} else {
-		newNIC.Type = t
-		newNIC.Vmnet = vnet
+		DataNIC.Type = t
+		DataNIC.Vmnet = vnet
 	}
-	err = json.NewEncoder(requestBody).Encode(&newNIC)
+	err = json.NewEncoder(requestBody).Encode(&DataNIC)
 	if err != nil {
 		log.Error().Err(err).Msg("The NIC JSON is malformed.")
 		return nil, err
@@ -59,11 +61,13 @@ func CreateNic(netc *httpclient.HTTPClient, vmid string, t string, vnet string) 
 		log.Error().Err(err).Msg("We couldn't complete the API call creating NIC.")
 		return nil, err
 	}
-	err = json.NewDecoder(response).Decode(&NIC)
+	err = json.NewDecoder(response).Decode(&newNIC)
 	if err != nil {
 		log.Error().Err(err).Msg("The response JSON is malformed.")
-		return NIC, err
+		return nil, err
 	}
+	NIC.Num = 1
+	NIC.NICS = append(NIC.NICS, newNIC)
 	log.Debug().Msgf("Info of new NIC: %#v", NIC)
 	log.Info().Msg("We have created the NIC.")
 	return NIC, nil
