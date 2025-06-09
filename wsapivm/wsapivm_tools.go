@@ -18,7 +18,7 @@ import (
 // vm: (*wsapivm.MyVm) pointer to the VM that we are handeling.
 // err: (error) If we will have some error we can handle it here.
 func CloneVM(vmc *httpclient.HTTPClient, pid string, n string) (*MyVm, error) {
-	var vm MyVm
+	var vm *MyVm
 	var DataVM CreatePayload
 	DataVM.Name = n
 	DataVM.ParentId = pid
@@ -42,12 +42,19 @@ func CloneVM(vmc *httpclient.HTTPClient, pid string, n string) (*MyVm, error) {
 		return nil, err
 	}
 	log.Debug().Msgf("Response Human Readable: %#v", responseBody.String())
-	err = json.NewDecoder(responseBody).Decode(&vm)
+	err = json.NewDecoder(responseBody).Decode(vm)
 	if err != nil {
 		log.Error().Err(err).Msg("The response JSON is malformed.")
 		return nil, err
 	}
-	return &vm, nil
+	vm, err = GetVM(vmc, vm.IdVM)
+	if err != nil {
+		log.Error().Err(err).Msg("We can't read the VM to load the ID and Path.")
+		return nil, err
+	}
+	log.Debug().Msgf("VM is: %#v", vm)
+	log.Info().Msg("We have cloned the VM with the Path included.")
+	return vm, nil
 }
 
 // GetVM Auxiliar function to get the data of the VM and don't repeat code
