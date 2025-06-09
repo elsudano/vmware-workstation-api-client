@@ -18,6 +18,14 @@ type NETManager struct {
 	netclient *httpclient.HTTPClient
 }
 
+// This struct is to create a new NIC the information is different in APIRest of VmWare Workstation PRO
+type NewNIC struct {
+	Index int32  `json:"index"`
+	Type  string `json:"type"`
+	Vmnet string `json:"vmnet"`
+	Mac   string `json:"macAddress"`
+}
+
 // This struct is for get and put information about NIC of the VM
 type InfoNICS struct {
 	Num  int `json:"num"`
