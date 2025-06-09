@@ -169,6 +169,12 @@ func (wsapi *WSAPIClient) CreateVM(pid string, n string, d string, p int32, m in
 		return nil, err
 	}
 	log.Debug().Msgf("That's the basic information of VM: %#v", vm)
+	vm, err = wsapi.VMService.LoadVM(vm.IdVM)
+	if err != nil {
+		log.Error().Err(err).Msg("We can't Load the VM after create.")
+		return nil, err
+	}
+	log.Debug().Msgf("With the PATH loaded: %#v", vm)
 	// These lines are just useful if the Terraform Code and the
 	// VmWare Workstation API Rest are in the same server
 	// err = wsapi.Utils.SetDenominationDescription(vm.Path, n, d)
