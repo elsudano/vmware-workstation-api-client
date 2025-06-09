@@ -188,13 +188,13 @@ func (wsapi *WSAPIClient) CreateVM(pid string, n string, d string, p int32, m in
 		log.Error().Err(err).Msg("We can't Delete the Network of VM.")
 		return nil, err
 	}
-	log.Debug().Msgf("We have deleted the Network %#v the VM: %#v", net.NICS[0].Index, vm.Denomination)
+	log.Debug().Msgf("We have deleted the Network %#v the VM: %#v", net.NICS[0].Index, vm)
 	net, err = wsapi.NETService.CreateNIC(vm, net.NICS[0].Type, net.NICS[0].Vmnet)
 	if err != nil {
 		log.Error().Err(err).Msg("We can't Create the Network of VM.")
 		return nil, err
 	}
-	log.Debug().Msgf("We have created the Network %#v the VM: %#v", net.NICS[0].Index, vm.Denomination)
+	log.Debug().Msgf("We have created the Network %#v the VM: %#v", net.NICS[0].Index, vm)
 	log.Info().Msg("We have created the VM.")
 	return vm, err
 }
