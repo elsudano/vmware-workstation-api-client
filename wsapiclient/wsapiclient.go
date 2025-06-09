@@ -177,6 +177,11 @@ func (wsapi *WSAPIClient) CreateVM(pid string, n string, d string, p int32, m in
 	// 	return nil, err
 	// }
 	// log.Debug().Msgf("After change the Denomination and the Description: %#v", vm)
+	// ------------------------------------------------------------------------------------
+	// The following lines were created because sometimes the VM can't get the IP
+	// when we powered the VM, that happens because the VM has the same MAC address
+	// that the ParentVM, so we delete the NIC and create it again in order to refresh
+	// the MAC address
 	net, err := wsapi.NETService.LoadNICS(vm)
 	if err != nil {
 		log.Error().Err(err).Msg("We can't Load the Network of VM.")
