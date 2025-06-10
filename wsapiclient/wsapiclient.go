@@ -147,10 +147,10 @@ func (wsapi *WSAPIClient) ConfigApiClient(a string, u string, p string, i bool, 
 	return wsapi.Caller.ConfigClient(a, u, p, i, d)
 }
 
-// GetAllVMs Method return array of MyVm and a error variable if occurr some problem
+// GetAllVMs Method return array of MyVm and a error variable if occur some problem
 // Outputs:
 // []MyVm list of all VMs that we have in VmWare Workstation
-// (error) variable with the error if occurr
+// (error) variable with the error if occur
 func (wsapi *WSAPIClient) GetAllVMs() ([]wsapivm.MyVm, error) {
 	return wsapi.VMService.GetAllVMs()
 }
@@ -215,7 +215,7 @@ func (wsapi *WSAPIClient) CreateVM(pid string, n string, d string, p int32, m in
 // i: (string) String with the ID of the VM
 // Outputs:
 // (pointer) Pointer at the MyVm object
-// (error) variable with the error if occurr
+// (error) variable with the error if occur
 func (wsapi *WSAPIClient) LoadVM(i string) (*wsapivm.MyVm, error) {
 	return wsapi.VMService.LoadVM(i)
 }
@@ -225,7 +225,7 @@ func (wsapi *WSAPIClient) LoadVM(i string) (*wsapivm.MyVm, error) {
 // n: (string) String with the Name of the VM
 // Outputs:
 // (pointer) Pointer at the MyVm object
-// (error) variable with the error if occurr
+// (error) variable with the error if occur
 func (wsapi *WSAPIClient) LoadVMbyName(n string) (*wsapivm.MyVm, error) {
 	return wsapi.VMService.LoadVMbyName(n)
 }
@@ -239,7 +239,7 @@ func (wsapi *WSAPIClient) LoadVMbyName(n string) (*wsapivm.MyVm, error) {
 // s: Power State desired, choose between on, off, reset, (nil no change)
 // Output:
 // pointer at the MyVm object
-// and error variable with the error if occurr
+// and error variable with the error if occur
 func (wsapi *WSAPIClient) UpdateVM(vm *wsapivm.MyVm, n string, d string, p int32, m int32, s string) error {
 	return wsapi.VMService.UpdateVM(vm, n, d, p, m, s)
 }

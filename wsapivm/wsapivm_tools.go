@@ -10,12 +10,12 @@ import (
 
 // CloneVM Auxiliary function that allow us to clone a VM in a new one
 // just with the the same settings that the ParentVM
-// Imputs:
+// Inputs:
 // vmc: (*httpclient.HTTPClient) pointer at the client of the API server.
 // pid (string) Chain with the ID of the Parent VM
 // n: (string) Chain with the name of the new VM
 // Outputs:
-// vm: (*wsapivm.MyVm) pointer to the VM that we are handeling.
+// vm: (*wsapivm.MyVm) pointer to the VM that we are handling.
 // err: (error) If we will have some error we can handle it here.
 func CloneVM(vmc *httpclient.HTTPClient, pid string, n string) (*MyVm, error) {
 	var vm *MyVm
@@ -52,12 +52,12 @@ func CloneVM(vmc *httpclient.HTTPClient, pid string, n string) (*MyVm, error) {
 	return vm, nil
 }
 
-// GetVM Auxiliar function to get the data of the VM and don't repeat code
+// GetVM Auxiliary function to get the data of the VM and don't repeat code
 // Input:
 // vmc: (*wsapiclient.Client) pointer at the client of the API server.
 // i: (string) string with the ID yo VM
 // Outputs:
-// vm: (*wsapivm.MyVm) pointer to the VM that we are handeling.
+// vm: (*wsapivm.MyVm) pointer to the VM that we are handling.
 // err: (error) If we will have some error we can handle it here.
 func GetVM(vmc *httpclient.HTTPClient, i string) (*MyVm, error) {
 	log.Info().Msgf("The VM Id value is: %#v", i)
@@ -93,7 +93,7 @@ func GetVM(vmc *httpclient.HTTPClient, i string) (*MyVm, error) {
 // vmc: (*httpclient.HTTPClient) pointer at the client of the API server.
 // n: (string) The name of the VM that we want to get.
 // Outputs:
-// vm: (*wsapivm.MyVm) pointer to the VM that we are handeling.
+// vm: (*wsapivm.MyVm) pointer to the VM that we are handling.
 // err: (error) If we will have some error we can handle it here.
 func GetVMbyName(vmc *httpclient.HTTPClient, n string) (*MyVm, error) {
 	log.Info().Msgf("The VM name value is: %#v", n)
@@ -192,7 +192,7 @@ func GetBasicInfo(vmc *httpclient.HTTPClient, vm *MyVm) error {
 }
 
 // SetBasicInfo Auxiliary function to add the basic values of a VM Processor and Memory
-// Imputs:
+// Inputs:
 // vmc: (*httpclient.Client) pointer at the client of the API server.
 // vm: (*wsapivm.MyVm) The VM that we want to Set the Memory and CPU info.
 // p: (string) The CPU settings that we want to put in VM

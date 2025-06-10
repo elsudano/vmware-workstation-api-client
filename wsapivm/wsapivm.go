@@ -14,10 +14,10 @@ func New(httpcaller *httpclient.HTTPClient) VMService {
 	return &VMManager{vmclient: httpcaller}
 }
 
-// GetAllVMs Method return array of MyVm and a error variable if occurr some problem
+// GetAllVMs Method return array of MyVm and a error variable if occur some problem
 // Outputs:
 // []MyVm list of all VMs that we have in VmWare Workstation
-// (error) variable with the error if occurr
+// (error) variable with the error if occur
 func (vmm *VMManager) GetAllVMs() ([]MyVm, error) {
 	var vms []MyVm
 	responseBody, err := vmm.vmclient.ApiCall("vms", "GET", bytes.Buffer{})
@@ -89,7 +89,7 @@ func (vmm *VMManager) CreateVM(pid string, n string, d string, p int32, m int32)
 // i: (string) String with the ID of the VM
 // Outputs:
 // (pointer) Pointer at the MyVm object
-// (error) variable with the error if occurr
+// (error) variable with the error if occur
 func (vmm *VMManager) LoadVM(i string) (*MyVm, error) {
 	vm, err := GetVM(vmm.vmclient, i)
 	if err != nil {
@@ -111,7 +111,7 @@ func (vmm *VMManager) LoadVM(i string) (*MyVm, error) {
 // n: (string) String with the Name of the VM
 // Outputs:
 // (pointer) Pointer at the MyVm object
-// (error) variable with the error if occurr
+// (error) variable with the error if occur
 func (vmm *VMManager) LoadVMbyName(n string) (*MyVm, error) {
 	vm, err := GetVMbyName(vmm.vmclient, n)
 	if err != nil {
@@ -137,7 +137,7 @@ func (vmm *VMManager) LoadVMbyName(n string) (*MyVm, error) {
 // s: Power State desired, choose between on, off, reset, (nil no change)
 // Output:
 // pointer at the MyVm object
-// and error variable with the error if occurr
+// and error variable with the error if occur
 func (vmm *VMManager) UpdateVM(vm *MyVm, n string, d string, p int32, m int32, s string) error {
 	var buffer bytes.Buffer
 	var memcpu SettingPayload
