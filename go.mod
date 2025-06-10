@@ -6,7 +6,7 @@ toolchain go1.24.3
 
 require (
 	github.com/TwiN/go-color v1.4.1
-	github.com/johlandabee/govmx v0.0.0-20200622120338-15e2c507b193
+	github.com/elsudano/govmx v1.0.0
 	github.com/rs/zerolog v1.34.0
 )
 

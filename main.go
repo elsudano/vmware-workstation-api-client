@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"os"
 	"strings"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/TwiN/go-color"
 	"github.com/elsudano/vmware-workstation-api-client/wsapiclient"
+	"github.com/elsudano/vmware-workstation-api-client/wsapivm"
 	"github.com/rs/zerolog/log"
 )
 
@@ -16,7 +18,11 @@ var paragraph_color = color.Blue
 var title_line_color = color.White
 var value_color = color.Yellow
 
-func PrintVM(VM *wsapiclient.MyVm) {
+func Version() {
+	fmt.Printf("v%s\n", wsapiclient.LibraryVersion)
+}
+
+func PrintVM(VM *wsapivm.MyVm) {
 	fmt.Println(
 		color.Ize(title_line_color, " ID:"), color.Ize(value_color, VM.IdVM), "\n",
 		color.Ize(title_line_color, "Path:"), color.Ize(value_color, VM.Path), "\n",
@@ -40,6 +46,19 @@ func PrintVM(VM *wsapiclient.MyVm) {
 }
 
 func main() {
+	var version, tests, debug bool
+	flag.BoolVar(&version, "version", false, "Show the version and exit")
+	flag.BoolVar(&tests, "tests", false, "Run the tests of the API client and exit")
+	flag.BoolVar(&debug, "debug", false, "Enable the debug mode by command line")
+	flag.Parse()
+	if version {
+		Version()
+		os.Exit(0)
+	}
+	if !tests {
+		os.Exit(0)
+	}
+
 	file, err := os.Open("config.ini")
 	if err != nil {
 		log.Error().Err(err).Msgf("Failed opening file %s, please make sure the config file exists", err)
@@ -78,6 +97,9 @@ func main() {
 			}
 		}
 	}
+	if debug {
+		vardebug = "DEBUG"
+	}
 	fmt.Println(color.Ize(paragraph_color, "First of all we want to see which are the Input Values:"))
 	fmt.Println(
 		color.Ize(title_line_color, "varuser:"), color.Ize(value_color, varuser),
@@ -89,22 +111,15 @@ func main() {
 	)
 	fmt.Println()
 	file.Close()
-
-	// First option we will can create a client with the default values {{{
-	// client, _ := wsapiclient.New()
-	// client.ConfigCli(varurl, varuser, varpass, varinsecure, vardebug)
-	// fmt.Printf("Parent ID: %s", varparentid)
-	// }}}
-
-	// Second option we will setting the values in the creation moment {{{
-	client, err := wsapiclient.NewClient(varurl, varuser, varpass, varinsecure, vardebug)
+	client := wsapiclient.New()
+	client.ConfigLog(vardebug, "HR")
+	err = client.ConfigApiClient(varurl, varuser, varpass, varinsecure, vardebug)
 	if err != nil {
 		log.Error().Err(err).Msgf("Creating client error %#v", err)
-		os.Exit(10)
+		os.Exit(9)
 	}
 	fmt.Println(color.Ize(paragraph_color, "We can see here the value of the ParentID VM:"))
 	fmt.Println(color.Ize(title_line_color, "Parent ID:"), color.Ize(value_color, varparentid))
-	// }}}
 
 	// To changing the config of debug you use this method
 	// client.SwitchDebugLevel("NONE")
@@ -114,17 +129,10 @@ func main() {
 	AllVMs, err := client.GetAllVMs()
 	if err != nil {
 		log.Error().Err(err).Msg("We can't show this VM by")
-		// os.Exit(11)
+		os.Exit(10)
 	}
-	for _, item := range AllVMs {
-		if item.IdVM != "II82IG14IV0UHB7QHAI3J0G44RJBGNR5" { // is just because this VM is encripted
-			VM, err := client.LoadVM(item.IdVM)
-			if err != nil {
-				log.Error().Err(err).Msgf("First time Reading VM Error %#v", err)
-				os.Exit(13)
-			}
-			PrintVM(VM)
-		}
+	for _, VM := range AllVMs {
+		PrintVM(&VM)
 	}
 	// After to read all the instances that we have in the list, we can create a new one to test it
 	fmt.Println(color.Ize(paragraph_color, "We are using the CreateVM method to create the VM test."))
@@ -151,7 +159,7 @@ func main() {
 	// time.Sleep(10 * time.Second)
 	// After to register the instance, we will update the values of the instance with new onece
 	fmt.Println(color.Ize(paragraph_color, "Now, we going to Energize the VM with the UpdateVM method."))
-	VM, err = client.UpdateVM(VM.IdVM, "clone-test-copy-change", "esta es una prueba de llenadao de datos", 2, 1024, "on")
+	err = client.UpdateVM(VM, "clone-test-copy-change", "esta es una prueba de llenadao de datos", 2, 1024, "on")
 	if err != nil {
 		log.Error().Err(err).Msgf("Updating VM Error %#v", err)
 		os.Exit(15)
@@ -166,7 +174,7 @@ func main() {
 	PrintVM(VM)
 	// We want to shutdown the instance in order to test the UpdateVM method
 	fmt.Println(color.Ize(paragraph_color, "Now, we going to shutdown and change the propierties of the VM with the UpdateVM method"))
-	VM, err = client.UpdateVM(VM.IdVM, "clone-test-copy-change", "esta es una prueba de llenadao de datos", 1, 512, "off")
+	err = client.UpdateVM(VM, "clone-test-copy-change", "esta es una prueba de llenadao de datos", 1, 512, "off")
 	if err != nil {
 		log.Error().Err(err).Msgf("Updating VM Error %#v", err)
 		os.Exit(17)
@@ -181,7 +189,7 @@ func main() {
 	PrintVM(VM)
 	// And finally we will delete the instance that we was created
 	fmt.Println(color.Ize(paragraph_color, "And finally we have deleted the VM"))
-	err = client.DeleteVM(VM.IdVM)
+	err = client.DeleteVM(VM)
 	if err != nil {
 		log.Error().Err(err).Msgf("DeleteVM Error %#v", err)
 		os.Exit(19)

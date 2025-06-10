@@ -1,7 +1,7 @@
 SHELL = /bin/bash
 
 NAME = vmware-workstation-api-client
-VERSION = $(shell cat wsapiclient/wsapiclient.go | grep libraryVersion | awk '{print $$3}' | tr -d \")
+VERSION = $(shell cat wsapiclient/wsapiclient.go | grep LibraryVersion | awk '{print $$4}' | tr -d \")
 DIRELEASES = releases/
 BINARY = $(NAME)_v$(VERSION)
 PRIVATEKEYFILE = workstationapi-key.pem
@@ -53,11 +53,20 @@ api_test: ## Test API client and list all virtual machine of VmWare Workstation
 	@go run . 2> debug.log
 	@echo -e "in order to review the Debug or errors run: 'less debug.log'"
 
-prepare: ## We can prepare the code locally in order to create a new version of provider
-	@git tag v$(VERSION)
+format: ## We can check if the format of our code is correct or not.
+	@gofmt -s -w -e .
 
-build: prepare ## Build the binary of the module
+prepare: format ## We can prepare the code locally in order to create a new version of provider
 	@go get -u
+	@go mod tidy	
+
+.ONESHELL:
+test: prepare ## We can run the test of provider directly.
+	@export TF_ACC=1
+	@go test -v -cover -timeout=120s -parallel=10 ./...
+
+build: test ## Build the binary of the module
+	@git tag v$(VERSION)
 	@go build -o $(DIRELEASES)$(BINARY)
 
 publish: build ## Build and Publish a new TAG in GitHub
