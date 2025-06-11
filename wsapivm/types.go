@@ -7,7 +7,7 @@ type VMService interface {
 	GetAllVMs() ([]MyVm, error)
 	LoadVM(i string) (*MyVm, error)
 	LoadVMbyName(n string) (*MyVm, error)
-	CreateVM(pid string, n string, d string, p int32, m int32) (*MyVm, error)
+	CreateVM(pid string, n string, d string, p int32, m int32, s string) (*MyVm, error)
 	UpdateVM(vm *MyVm, n string, d string, p int32, m int32, s string) error
 	RegisterVM(vm *MyVm) error
 	DeleteVM(vm *MyVm) error

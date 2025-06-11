@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	LibraryVersion string = "1.10.45"
+	LibraryVersion string = "1.10.46"
 )
 
 // New functon is just to create a new object APIClient to make the different calls at VmWare Workstation Pro
@@ -162,8 +162,8 @@ func (wsapi *WSAPIClient) GetAllVMs() ([]wsapivm.MyVm, error) {
 // d: string with the description of VM
 // p: int with the number of processors in the VM
 // m: int with the number of memory in the VM
-func (wsapi *WSAPIClient) CreateVM(pid string, n string, d string, p int32, m int32) (*wsapivm.MyVm, error) {
-	vm, err := wsapi.VMService.CreateVM(pid, n, d, p, m)
+func (wsapi *WSAPIClient) CreateVM(pid string, n string, d string, p int32, m int32, s string) (*wsapivm.MyVm, error) {
+	vm, err := wsapi.VMService.CreateVM(pid, n, d, p, m, s)
 	if err != nil {
 		log.Error().Err(err).Msg("We can't create the VM.")
 		return nil, err
