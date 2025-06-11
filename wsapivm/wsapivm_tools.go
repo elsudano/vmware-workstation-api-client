@@ -48,7 +48,7 @@ func CloneVM(vmc *httpclient.HTTPClient, pid string, n string) (*MyVm, error) {
 		return nil, err
 	}
 	log.Debug().Msgf("VM is: %#v", vm)
-	log.Info().Msg("We have cloned the VM with the Path included.")
+	log.Info().Msg("We have cloned the VM without Path.")
 	return vm, nil
 }
 

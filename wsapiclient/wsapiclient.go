@@ -174,7 +174,7 @@ func (wsapi *WSAPIClient) CreateVM(pid string, n string, d string, p int32, m in
 		log.Error().Err(err).Msg("We can't Load the VM after create.")
 		return nil, err
 	}
-	log.Debug().Msgf("With the PATH loaded: %#v", vm)
+	log.Debug().Msgf("We have loaded the VM: %#v", vm)
 	// These lines are just useful if the Terraform Code and the
 	// VmWare Workstation API Rest are in the same server
 	// err = wsapi.Utils.SetDenominationDescription(vm.Path, n, d)
@@ -194,16 +194,18 @@ func (wsapi *WSAPIClient) CreateVM(pid string, n string, d string, p int32, m in
 		return nil, err
 	}
 	log.Debug().Msgf("The network information of VM: %#v", net)
-	err = wsapi.NETService.DeleteNIC(vm, net.NICS[0].Index)
-	if err != nil {
-		log.Error().Err(err).Msg("We can't Delete the Network of VM.")
-		return nil, err
-	}
-	log.Debug().Msgf("We have deleted the Network %#v the VM: %#v", net.NICS[0].Index, vm)
-	net, err = wsapi.NETService.CreateNIC(vm, net.NICS[0].Type, net.NICS[0].Vmnet)
-	if err != nil {
-		log.Error().Err(err).Msg("We can't Create the Network of VM.")
-		return nil, err
+	if vm.PowerStatus != "on" {
+		err = wsapi.NETService.DeleteNIC(vm, net.NICS[0].Index)
+		if err != nil {
+			log.Error().Err(err).Msg("We can't Delete the Network of VM.")
+			return nil, err
+		}
+		log.Debug().Msgf("We have deleted the Network %#v the VM: %#v", net.NICS[0].Index, vm)
+		net, err = wsapi.NETService.CreateNIC(vm, net.NICS[0].Type, net.NICS[0].Vmnet)
+		if err != nil {
+			log.Error().Err(err).Msg("We can't Create the Network of VM.")
+			return nil, err
+		}
 	}
 	log.Debug().Msgf("We have created the Network %#v the VM: %#v", net.NICS[0].Index, vm)
 	log.Info().Msg("We have created the VM.")
