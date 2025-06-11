@@ -53,7 +53,8 @@ func (vmm *VMManager) GetAllVMs() ([]MyVm, error) {
 // d: string with the description of VM
 // p: int with the number of processors in the VM
 // m: int with the number of memory in the VM
-func (vmm *VMManager) CreateVM(pid string, n string, d string, p int32, m int32) (*MyVm, error) {
+// s: (string) this will be the state of the VM in creation (on, off, restart)
+func (vmm *VMManager) CreateVM(pid string, n string, d string, p int32, m int32, s string) (*MyVm, error) {
 	vm, err := CloneVM(vmm.vmclient, pid, n)
 	if err != nil {
 		log.Error().Err(err).Msg("We can't Clone the VM.")
@@ -66,6 +67,12 @@ func (vmm *VMManager) CreateVM(pid string, n string, d string, p int32, m int32)
 		return nil, err
 	}
 	log.Debug().Msgf("We have put %#v processors and %#v memory in %#v VM", p, m, vm.Denomination)
+	err = PowerSwitch(vmm.vmclient, vm, s)
+	if err != nil {
+		log.Error().Err(err).Msg("We can't change the PowerState of VM.")
+		return nil, err
+	}
+	log.Debug().Msgf("We have Changed the state of VM to: %#v", s)
 	// We need to wait after the VmWare Workstation Team fix the API {{{
 	// err = SetParameter(vmm.vmclient, vm, "denomination", n)
 	// if err != nil {
