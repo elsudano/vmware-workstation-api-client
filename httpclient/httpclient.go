@@ -157,6 +157,7 @@ func (c *HTTPClient) ApiCall(p string, m string, pl bytes.Buffer) (io.ReadCloser
 	case "POST":
 		req.Header.Add("Content-Type", "application/vnd.vmware.vmw.rest-v1+json")
 	case "DELETE":
+		req.Header.Add("Content-Type", "application/vnd.vmware.vmw.rest-v1+json")
 	default:
 		req.Header.Add("Content-Type", "application/json")
 	}

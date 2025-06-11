@@ -46,7 +46,7 @@ func (vmm *VMManager) GetAllVMs() ([]MyVm, error) {
 	return vms, nil
 }
 
-// CreateVM method to create a new VM in VmWare Worstation
+// CreateVM method to create a new VM in VmWare Workstation
 // Input:
 // pid: (string) with the ID of the Parent VM,
 // n: string with the denomination of the VM,
@@ -135,7 +135,7 @@ func (vmm *VMManager) LoadVMbyName(n string) (*MyVm, error) {
 	return vm, err
 }
 
-// UpdateVM method to update a VM in VmWare Worstation
+// UpdateVM method to update a VM in VmWare Workstation
 // Input:
 // vm (*MyVm) The VM that we want to update
 // n: string with the denomination of VM
@@ -200,7 +200,7 @@ func (vmm *VMManager) UpdateVM(vm *MyVm, n string, d string, p int32, m int32, s
 	return err
 }
 
-// RegisterVM method to register a new VM in VmWare Worstation GUI:
+// RegisterVM method to register a new VM in VmWare Workstation GUI:
 // Input:
 // c: (*wsapiclient.Client) The client to make the call.
 // vm: (*wsapivm.MyVM) The VM object that we want to delete.
@@ -240,7 +240,7 @@ func (vmm *VMManager) RegisterVM(vm *MyVm) error {
 	return err
 }
 
-// DeleteVM method to delete a VM in VmWare Worstation
+// DeleteVM method to delete a VM in VmWare Workstation
 // Input:
 // c: (*wsapiclient.Client) The client to make the call.
 // vm: (*wsapivm.MyVM) The VM object that we want to delete.
@@ -251,6 +251,16 @@ func (vmm *VMManager) DeleteVM(vm *MyVm) error {
 	if err != nil {
 		log.Error().Err(err).Msgf("We can't shutdown the VM")
 		return err
+	}
+	for {
+		err = GetPowerStatus(vmm.vmclient, vm)
+		if err != nil {
+			log.Error().Err(err).Msgf("We can't get the current PowerStatus of VM")
+			return err
+		}
+		if vm.PowerStatus == "off" {
+			break
+		}
 	}
 	response, err := vmm.vmclient.ApiCall("vms/"+vm.IdVM, "DELETE", bytes.Buffer{})
 	if err != nil {
