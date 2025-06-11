@@ -136,7 +136,7 @@ func main() {
 	}
 	// After to read all the instances that we have in the list, we can create a new one to test it
 	fmt.Println(color.Ize(paragraph_color, "We are using the CreateVM method to create the VM test."))
-	VM, err := client.CreateVM(varparentid, "clone-test-copy", "Test to INSERT description", 2, 1024)
+	VM, err := client.CreateVM(varparentid, "clone-test-copy", "Test to INSERT description", 2, 1024, "off")
 	if err != nil {
 		log.Error().Err(err).Msgf("Creating VMs Error %#v", err)
 		os.Exit(12)
