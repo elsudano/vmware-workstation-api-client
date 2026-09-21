@@ -50,8 +50,12 @@ endif
 
 .PHONY += api_test
 api_test: ## Test API client and list all virtual machine of VmWare Workstation
-	@go run . 2> debug.log
+	@go run . -tests 2> debug.log
 	@echo -e "in order to review the Debug or errors run: 'less debug.log'"
+
+.PHONY += api_version
+api_version: ## You will see which is the version of the API
+	@go run . -version
 
 format: ## We can check if the format of our code is correct or not.
 	@gofmt -s -w -e .
