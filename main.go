@@ -17,6 +17,7 @@ import (
 var paragraph_color = color.Blue
 var title_line_color = color.White
 var value_color = color.Yellow
+var error_color = color.Red
 
 func Version() {
 	fmt.Printf("v%s\n", wsapiclient.LibraryVersion)
@@ -97,6 +98,7 @@ func main() {
 			}
 		}
 	}
+	fmt.Println(color.Ize(error_color, scanner.Err()))
 	if debug {
 		vardebug = "DEBUG"
 	}
