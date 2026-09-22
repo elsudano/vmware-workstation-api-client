@@ -15,8 +15,10 @@ func TestNewClient(t *testing.T) {
 	if err != nil {
 		t.Errorf("%#v\n", err)
 	}
-	if !strings.Contains(apiClient.BaseURL.String(), "https") || !strings.Contains(apiClient.BaseURL.String(), "http") {
-		t.Errorf("The param url not contain the formatted URL: %#v", url)
+	if !strings.Contains(apiClient.BaseURL.String(), "https") {
+		if !strings.Contains(apiClient.BaseURL.String(), "http") {
+			t.Errorf("The param url not contain the formatted URL: %#v", url)
+		}
 	}
 	if !strings.Contains("NONE, INFO, ERROR, DEBUG", debug) {
 		t.Errorf("The Debug Level has defined a wrong level: %#v", debug)
@@ -24,7 +26,18 @@ func TestNewClient(t *testing.T) {
 }
 
 func TestNew(t *testing.T) {
-
+	apiClient, err := New()
+	if err != nil {
+		t.Errorf("%#v\n", err)
+	}
+	if !strings.Contains(apiClient.BaseURL.String(), "https") {
+		if !strings.Contains(apiClient.BaseURL.String(), "http") {
+			t.Errorf("The param url not contain the formatted URL")
+		}
+	}
+	if !strings.Contains(apiClient.DebugLevel, "NONE") {
+		t.Errorf("The Debug Level has defined a wrong level")
+	}
 }
 
 func TestApiCall(t *testing.T) {
